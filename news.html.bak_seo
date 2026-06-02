@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新闻动态 - 谊达翻译（武汉）有限公司</title>
+    <meta name="description" content="了解Eadartrans的最新资讯、行业动态和翻译技巧。专业翻译服务领域的最新发展与洞察。">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #648dc9; --primary-light: #648dc9; --accent: #648dc9;
+            --text-dark: #1a1a1a; --text-gray: #666666; --text-light: #999999;
+            --bg-white: #ffffff; --bg-light: #f8f9fa; --border: #e8e8e8;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.6; color: var(--text-dark); background: var(--bg-white);
+        }
+        .navbar { position: fixed; top: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); z-index: 1000; }
+        .nav-container { max-width: 1280px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 80px; }
+        .logo { display: flex; align-items: center; height: 80px; text-decoration: none; }
+        .logo img { height: 80px; display: block; width: auto; }
+        .nav-menu { display: flex; list-style: none; gap: 40px; margin-left: auto; margin-right: 40px; align-items: center; height: 80px; }
+        .nav-menu a { color: var(--text-dark); text-decoration: none; font-size: 15px; font-weight: 500; transition: color 0.3s; position: relative; }
+        .nav-menu a:hover, .nav-menu a.active { color: var(--primary); }
+        .nav-menu a::after { content: ''; position: absolute; bottom: -5px; left: 0; width: 0; height: 2px; background: var(--primary); transition: width 0.3s; }
+        .nav-menu a:hover::after, .nav-menu a.active::after { width: 100%; }
+        .lang-switcher { display: flex; gap: 12px; align-items: center; padding-right: 40px; height: 80px; }
+        .lang-btn { padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 14px; font-weight: 500; transition: all 0.3s; border: 1px solid var(--border); color: var(--text-gray); }
+        .lang-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .hero { padding: 160px 40px 80px; background: linear-gradient(135deg, #f8fafc 0%, #e8f4f8 100%); position: relative; overflow: hidden; }
+        .hero-container { max-width: 1280px; margin: 0 auto; text-align: center; position: relative; z-index: 1; }
+        .hero-content h1 { font-size: 48px; font-weight: 700; line-height: 1.2; color: var(--text-dark); margin-bottom: 20px; }
+        .hero-content h1 span { color: var(--primary); }
+        .hero-subtitle { font-size: 18px; color: var(--text-gray); max-width: 600px; margin: 0 auto; line-height: 1.8; }
+        .breadcrumb { max-width: 1280px; margin: 0 auto; padding: 20px 40px; font-size: 14px; color: var(--text-gray); }
+        .breadcrumb a { color: var(--text-gray); text-decoration: none; transition: color 0.3s; }
+        .breadcrumb a:hover { color: var(--primary); }
+        .main-content { max-width: 1000px; margin: 0 auto; padding: 0 40px 100px; }
+        .news-section { display: flex; flex-direction: column; gap: 30px; }
+        .news-card { display: grid; grid-template-columns: 280px 1fr; background: var(--bg-white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: all 0.3s; }
+        .news-card:hover { border-color: var(--primary); box-shadow: 0 10px 40px rgba(30,58,95,0.1); transform: translateY(-3px); }
+        .news-image { position: relative; min-height: 200px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); display: flex; align-items: center; justify-content: center; }
+        .news-image .icon { font-size: 48px; color: rgba(255,255,255,0.9); }
+        .news-category { position: absolute; top: 16px; left: 16px; background: var(--accent); color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .news-content { padding: 30px; display: flex; flex-direction: column; justify-content: center; }
+        .news-meta { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; font-size: 13px; color: var(--text-light); }
+        .news-meta span { display: flex; align-items: center; gap: 6px; }
+        .news-content h3 { font-size: 18px; font-weight: 600; color: var(--text-dark); margin-bottom: 10px; line-height: 1.4; }
+        .news-card:hover .news-content h3 { color: var(--primary); }
+        .news-content p { font-size: 14px; color: var(--text-gray); line-height: 1.7; margin-bottom: 16px; }
+        .news-link { display: inline-flex; align-items: center; gap: 6px; color: var(--primary); text-decoration: none; font-weight: 600; font-size: 13px; }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 50px; padding-top: 40px; border-top: 1px solid var(--border); }
+        .pagination a, .pagination span { display: flex; align-items: center; justify-content: center; min-width: 40px; height: 40px; border-radius: 8px; font-size: 14px; font-weight: 500; transition: all 0.3s; }
+        .pagination a { color: var(--text-gray); text-decoration: none; border: 1px solid var(--border); }
+        .pagination a:hover { border-color: var(--primary); color: var(--primary); }
+        .pagination span.current { background: var(--primary); color: white; }
+        .footer { background: var(--primary); color: white; padding: 80px 40px 40px; }
+        .footer-container { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 3fr 1fr 1fr 2fr; gap: 60px; margin-bottom: 60px; }
+        .footer-brand img { height: 50px; margin-bottom: 20px; }
+        .footer-brand p { font-size: 15px; line-height: 1.8; opacity: 0.8; margin-bottom: 24px; }
+        .footer-social { display: flex; gap: 16px; }
+        .footer-social a { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; transition: all 0.3s; }
+        .footer-social a:hover { background: rgba(255,255,255,0.2); transform: translateY(-3px); }
+        .footer-column h4 { font-size: 16px; font-weight: 600; margin-bottom: 24px; }
+        .footer-column ul { list-style: none; }
+        .footer-column li { margin-bottom: 12px; }
+        .footer-column a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 14px; transition: color 0.3s; }
+        .footer-column a:hover { color: white; }
+        .footer-bottom { max-width: 1280px; margin: 0 auto; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; font-size: 14px; opacity: 0.8; }
+        @media (max-width: 768px) { .news-card { grid-template-columns: 1fr; } .news-image { min-height: 160px; } }
+        @media (max-width: 768px) { .nav-menu { display: none; } .hero-content h1 { font-size: 32px; } .main-content { padding: 0 20px 60px; } .footer-container { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 480px) { .footer-container { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo"><img src="images/logo-blue.png" alt="Eadartrans"></a>
+            <ul class="nav-menu">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="about.html">关于我们</a></li>
+                <li><a href="services.html">服务</a></li>
+                <li><a href="news.html" class="active">新闻</a></li>
+                <li><a href="contact.html">联系我们</a></li>
+            </ul>
+            <div class="lang-switcher">
+                <a href="news.html" class="lang-btn active">中文</a>
+                <a href="en/news.html" class="lang-btn">EN</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>新闻<span>动态</span></h1>
+                <p class="hero-subtitle">了解Eadartrans的最新资讯、行业洞察与翻译技巧分享</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="breadcrumb">
+        <a href="index.html">首页</a> <i class="fas fa-chevron-right"></i> <span>新闻动态</span>
+    </div>
+
+    <div class="main-content">
+        <div class="news-section">
+            <!-- 文章1: 2026年 - 公司动态 -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">公司动态</span>
+                    <i class="fas fa-award icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> 2026年5月20日</span>
+                    </div>
+                    <h3>Eadartrans 荣获"优秀翻译服务企业"称号</h3>
+                    <p>在2026年度翻译行业评选中，Eadartrans凭借卓越的服务品质和良好的客户口碑，荣获行业认可。</p>
+                    <a href="news-2026-award.html" class="news-link">阅读更多 <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- 文章2: 2026年 - 翻译技巧 -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">翻译技巧</span>
+                    <i class="fas fa-lightbulb icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> 2026年4月15日</span>
+                    </div>
+                    <h3>化工领域专业术语翻译技巧与注意事项</h3>
+                    <p>化工翻译涉及大量专业术语，本文分享化工领域翻译的核心技巧和常见误区。</p>
+                    <a href="news-2026-chemical-tips.html" class="news-link">阅读更多 <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- 文章3: 2025年 - 行业资讯 -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">行业资讯</span>
+                    <i class="fas fa-globe icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> 2025年11月8日</span>
+                    </div>
+                    <h3>AI翻译技术发展趋势：人机协作成为主流</h3>
+                    <p>随着人工智能技术的发展，翻译行业正在经历变革，人机协作模式如何提升翻译效率。</p>
+                    <a href="news-2025-ai-trend.html" class="news-link">阅读更多 <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- 文章4: 2025年 - 翻译技巧 -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">翻译技巧</span>
+                    <i class="fas fa-book icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> 2025年8月22日</span>
+                    </div>
+                    <h3>法律合同翻译的关键要点与常见陷阱</h3>
+                    <p>法律翻译要求精准无误，本文详解合同翻译的核心要素和需要特别注意的问题。</p>
+                    <a href="news-2025-legal-tips.html" class="news-link">阅读更多 <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- 文章5: 2024年 - 行业资讯 -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">行业资讯</span>
+                    <i class="fas fa-chart-line icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> 2024年12月10日</span>
+                    </div>
+                    <h3>2024年全球语言服务市场突破600亿美元</h3>
+                    <p>根据行业研究报告，全球语言服务市场持续保持强劲增长，数字化转型是主要驱动力。</p>
+                    <a href="news-2024-market.html" class="news-link">阅读更多 <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- 文章6: 2024年 - 翻译技巧 -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">翻译技巧</span>
+                    <i class="fas fa-language icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> 2024年6月18日</span>
+                    </div>
+                    <h3>医学翻译的准确性要求与质量控制</h3>
+                    <p>医学翻译关乎生命安全，本文介绍医学翻译的特殊要求和严格的质量控制流程。</p>
+                    <a href="news-2024-medical-tips.html" class="news-link">阅读更多 <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- 文章7: 2023年 - 公司动态 -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">公司动态</span>
+                    <i class="fas fa-users icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> 2023年9月5日</span>
+                    </div>
+                    <h3>团队扩充：多名资深翻译专家加入Eadartrans</h3>
+                    <p>为满足业务需求，公司招募了多名具有丰富经验的资深翻译专家，涵盖多个专业领域。</p>
+                    <a href="news-2023-team.html" class="news-link">阅读更多 <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- 文章8: 2022年 - 翻译技巧 -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">翻译技巧</span>
+                    <i class="fas fa-desktop icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> 2022年10月12日</span>
+                    </div>
+                    <h3>技术文档翻译：如何保持术语一致性</h3>
+                    <p>技术翻译中术语一致性至关重要，本文分享建立术语库和保持翻译一致性的方法。</p>
+                    <a href="news-2022-technical-tips.html" class="news-link">阅读更多 <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- 文章9: 2021年 - 行业资讯 -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">行业资讯</span>
+                    <i class="fas fa-handshake icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> 2021年7月20日</span>
+                    </div>
+                    <h3>远程口译服务需求激增，行业迎来新机遇</h3>
+                    <p>疫情后时代，远程口译服务需求大幅增长，为翻译行业带来新的发展机遇。</p>
+                    <a href="news-2021-remote.html" class="news-link">阅读更多 <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- 文章10: 2020年 - 公司动态 -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">公司动态</span>
+                    <i class="fas fa-building icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> 2020年3月15日</span>
+                    </div>
+                    <h3>谊达翻译（武汉）有限公司正式成立</h3>
+                    <p>经过6年团队建设，谊达翻译（武汉）有限公司正式注册成立，开启专业化发展新篇章。</p>
+                    <a href="news-2020-founded.html" class="news-link">阅读更多 <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+        </div>
+
+
+    </div>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <img src="images/logo-white.png" alt="Eadartrans">
+                <p>谊达翻译（武汉）有限公司是专业的语言服务提供商，致力于为全球客户提供高质量、精准、高效的语言解决方案。</p>
+                <div class="footer-social">
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-weixin"></i></a>
+                    <a href="mailto:serena@eadartrans.com"><i class="fas fa-envelope"></i></a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>快速链接</h4>
+                <ul>
+                    <li><a href="index.html">首页</a></li>
+                    <li><a href="about.html">关于我们</a></li>
+                    <li><a href="services.html">服务</a></li>
+                    <li><a href="news.html">新闻</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>服务项目</h4>
+                <ul>
+                    <li><a href="services.html">文档翻译</a></li>
+                    <li><a href="services.html">口译服务</a></li>
+                    <li><a href="services.html">本地化</a></li>
+                    <li><a href="services.html">认证翻译</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>联系我们</h4>
+                <ul>
+                    <li><a href="tel:+8615607161089">+86 15607161089</a></li>
+                    <li><a href="mailto:serena@eadartrans.com">serena@eadartrans.com</a></li>
+                    <li><a href="#">武汉东湖新技术开发区光谷创业街9号楼</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 谊达翻译（武汉）有限公司 版权所有</p>
+            <p><a href="https://beian.miit.gov.cn/" target="_blank">鄂ICP备2020020827号-1</a></p>
+            <p>专业翻译与本地化服务提供商</p>
+        </div>
+    </footer>
+</body>
+</html>

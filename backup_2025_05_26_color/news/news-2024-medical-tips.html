@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医学翻译的准确性要求与质量控制 - 谊达翻译</title>
+    <meta name="description" content="医学翻译关乎生命安全，本文介绍医学翻译的特殊要求和严格的质量控制流程。">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #2563eb; --primary-light: #3b82f6; --accent: #60a5fa;
+            --text-dark: #1f2937; --text-gray: #6b7280; --text-light: #999999;
+            --bg-white: #ffffff; --bg-light: #f9fafb; --border: #e5e7eb;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.6; color: var(--text-dark); background: var(--bg-white);
+        }
+        .navbar { position: fixed; top: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); z-index: 1000; }
+        .nav-container { max-width: 1280px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 80px; }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            height: 80px; display: flex; align-items: center; height: 80px; text-decoration: none; }
+        .logo img { height: 80px; display: block; width: auto; }
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .logo-text .cn {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-dark);
+            line-height: 1.3;
+        }
+
+        .logo-text .en {
+            font-size: 11px;
+            color: var(--text-gray);
+            line-height: 1.3;
+            letter-spacing: 0.5px;
+        }
+
+        .placeholder{
+        .nav-menu { display: flex; list-style: none; gap: 40px; margin-left: auto; margin-right: 40px; align-items: center; height: 80px; }
+        .nav-menu a { color: var(--text-dark); text-decoration: none; font-size: 15px; font-weight: 500; transition: color 0.3s; position: relative; }
+        .nav-menu a:hover, .nav-menu a.active { color: var(--primary); }
+        .nav-menu a::after { content: ''; position: absolute; bottom: -5px; left: 0; width: 0; height: 2px; background: #1f2937; transition: width 0.3s; }
+        .nav-menu a:hover::after, .nav-menu a.active::after { width: 100%; }
+        .lang-switcher { display: flex; gap: 12px; align-items: center; padding-right: 40px; height: 80px; }
+        .lang-btn { padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 14px; font-weight: 500; transition: all 0.3s; border: 1px solid var(--border); color: var(--text-gray); }
+        .lang-btn.active { background: #1f2937; color: white; border-color: var(--primary); }
+        .article-header { padding: 140px 40px 60px; background: linear-gradient(135deg, #f8fafc 0%, #e8f4f8 100%); }
+        .article-container { max-width: 800px; margin: 0 auto; }
+        .article-meta { display: flex; gap: 20px; margin-bottom: 20px; font-size: 14px; color: var(--text-gray); }
+        .article-category { background: var(--accent); color: white; padding: 4px 12px; border-radius: 20px; }
+        .article-title { font-size: 36px; font-weight: 700; color: var(--text-dark); margin-bottom: 20px; line-height: 1.3; }
+        .article-content { max-width: 800px; margin: 0 auto; padding: 60px 40px 100px; }
+        .article-content p { font-size: 16px; line-height: 1.9; margin-bottom: 20px; color: var(--text-gray); }
+        .article-content h2 { font-size: 24px; font-weight: 600; color: var(--text-dark); margin: 40px 0 20px; }
+        .article-content ul { margin: 20px 0; padding-left: 24px; }
+        .article-content li { margin-bottom: 12px; color: var(--text-gray); line-height: 1.8; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--primary); text-decoration: none; font-weight: 500; margin-bottom: 30px; }
+        .footer { background: #1f2937; color: white; padding: 80px 40px 40px; }
+        .footer-container { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 3fr 1fr 1fr 2fr; gap: 60px; margin-bottom: 60px; }
+        .footer-brand img { height: 100px; width: auto; display: block; margin: 0 0 20px 0; padding: 0; margin-bottom: 20px; }
+        .footer-brand p { font-size: 15px; line-height: 1.8; opacity: 0.8; margin-bottom: 24px; }
+        .footer-social { display: flex; gap: 16px; }
+        .footer-social a { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; transition: all 0.3s; }
+        .footer-social a:hover { background: rgba(255,255,255,0.2); transform: translateY(-3px); }
+        .footer-column h4 { font-size: 16px; font-weight: 600; margin-bottom: 24px; }
+        .footer-column ul { list-style: none; }
+        .footer-column li { margin-bottom: 12px; }
+        .footer-column a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 14px; transition: color 0.3s; }
+        .footer-column a:hover { color: white; }
+        .footer-bottom { max-width: 1280px; margin: 0 auto; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; font-size: 14px; opacity: 0.8; }
+        @media (max-width: 768px) { .nav-menu { display: none; } .article-title { font-size: 28px; } .article-content { padding: 40px 20px 60px; } .footer-container { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../index.html" class="logo"><img src="../images/logo-blue.png" alt="Eadartrans"></a>
+            <ul class="nav-menu">
+                <li><a href="../index.html">首页</a></li>
+                <li><a href="../about.html">关于我们</a></li>
+                <li><a href="../services.html">服务</a></li>
+                <li><a href="../news.html" class="active">新闻</a></li>
+                <li><a href="../contact.html">联系我们</a></li>
+            </ul>
+            <div class="lang-switcher">
+                <a href="news-2024-medical-tips.html" class="lang-btn active">中文</a>
+                <a href="../en/news/news-2024-medical-tips.html" class="lang-btn">EN</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="article-header">
+        <div class="article-container">
+            <a href="../news.html" class="back-link"><i class="fas fa-arrow-left"></i> 返回新闻列表</a>
+            <div class="article-meta">
+                <span class="article-category">翻译技巧</span>
+                <span><i class="far fa-calendar"></i> 2024年6月18日</span>
+            </div>
+            <h1 class="article-title">医学翻译的准确性要求与质量控制</h1>
+        </div>
+    </header>
+
+    <article class="article-content">
+        <p>医学翻译是一项关乎生命安全的专业工作。无论是药品说明书、临床试验报告，还是医疗器械操作手册，任何翻译错误都可能导致严重后果。本文将介绍医学翻译的特殊要求和严格的质量控制流程。</p>
+        
+        <h2>一、医学翻译的特殊性</h2>
+        <p>医学翻译与其他领域的翻译相比，具有以下特殊性：</p>
+        <ul>
+            <li><strong>准确性要求极高：</strong>医学术语必须精确对应，不能有任何歧义</li>
+            <li><strong>专业性强：</strong>涉及大量拉丁词汇、解剖学术语、药学术语</li>
+            <li><strong>法规约束：</strong>医药文档翻译需符合各国药品监管要求</li>
+            <li><strong>更新频繁：</strong>医学知识不断更新，译者需要持续学习</li>
+        </ul>
+        
+        <h2>二、常见医学翻译难点</h2>
+        <p>在医学翻译实践中，以下难点需要特别注意：</p>
+        <ul>
+            <li><strong>一词多义：</strong>如"cell"可指细胞、电池、小房间，需根据语境判断</li>
+            <li><strong>缩写词：</strong>医学大量使用缩写，如CNS（中枢神经系统）、COPD（慢性阻塞性肺病）</li>
+            <li><strong> brand name vs generic name：</strong>药品的商品名和通用名需要准确区分</li>
+            <li><strong>剂量单位：</strong>不同国家可能使用不同的剂量表示方法</li>
+        </ul>
+        
+        <h2>三、术语管理</h2>
+        <p>建立和维护医学术语库是保证翻译质量的关键：</p>
+        <ul>
+            <li>参考权威医学词典，如《道兰氏医学词典》</li>
+            <li>遵循国家药典委员会发布的药品名称</li>
+            <li>建立客户专属术语库，确保品牌名、产品名翻译一致</li>
+            <li>定期更新术语库，纳入新出现的医学术语</li>
+        </ul>
+        
+        <h2>四、质量控制流程</h2>
+        <p>Eadartrans对医学翻译实行严格的质量控制：</p>
+        <ul>
+            <li><strong>专业匹配：</strong>安排具有医学背景的资深译员</li>
+            <li><strong>双重审校：</strong>翻译完成后由医学专家审校</li>
+            <li><strong>术语核对：</strong>专人负责术语一致性检查</li>
+            <li><strong>格式审查：</strong>确保译文格式符合监管要求</li>
+            <li><strong>终稿确认：</strong>项目经理进行最终质量把关</li>
+        </ul>
+        
+        <h2>五、保密要求</h2>
+        <p>医学文档往往涉及未公开的临床试验数据、新药研发信息等敏感内容，保密工作尤为重要：</p>
+        <ul>
+            <li>所有参与人员签署严格的保密协议（NDA）</li>
+            <li>使用加密传输和存储系统</li>
+            <li>限制文档访问权限</li>
+            <li>项目结束后彻底销毁工作文件</li>
+        </ul>
+        
+        <h2>六、常见文档类型</h2>
+        <p>Eadartrans提供的医学翻译服务涵盖：</p>
+        <ul>
+            <li>药品注册申报资料</li>
+            <li>临床试验报告</li>
+            <li>医疗器械说明书</li>
+            <li>医学论文和文献</li>
+            <li>病历和诊断报告</li>
+            <li>医学会议资料</li>
+        </ul>
+        
+        <p>医学翻译是一项责任重大的工作，需要译者具备扎实的医学知识、严谨的工作态度和高度的责任心。选择专业的医学翻译服务商，是确保翻译质量和安全的关键。</p>
+    </article>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <img src="../images/logo-white.png" alt="Eadartrans">
+                <p>谊达翻译（武汉）有限公司是专业的语言服务提供商，致力于为全球客户提供高质量、精准、高效的语言解决方案。</p>
+                <div class="footer-social">
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-weixin"></i></a>
+                    <a href="mailto:serena@eadartrans.com"><i class="fas fa-envelope"></i></a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>快速链接</h4>
+                <ul>
+                    <li><a href="../index.html">首页</a></li>
+                    <li><a href="../about.html">关于我们</a></li>
+                    <li><a href="../services.html">服务</a></li>
+                    <li><a href="../news.html">新闻</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>服务项目</h4>
+                <ul>
+                    <li><a href="../services.html">文档翻译</a></li>
+                    <li><a href="../services.html">口译服务</a></li>
+                    <li><a href="../services.html">本地化</a></li>
+                    <li><a href="../services.html">认证翻译</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>联系我们</h4>
+                <ul>
+                    <li><a href="tel:+8615607161089">+86 15607161089</a></li>
+                    <li><a href="mailto:serena@eadartrans.com">serena@eadartrans.com</a></li>
+                    <li><a href="#">武汉东湖新技术开发区光谷创业街9号楼</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 谊达翻译（武汉）有限公司 版权所有</p>
+            <p>专业翻译与本地化服务提供商</p>
+        </div>
+    </footer>
+</body>
+</html>

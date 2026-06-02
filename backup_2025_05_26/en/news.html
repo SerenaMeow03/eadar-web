@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News & Updates - Eadartrans (Wuhan) Co., Ltd.</title>
+    <meta name="description" content="Stay updated with the latest news, industry insights, and company developments from Eadartrans. Explore trends in professional translation services.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1e3a5f;
+            --primary-light: #2d5a8a;
+            --accent: #4a90a4;
+            --text-dark: #1a1a1a;
+            --text-gray: #666666;
+            --text-light: #999999;
+            --bg-white: #ffffff;
+            --bg-light: #f8f9fa;
+            --border: #e8e8e8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-white);
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            height: 80px;
+        }
+
+        .logo img {
+            height: 80px;
+            display: block;
+            padding: 0;
+            margin: 0;
+            width: auto;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+            margin-left: auto;
+            margin-right: 40px;
+            align-items: center;
+            height: 80px;
+        }
+
+        .nav-menu a {
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-menu a:hover,
+        .nav-menu a.active {
+            color: var(--primary);
+        }
+
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+
+        .nav-menu a:hover::after,
+        .nav-menu a.active::after {
+            width: 100%;
+        }
+
+        .lang-switcher {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding-right: 40px;
+            height: 80px;
+        }
+
+        .lang-btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: 1px solid var(--border);
+            color: var(--text-gray);
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .lang-btn:hover:not(.active) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 160px 40px 80px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e8f4f8 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 80%;
+            height: 200%;
+            background: radial-gradient(ellipse, rgba(74,144,164,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-content h1 {
+            font-size: 48px;
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+        }
+
+        .hero-content h1 span {
+            color: var(--primary);
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            color: var(--text-gray);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 20px 40px;
+            font-size: 14px;
+            color: var(--text-gray);
+        }
+
+        .breadcrumb a {
+            color: var(--text-gray);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--primary);
+        }
+
+        .breadcrumb i {
+            margin: 0 10px;
+            font-size: 12px;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 40px 100px;
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 60px;
+        }
+
+        /* News Grid */
+        .news-section {
+            flex-direction: column;
+        }
+
+        .news-card {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 30px;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .news-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 10px 40px rgba(30,58,95,0.1);
+            transform: translateY(-3px);
+        }
+
+        .news-image {
+            position: relative;
+            min-height: 200px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .news-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .news-image .icon {
+            font-size: 48px;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .news-category {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: var(--accent);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .news-content {
+            padding: 30px 30px 30px 0;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .news-meta {
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .news-meta span {
+            align-items: center;
+            gap: 6px;
+        }
+
+        .news-meta i {
+            color: var(--accent);
+        }
+
+        .news-content h3 {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+            line-height: 1.4;
+            transition: color 0.3s;
+        }
+
+        .news-card:hover .news-content h3 {
+            color: var(--primary);
+        }
+
+        .news-content p {
+            font-size: 15px;
+            color: var(--text-gray);
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .news-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: gap 0.3s;
+        }
+
+        .news-link:hover {
+        }
+
+        /* Pagination */
+        .pagination {
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border);
+        }
+
+        .pagination a,
+        .pagination span {
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .pagination a {
+            color: var(--text-gray);
+            text-decoration: none;
+            border: 1px solid var(--border);
+        }
+
+        .pagination a:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .pagination span.current {
+            background: var(--primary);
+            color: white;
+        }
+
+        .pagination .prev,
+        .pagination .next {
+            padding: 0 20px;
+            gap: 8px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            flex-direction: column;
+        }
+
+        .sidebar-widget {
+            background: var(--bg-light);
+            border-radius: 12px;
+            padding: 30px;
+        }
+
+        .sidebar-widget h4 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary);
+            display: inline-block;
+        }
+
+        /* Tags */
+        .tag-cloud {
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tag {
+            padding: 8px 16px;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-gray);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .tag:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Featured News */
+        .featured-list {
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .featured-item {
+            gap: 16px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .featured-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .featured-item:hover .featured-title {
+            color: var(--primary);
+        }
+
+        .featured-thumb {
+            width: 80px;
+            height: 80px;
+            display: block;
+            padding: 0;
+            margin: 0;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent) 100%);
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .featured-thumb i {
+            font-size: 24px;
+            color: white;
+        }
+
+        .featured-content {
+            flex: 1;
+        }
+
+        .featured-date {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-bottom: 6px;
+        }
+
+        .featured-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dark);
+            line-height: 1.5;
+            transition: color 0.3s;
+        }
+
+        /* Categories */
+        .category-list {
+            flex-direction: column;
+        }
+
+        .category-item {
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-white);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-gray);
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .category-item:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .category-item span {
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-count {
+            background: var(--bg-light);
+            color: var(--text-gray);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .category-item:hover .category-count {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        /* Newsletter */
+        .newsletter-form {
+            flex-direction: column;
+        }
+
+        .newsletter-form input {
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .newsletter-form input:focus {
+            border-color: var(--primary);
+        }
+
+        .newsletter-form button {
+            padding: 14px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .newsletter-form button:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--primary);
+            color: white;
+            padding: 80px 40px 40px;
+        }
+
+        .footer-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 60px;
+        }
+
+        .footer-brand img {
+            height: 80px;
+            display: block;
+            padding: 0;
+            margin: 0;
+            margin-bottom: 20px;
+        }
+
+        .footer-brand p {
+            font-size: 15px;
+            line-height: 1.8;
+            opacity: 0.8;
+            margin-bottom: 24px;
+        }
+
+        .footer-social {
+            gap: 16px;
+        }
+
+        .footer-social a {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .footer-social a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-3px);
+        }
+
+        .footer-column h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .footer-column ul {
+        }
+
+        .footer-column li {
+            margin-bottom: 12px;
+        }
+
+        .footer-column a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .footer-column a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 60px;
+            }
+
+            .sidebar {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 30px;
+            }
+
+            .news-card {
+                grid-template-columns: 240px 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .hero {
+                padding: 140px 20px 60px;
+            }
+
+            .hero-content h1 {
+                font-size: 32px;
+            }
+
+            .main-content {
+                padding: 0 20px 60px;
+            }
+
+            .news-card {
+                grid-template-columns: 1fr;
+            }
+
+            .news-content {
+                padding: 24px;
+            }
+
+            .news-image {
+                min-height: 180px;
+            }
+
+            .sidebar {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 40px;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .footer-container {
+                grid-template-columns: 1fr;
+            }
+
+            .pagination {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="../images/logo-blue.png" alt="Eadartrans">
+            </a>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="services.html">Services</a></li>
+                <li><a href="news.html" class="active">News</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+            <div class="lang-switcher">
+                <a href="../news.html" class="lang-btn">中文</a>
+                <a href="news.html" class="lang-btn active">EN</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>News <span>& Updates</span></h1>
+                <p class="hero-subtitle">Stay informed with the latest news, industry insights, and company developments from Eadartrans. Explore cutting-edge trends in language services.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <a href="index.html">Home</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>News & Updates</span>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- News Section -->
+        <div class="news-section">
+            <!-- News Card 1 -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">Company News</span>
+                    <i class="fas fa-award icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> May 20, 2026</span>
+                        <span><i class="far fa-eye"></i> 1,258 Views</span>
+                    </div>
+                    <h3>Eadartrans Honored with "Outstanding Translation Service Provider" Award</h3>
+                    <p>At the 2026 Translation Industry Awards, Eadartrans was recognized as an "Outstanding Translation Service Provider" for its exceptional service quality and excellent customer reputation. This honor reflects our team's professionalism and commitment to quality.</p>
+                    <a href="#" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- News Card 2 -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">Industry Insights</span>
+                    <i class="fas fa-robot icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> May 15, 2026</span>
+                        <span><i class="far fa-eye"></i> 986 Views</span>
+                    </div>
+                    <h3>AI Translation Trends: Human-Machine Collaboration Becomes Mainstream</h3>
+                    <p>With the rapid advancement of AI technology, the translation industry is undergoing profound transformation. This article analyzes the latest developments in AI translation and explores how human-machine collaboration enhances translation efficiency and quality.</p>
+                    <a href="#" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- News Card 3 -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">Company News</span>
+                    <i class="fas fa-users icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> April 28, 2026</span>
+                        <span><i class="far fa-eye"></i> 756 Views</span>
+                    </div>
+                    <h3>Team Expansion: Senior Translation Experts Join Eadartrans</h3>
+                    <p>To meet growing business demands, we have successfully recruited several senior translation experts with extensive industry experience, covering legal, medical, technical, and other specialized fields.</p>
+                    <a href="#" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- News Card 4 -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">Partnerships</span>
+                    <i class="fas fa-handshake icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> April 10, 2026</span>
+                        <span><i class="far fa-eye"></i> 892 Views</span>
+                    </div>
+                    <h3>Eadartrans Establishes Strategic Partnerships with Multinational Corporations</h3>
+                    <p>Leveraging our professional service quality and strong industry reputation, we have successfully signed long-term cooperation agreements with several renowned multinational corporations to provide comprehensive language solutions.</p>
+                    <a href="#" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- News Card 5 -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">Industry Insights</span>
+                    <i class="fas fa-globe-asia icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> March 22, 2026</span>
+                        <span><i class="far fa-eye"></i> 1,124 Views</span>
+                    </div>
+                    <h3>Global Language Services Market Expected to Exceed $60 Billion in 2026</h3>
+                    <p>According to the latest industry research report, the global language services market continues to show strong growth momentum. Digital transformation and cross-border trade development are the main driving forces.</p>
+                    <a href="#" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- News Card 6 -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">Company News</span>
+                    <i class="fas fa-laptop-code icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> March 8, 2026</span>
+                        <span><i class="far fa-eye"></i> 645 Views</span>
+                    </div>
+                    <h3>Smart Translation Management System Improves Service Efficiency by 40%</h3>
+                    <p>To better serve our clients, we have introduced an advanced intelligent translation management system that automates project management through technological innovation, significantly improving delivery efficiency while maintaining translation quality.</p>
+                    <a href="#" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <a href="#" class="prev"><i class="fas fa-chevron-left"></i> Previous</a>
+                <span class="current">1</span>
+                <a href="#">2</a>
+                <a href="#">3</a>
+                <span>...</span>
+                <a href="#">8</a>
+                <a href="#" class="next">Next <i class="fas fa-chevron-right"></i></a>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- Categories -->
+            <div class="sidebar-widget">
+                <h4>Categories</h4>
+                <div class="category-list">
+                    <a href="#" class="category-item">
+                        <span><i class="fas fa-building"></i> Company News</span>
+                        <span class="category-count">24</span>
+                    </a>
+                    <a href="#" class="category-item">
+                        <span><i class="fas fa-industry"></i> Industry Insights</span>
+                        <span class="category-count">18</span>
+                    </a>
+                    <a href="#" class="category-item">
+                        <span><i class="fas fa-handshake"></i> Partnerships</span>
+                        <span class="category-count">12</span>
+                    </a>
+                    <a href="#" class="category-item">
+                        <span><i class="fas fa-graduation-cap"></i> Training Events</span>
+                        <span class="category-count">8</span>
+                    </a>
+                    <a href="#" class="category-item">
+                        <span><i class="fas fa-certificate"></i> Certifications</span>
+                        <span class="category-count">6</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Featured News -->
+            <div class="sidebar-widget">
+                <h4>Featured News</h4>
+                <div class="featured-list">
+                    <a href="#" class="featured-item">
+                        <div class="featured-thumb">
+                            <i class="fas fa-award"></i>
+                        </div>
+                        <div class="featured-content">
+                            <div class="featured-date">May 20, 2026</div>
+                            <div class="featured-title">Eadartrans Honored with "Outstanding Translation Service Provider" Award</div>
+                        </div>
+                    </a>
+                    <a href="#" class="featured-item">
+                        <div class="featured-thumb">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="featured-content">
+                            <div class="featured-date">May 15, 2026</div>
+                            <div class="featured-title">In-Depth Analysis of AI Translation Technology Trends</div>
+                        </div>
+                    </a>
+                    <a href="#" class="featured-item">
+                        <div class="featured-thumb">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <div class="featured-content">
+                            <div class="featured-date">March 22, 2026</div>
+                            <div class="featured-title">2026 Global Language Services Market Outlook</div>
+                        </div>
+                    </a>
+                    <a href="#" class="featured-item">
+                        <div class="featured-thumb">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <div class="featured-content">
+                            <div class="featured-date">March 8, 2026</div>
+                            <div class="featured-title">Smart Translation Management System Officially Launched</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="sidebar-widget">
+                <h4>Popular Tags</h4>
+                <div class="tag-cloud">
+                    <a href="#" class="tag">Translation Services</a>
+                    <a href="#" class="tag">Localization</a>
+                    <a href="#" class="tag">AI Translation</a>
+                    <a href="#" class="tag">Interpretation</a>
+                    <a href="#" class="tag">Technical Documents</a>
+                    <a href="#" class="tag">Legal Translation</a>
+                    <a href="#" class="tag">Medical Translation</a>
+                    <a href="#" class="tag">Game Localization</a>
+                    <a href="#" class="tag">Multilingual</a>
+                    <a href="#" class="tag">Globalization</a>
+                </div>
+            </div>
+
+            <!-- Newsletter -->
+            <div class="sidebar-widget">
+                <h4>Newsletter</h4>
+                <p style="font-size: 14px; color: var(--text-gray); margin-bottom: 16px; line-height: 1.6;">Subscribe to our newsletter for the latest industry trends and company updates.</p>
+                <form class="newsletter-form">
+                    <input type="email" placeholder="Enter your email">
+                    <button type="submit">
+                        <i class="fas fa-paper-plane"></i>
+                        Subscribe Now
+                    </button>
+                </form>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <img src="../images/logo-white.png" alt="Eadartrans">
+                <p>Eadartrans (Wuhan) Co., Ltd. is a professional language service provider, committed to delivering high-quality, accurate, and efficient language solutions for global clients.</p>
+                <div class="footer-social">
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fas fa-envelope"></i></a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="services.html">Services</a></li>
+                    <li><a href="news.html">News</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Services</h4>
+                <ul>
+                    <li><a href="services.html">Translation</a></li>
+                    <li><a href="services.html">Interpretation</a></li>
+                    <li><a href="services.html">Localization</a></li>
+                    <li><a href="services.html">Certified Translation</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Contact</h4>
+                <ul>
+                    <li><a href="contact.html">Contact Us</a></li>
+                    <li><a href="mailto:serena@eadartrans.com">serena@eadartrans.com</a></li>
+                    <li><a href="#">Building 9, Guanggu Entrepreneurship Street, Donghu New Technology Development Zone, Wuhan, China</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Eadartrans (Wuhan) Co., Ltd. All Rights Reserved</p>
+            <p>Professional Translation & Localization Services</p>
+        </div>
+    </footer>
+</body>
+</html>

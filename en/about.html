@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us | Eadartrans Translation Company - 20 Years Experience</title>
+    <meta name="description" content="Learn about Eadartrans's development history, core advantages, and professional team. 20 years of industry experience, serving 500+ global clients with professional translation services.">
+    <meta name="keywords" content="Eadartrans,translation company,about Eadartrans,Wuhan translation,professional translation team,translation services">
+    <link rel="canonical" href="https://www.eadartrans.com/en/about.html" />
+    <link rel="alternate" hreflang="zh-CN" href="https://www.eadartrans.com/about.html" />
+    <link rel="alternate" hreflang="en" href="https://www.eadartrans.com/en/about.html" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="About Us | Eadartrans Translation Company">
+    <meta property="og:description" content="20 years of industry experience, serving 500+ global clients">
+    <meta property="og:image" content="https://www.eadartrans.com/images/logo.png">
+    <meta property="og:url" content="https://www.eadartrans.com/en/about.html">
+    <meta property="og:type" content="website">
+    
+    <!-- Schema.org BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.eadartrans.com/en/index.html"},
+        {"@type": "ListItem", "position": 2, "name": "About Us", "item": "https://www.eadartrans.com/en/about.html"}
+      ]
+    }
+    </script>
+    
+    <!-- Schema.org AboutPage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "AboutPage",
+      "name": "About Eadartrans",
+      "description": "Eadartrans translation company profile, 20 years of professional experience",
+      "url": "https://www.eadartrans.com/en/about.html",
+      "mainEntity": {
+        "@type": "Organization",
+        "name": "Eadartrans (Wuhan) Co., Ltd.",
+        "description": "Professional translation company with 20 years of industry experience",
+        "foundingDate": "2005",
+        "numberOfEmployees": "50+"
+      }
+    }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #648dc9;
+            --primary-light: #648dc9;
+            --accent: #648dc9;
+            --text-dark: #1a1a1a;
+            --text-gray: #666666;
+            --text-light: #999999;
+            --bg-white: #ffffff;
+            --bg-light: #f8f9fa;
+            --border: #e8e8e8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-white);
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            height: 80px;
+        }
+
+        .logo img {
+            height: 80px;
+            display: block;
+            padding: 0;
+            margin: 0;
+            width: auto;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+            margin-left: auto;
+            margin-right: 40px;
+            align-items: center;
+            height: 80px;
+        }
+
+        .nav-menu a {
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-menu a:hover,
+        .nav-menu a.active {
+            color: var(--primary);
+        }
+
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+
+        .nav-menu a:hover::after,
+        .nav-menu a.active::after {
+            width: 100%;
+        }
+
+        .lang-switcher {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding-right: 40px;
+            height: 80px;
+        }
+
+        .lang-btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: 1px solid var(--border);
+            color: var(--text-gray);
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .lang-btn:hover:not(.active) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Hero Section - White/Light Background */
+        .about-hero {
+            min-height: 60vh;
+            align-items: center;
+            padding: 140px 40px 80px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            background: radial-gradient(ellipse at top right, rgba(74,144,164,0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            text-align: center;
+            width: 100%;
+        }
+
+        .hero-content h1 {
+            font-size: 56px;
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--text-dark);
+            margin-bottom: 24px;
+        }
+
+        .hero-content h1 span {
+            color: var(--primary);
+        }
+
+        .hero-subtitle {
+            font-size: 20px;
+            color: var(--text-gray);
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+
+        /* Company Intro Section */
+        .company-intro {
+            padding: 100px 40px;
+            background: var(--bg-white);
+        }
+
+        .intro-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .intro-image {
+            position: relative;
+        }
+
+        .intro-image-main {
+            width: 100%;
+            height: 450px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border-radius: 16px;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 6rem;
+            box-shadow: 0 20px 60px rgba(30,58,95,0.2);
+        }
+
+        .intro-image-badge {
+            position: absolute;
+            bottom: -30px;
+            right: -30px;
+            background: white;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .intro-image-badge .number {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--primary);
+            display: block;
+        }
+
+        .intro-image-badge .label {
+            font-size: 14px;
+            color: var(--text-gray);
+        }
+
+        .intro-content h2 {
+            font-size: 40px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 24px;
+        }
+
+        .intro-content h2 span {
+            color: var(--primary);
+        }
+
+        .intro-content p {
+            font-size: 16px;
+            color: var(--text-gray);
+            line-height: 1.9;
+            margin-bottom: 20px;
+        }
+
+        .intro-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border);
+        }
+
+        .intro-stat {
+            text-align: center;
+        }
+
+        .intro-stat .number {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .intro-stat .label {
+            font-size: 14px;
+            color: var(--text-gray);
+        }
+
+        /* Core Advantages */
+        .advantages {
+            padding: 100px 40px;
+            background: var(--bg-light);
+        }
+
+        .section-header {
+            max-width: 1280px;
+            margin: 0 auto 60px;
+            text-align: center;
+        }
+
+        .section-header h2 {
+            font-size: 40px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+        }
+
+        .section-header p {
+            font-size: 18px;
+            color: var(--text-gray);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .advantages-grid {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+
+        .advantage-card {
+            background: white;
+            padding: 40px 32px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .advantage-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 15px 50px rgba(30,58,95,0.1);
+            transform: translateY(-8px);
+        }
+
+        .advantage-icon {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border-radius: 50%;
+            margin: 0 auto 24px;
+            color: white;
+            font-size: 32px;
+        }
+
+        .advantage-card h3 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-dark);
+        }
+
+        .advantage-card p {
+            font-size: 15px;
+            color: var(--text-gray);
+            line-height: 1.7;
+        }
+
+        /* Timeline Section */
+        .timeline-section {
+            padding: 100px 40px;
+            background: var(--bg-white);
+        }
+
+        .timeline-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary), var(--accent));
+        }
+
+        .timeline-item {
+            justify-content: flex-end;
+            padding-right: 50%;
+            position: relative;
+            margin-bottom: 60px;
+        }
+
+        .timeline-item:nth-child(even) {
+            justify-content: flex-start;
+            padding-right: 0;
+            padding-left: 50%;
+        }
+
+        .timeline-content {
+            background: white;
+            padding: 30px 35px;
+            border-radius: 12px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+            max-width: 420px;
+            position: relative;
+            border: 1px solid var(--border);
+        }
+
+        .timeline-content::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 0 0 4px var(--primary);
+        }
+
+        .timeline-item .timeline-content::before {
+            right: -60px;
+            top: 30px;
+        }
+
+        .timeline-item:nth-child(even) .timeline-content::before {
+            left: -60px;
+            right: auto;
+        }
+
+        .timeline-year {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .timeline-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+
+        .timeline-desc {
+            font-size: 15px;
+            color: var(--text-gray);
+            line-height: 1.7;
+        }
+
+        /* Team Section */
+        .team-section {
+            padding: 100px 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        }
+
+        .team-section .section-header h2,
+        .team-section .section-header p {
+            color: white;
+        }
+
+        .team-grid {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+        }
+
+        .team-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 40px 30px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s;
+        }
+
+        .team-card:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-5px);
+        }
+
+        .team-avatar {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 2.5rem;
+        }
+
+        .team-card h4 {
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .team-card .role {
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 16px;
+        }
+
+        .team-card .desc {
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.6;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 100px 40px;
+            background: var(--bg-light);
+            text-align: center;
+        }
+
+        .cta-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .cta-section h2 {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-dark);
+        }
+
+        .cta-section p {
+            font-size: 18px;
+            color: var(--text-gray);
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            padding: 16px 36px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 20px rgba(30,58,95,0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(30,58,95,0.4);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--primary);
+            color: white;
+            padding: 80px 40px 40px;
+        }
+
+        .footer-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 3fr 1fr 1fr 2fr;
+            gap: 60px;
+            margin-bottom: 60px;
+        }
+
+        .footer-brand img {
+            height: 50px;
+            margin-bottom: 20px;
+        }
+
+        .footer-brand p {
+            font-size: 15px;
+            line-height: 1.8;
+            opacity: 0.8;
+            margin-bottom: 24px;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 16px;
+        }
+
+        .footer-social a {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .footer-social a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-3px);
+        }
+
+        .footer-column h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column li {
+            margin-bottom: 12px;
+        }
+
+        .footer-column a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .footer-column a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .intro-container {
+                grid-template-columns: 1fr;
+                gap: 60px;
+            }
+
+            .intro-image-badge {
+                right: 20px;
+                bottom: -20px;
+            }
+
+            .advantages-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .team-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .timeline-container::before {
+                left: 20px;
+            }
+
+            .timeline-item,
+            .timeline-item:nth-child(even) {
+                padding-left: 60px;
+                padding-right: 0;
+                justify-content: flex-start;
+            }
+
+            .timeline-item .timeline-content::before,
+            .timeline-item:nth-child(even) .timeline-content::before {
+                left: -45px;
+                right: auto;
+            }
+
+            .footer-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .hero-content h1 {
+                font-size: 36px;
+            }
+
+            .intro-content h2 {
+                font-size: 28px;
+            }
+
+            .intro-stats {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .advantages-grid,
+            .team-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-header h2 {
+                font-size: 28px;
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="../images/logo-blue.png" alt="Eadartrans">
+            </a>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html" class="active">About Us</a></li>
+                <li><a href="services.html">Services</a></li>
+                <li><a href="news.html">News</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+            <div class="lang-switcher">
+                <a href="../about.html" class="lang-btn">中文</a>
+                <a href="about.html" class="lang-btn active">EN</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="about-hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>About <span>Us</span></h1>
+                <p class="hero-subtitle">Eadartrans is a professional language service provider dedicated to helping clients break language barriers, convey messages accurately, and empower global business development.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Company Intro Section -->
+    <section class="company-intro">
+        <div class="intro-container">
+            <div class="intro-image">
+                <div class="intro-image-main">
+                    <i class="fas fa-globe-asia"></i>
+                </div>
+                <div class="intro-image-badge">
+                    <span class="number">10+</span>
+                    <span class="label">Years of Experience</span>
+                </div>
+            </div>
+            <div class="intro-content">
+                <h2>Professional Language Services<br><span>Connecting Global Markets</span></h2>
+                <p>Eadartrans (Wuhan) Co., Ltd. was officially registered and established in 2020, with headquarters at Building 9, Guanggu Entrepreneurship Street, Donghu New Technology Development Zone, Wuhan, China. Our team began building in 2014, co-founded by alumni from <strong>Shanghai International Studies University, Shanghai Jiao Tong University, Hong Kong Polytechnic University, Ohio State University, and University of Cambridge</strong>.</p>
+                <p>We are dedicated to providing competitive translation services to domestic and international enterprises, government agencies, and academic researchers, enhancing our clients' image and creating greater value for them. Our clients span numerous industries including <strong>biomedicine, chemical, medical, electromechanical, automotive, aviation, marine, fashion, construction, legal, IT, and finance</strong>.</p>
+                <p>After years of development, we have grown into a professional language service provider covering 50+ languages, with a cumulative translation volume exceeding 500 million words and a customer satisfaction rate of 99%.</p>
+                <div class="intro-stats">
+                    <div class="intro-stat">
+                        <div class="number">50+</div>
+                        <div class="label">Languages</div>
+                    </div>
+                    <div class="intro-stat">
+                        <div class="number">1000+</div>
+                        <div class="label">Partner Clients</div>
+                    </div>
+                    <div class="intro-stat">
+                        <div class="number">500M+</div>
+                        <div class="label">Words Translated</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Advantages -->
+    <section class="advantages">
+        <div class="section-header">
+            <h2>Core Advantages</h2>
+            <p>Why choose Eadartrans as your language service partner</p>
+        </div>
+        <div class="advantages-grid">
+            <div class="advantage-card">
+                <div class="advantage-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>Professional Team</h3>
+                <p>Experienced team of translation experts with an average of 8+ years of industry experience, proficient in professional terminology across various industries</p>
+            </div>
+            <div class="advantage-card">
+                <div class="advantage-icon">
+                    <i class="fas fa-certificate"></i>
+                </div>
+                <h3>Quality Assurance</h3>
+                <p>Rigorous quality control system with a three-tier process of translation, proofreading, and review to ensure accuracy and professionalism of every translation</p>
+            </div>
+            <div class="advantage-card">
+                <div class="advantage-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3>On-Time Delivery</h3>
+                <p>Scientific project management processes and efficient working mechanisms ensure timely and high-quality completion of every translation project</p>
+            </div>
+            <div class="advantage-card">
+                <div class="advantage-icon">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h3>Strict Confidentiality</h3>
+                <p>Comprehensive confidentiality system and information security measures with signed NDAs to fully protect client business secrets</p>
+            </div>
+            <div class="advantage-card">
+                <div class="advantage-icon">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <h3>Dedicated Service</h3>
+                <p>7×24 hour customer service support with dedicated project managers following up throughout the process, responding promptly to client needs</p>
+            </div>
+            <div class="advantage-card">
+                <div class="advantage-icon">
+                    <i class="fas fa-hand-holding-usd"></i>
+                </div>
+                <h3>Competitive Pricing</h3>
+                <p>Transparent pricing system with flexible quotation plans based on project requirements to ensure cost-effective services</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Timeline Section -->
+    <section class="timeline-section">
+        <div class="section-header">
+            <h2>Our Journey</h2>
+            <p>Witness the growth and transformation of Eadartrans</p>
+        </div>
+        <div class="timeline-container">
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <div class="timeline-year">2014</div>
+                    <div class="timeline-title">Team Building</div>
+                    <div class="timeline-desc">Began assembling a professional translation team, accumulating industry experience and client resources</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <div class="timeline-year">2016</div>
+                    <div class="timeline-title">Business Expansion</div>
+                    <div class="timeline-desc">Service languages expanded to 30+, professional field translation teams established, serving over 100 clients</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <div class="timeline-year">2018</div>
+                    <div class="timeline-title">Technology Upgrade</div>
+                    <div class="timeline-desc">Introduced CAT translation tools and TM terminology database systems to improve translation efficiency and quality</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <div class="timeline-year">2020</div>
+                    <div class="timeline-title">Company Established</div>
+                    <div class="timeline-desc">Eadartrans (Wuhan) Co., Ltd. was officially registered, with a team of 50+ professionals</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <div class="timeline-year">2023</div>
+                    <div class="timeline-title">AI Empowerment</div>
+                    <div class="timeline-desc">Integrated AI translation technology, launched human-machine collaborative translation model to further improve service efficiency</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <div class="timeline-year">2026</div>
+                    <div class="timeline-title">Continuous Innovation</div>
+                    <div class="timeline-desc">Services covering 50+ languages, cumulative translation volume exceeding 500 million words, becoming a leading language service provider in the industry</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="team-section">
+        <div class="section-header">
+            <h2>Professional Team</h2>
+            <p>Gathering industry elites to provide you with excellent service</p>
+        </div>
+        <div class="team-grid">
+            <div class="team-card">
+                <div class="team-avatar">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <h4>Project Management</h4>
+                <div class="role">Project Managers</div>
+                <div class="desc">Senior project managers follow up throughout the process to ensure timely and high-quality project delivery</div>
+            </div>
+            <div class="team-card">
+                <div class="team-avatar">
+                    <i class="fas fa-language"></i>
+                </div>
+                <h4>Translation Experts</h4>
+                <div class="role">Expert Translators</div>
+                <div class="desc">Senior translators in various fields with an average of 8+ years of industry experience</div>
+            </div>
+            <div class="team-card">
+                <div class="team-avatar">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h4>Quality Assurance</h4>
+                <div class="role">QA Specialists</div>
+                <div class="desc">Rigorous quality review processes to ensure translation accuracy</div>
+            </div>
+            <div class="team-card">
+                <div class="team-avatar">
+                    <i class="fas fa-laptop-code"></i>
+                </div>
+                <h4>Technical Support</h4>
+                <div class="role">Tech Support</div>
+                <div class="desc">Professional technical team providing localization and technical support services</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-container">
+            <h2>Ready to Start Your Partnership?</h2>
+            <p>Contact our professional team for customized language solutions</p>
+            <a href="contact.html" class="btn btn-primary">
+                <i class="fas fa-envelope"></i>
+                Contact Us
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <img src="../images/logo-white.png" alt="Eadartrans">
+                <p>Eadartrans (Wuhan) Co., Ltd. is a professional language service provider dedicated to providing high-quality, accurate, and efficient language solutions to clients worldwide.</p>
+                <div class="footer-social">
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-weixin"></i></a>
+                    <a href="#"><i class="fas fa-envelope"></i></a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="services.html">Services</a></li>
+                    <li><a href="news.html">News</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Services</h4>
+                <ul>
+                    <li><a href="services.html">Document Translation</a></li>
+                    <li><a href="services.html">Interpretation</a></li>
+                    <li><a href="services.html">Localization</a></li>
+                    <li><a href="services.html">Certified Translation</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Contact Us</h4>
+                <ul>
+                    <li><a href="tel:+8615607161089">+86 15607161089</a></li>
+                    <li><a href="mailto:serena@eadartrans.com">serena@eadartrans.com</a></li>
+                    <li><a href="#">Building 9, Guanggu Entrepreneurship Street, Donghu New Technology Development Zone, Wuhan, China</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Eadartrans (Wuhan) Co., Ltd. All Rights Reserved</p>
+            <p>Professional Translation & Localization Services</p>
+        </div>
+    </footer>
+</body>
+</html>

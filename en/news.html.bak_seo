@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News - Eadartrans (Wuhan) Co., Ltd.</title>
+    <meta name="description" content="Stay updated with Eadartrans latest news, industry insights, and translation tips. Professional language services development and trends.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #648dc9; --primary-light: #648dc9; --accent: #648dc9;
+            --text-dark: #1a1a1a; --text-gray: #666666; --text-light: #999999;
+            --bg-white: #ffffff; --bg-light: #f8f9fa; --border: #e8e8e8;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.6; color: var(--text-dark); background: var(--bg-white);
+        }
+        .navbar { position: fixed; top: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); z-index: 1000; }
+        .nav-container { max-width: 1280px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 80px; }
+        .logo { display: flex; align-items: center; height: 80px; text-decoration: none; }
+        .logo img { height: 80px; display: block; width: auto; }
+        .nav-menu { display: flex; list-style: none; gap: 40px; margin-left: auto; margin-right: 40px; align-items: center; height: 80px; }
+        .nav-menu a { color: var(--text-dark); text-decoration: none; font-size: 15px; font-weight: 500; transition: color 0.3s; position: relative; }
+        .nav-menu a:hover, .nav-menu a.active { color: var(--primary); }
+        .nav-menu a::after { content: ''; position: absolute; bottom: -5px; left: 0; width: 0; height: 2px; background: var(--primary); transition: width 0.3s; }
+        .nav-menu a:hover::after, .nav-menu a.active::after { width: 100%; }
+        .lang-switcher { display: flex; gap: 12px; align-items: center; padding-right: 40px; height: 80px; }
+        .lang-btn { padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 14px; font-weight: 500; transition: all 0.3s; border: 1px solid var(--border); color: var(--text-gray); }
+        .lang-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .hero { padding: 160px 40px 80px; background: linear-gradient(135deg, #f8fafc 0%, #e8f4f8 100%); position: relative; overflow: hidden; }
+        .hero-container { max-width: 1280px; margin: 0 auto; text-align: center; position: relative; z-index: 1; }
+        .hero-content h1 { font-size: 48px; font-weight: 700; line-height: 1.2; color: var(--text-dark); margin-bottom: 20px; }
+        .hero-content h1 span { color: var(--primary); }
+        .hero-subtitle { font-size: 18px; color: var(--text-gray); max-width: 600px; margin: 0 auto; line-height: 1.8; }
+        .breadcrumb { max-width: 1280px; margin: 0 auto; padding: 20px 40px; font-size: 14px; color: var(--text-gray); }
+        .breadcrumb a { color: var(--text-gray); text-decoration: none; transition: color 0.3s; }
+        .breadcrumb a:hover { color: var(--primary); }
+        .main-content { max-width: 1000px; margin: 0 auto; padding: 0 40px 100px; }
+        .news-section { display: flex; flex-direction: column; gap: 30px; }
+        .news-card { display: grid; grid-template-columns: 280px 1fr; background: var(--bg-white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: all 0.3s; }
+        .news-card:hover { border-color: var(--primary); box-shadow: 0 10px 40px rgba(30,58,95,0.1); transform: translateY(-3px); }
+        .news-image { position: relative; min-height: 200px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); display: flex; align-items: center; justify-content: center; }
+        .news-image .icon { font-size: 48px; color: rgba(255,255,255,0.9); }
+        .news-category { position: absolute; top: 16px; left: 16px; background: var(--accent); color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .news-content { padding: 30px; display: flex; flex-direction: column; justify-content: center; }
+        .news-meta { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; font-size: 13px; color: var(--text-light); }
+        .news-meta span { display: flex; align-items: center; gap: 6px; }
+        .news-content h3 { font-size: 18px; font-weight: 600; color: var(--text-dark); margin-bottom: 10px; line-height: 1.4; }
+        .news-card:hover .news-content h3 { color: var(--primary); }
+        .news-content p { font-size: 14px; color: var(--text-gray); line-height: 1.7; margin-bottom: 16px; }
+        .news-link { display: inline-flex; align-items: center; gap: 6px; color: var(--primary); text-decoration: none; font-weight: 600; font-size: 13px; }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 50px; padding-top: 40px; border-top: 1px solid var(--border); }
+        .pagination a, .pagination span { display: flex; align-items: center; justify-content: center; min-width: 40px; height: 40px; border-radius: 8px; font-size: 14px; font-weight: 500; transition: all 0.3s; }
+        .pagination a { color: var(--text-gray); text-decoration: none; border: 1px solid var(--border); }
+        .pagination a:hover { border-color: var(--primary); color: var(--primary); }
+        .pagination span.current { background: var(--primary); color: white; }
+        .footer { background: var(--primary); color: white; padding: 80px 40px 40px; }
+        .footer-container { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 3fr 1fr 1fr 2fr; gap: 60px; margin-bottom: 60px; }
+        .footer-brand img { height: 50px; margin-bottom: 20px; }
+        .footer-brand p { font-size: 15px; line-height: 1.8; opacity: 0.8; margin-bottom: 24px; }
+        .footer-social { display: flex; gap: 16px; }
+        .footer-social a { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; transition: all 0.3s; }
+        .footer-social a:hover { background: rgba(255,255,255,0.2); transform: translateY(-3px); }
+        .footer-column h4 { font-size: 16px; font-weight: 600; margin-bottom: 24px; }
+        .footer-column ul { list-style: none; }
+        .footer-column li { margin-bottom: 12px; }
+        .footer-column a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 14px; transition: color 0.3s; }
+        .footer-column a:hover { color: white; }
+        .footer-bottom { max-width: 1280px; margin: 0 auto; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; font-size: 14px; opacity: 0.8; }
+        @media (max-width: 768px) { .news-card { grid-template-columns: 1fr; } .news-image { min-height: 160px; } }
+        @media (max-width: 768px) { .nav-menu { display: none; } .hero-content h1 { font-size: 32px; } .main-content { padding: 0 20px 60px; } .footer-container { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 480px) { .footer-container { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo"><img src="../images/logo-blue.png" alt="Eadartrans"></a>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="services.html">Services</a></li>
+                <li><a href="news.html" class="active">News</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+            <div class="lang-switcher">
+                <a href="../news.html" class="lang-btn">中文</a>
+                <a href="news.html" class="lang-btn active">EN</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>News <span>& Insights</span></h1>
+                <p class="hero-subtitle">Stay updated with Eadartrans latest news, industry insights, and translation tips</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="breadcrumb">
+        <a href="index.html">Home</a> <i class="fas fa-chevron-right"></i> <span>News</span>
+    </div>
+
+    <div class="main-content">
+        <div class="news-section">
+            <!-- Article 1: 2026 - Company News -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">Company News</span>
+                    <i class="fas fa-award icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> May 20, 2026</span>
+                    </div>
+                    <h3>Eadartrans Honored as "Outstanding Translation Service Provider"</h3>
+                    <p>In the 2026 translation industry awards, Eadartrans received recognition for excellent service quality and customer satisfaction.</p>
+                    <a href="news-2026-award.html" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- Article 2: 2026 - Translation Tips -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">Translation Tips</span>
+                    <i class="fas fa-lightbulb icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> April 15, 2026</span>
+                    </div>
+                    <h3>Chemical Industry Translation: Tips and Best Practices</h3>
+                    <p>Chemical translation involves extensive terminology. This article shares core techniques and common pitfalls in chemical translation.</p>
+                    <a href="news-2026-chemical-tips.html" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- Article 3: 2025 - Industry News -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">Industry News</span>
+                    <i class="fas fa-globe icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> November 8, 2025</span>
+                    </div>
+                    <h3>AI Translation Trends: Human-Machine Collaboration</h3>
+                    <p>As AI technology advances, the translation industry is transforming. How human-machine collaboration improves efficiency.</p>
+                    <a href="news-2025-ai-trend.html" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- Article 4: 2025 - Translation Tips -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">Translation Tips</span>
+                    <i class="fas fa-book icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> August 22, 2025</span>
+                    </div>
+                    <h3>Legal Contract Translation: Key Points and Common Pitfalls</h3>
+                    <p>Legal translation requires absolute accuracy. This article explains essential elements and special considerations.</p>
+                    <a href="news-2025-legal-tips.html" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- Article 5: 2024 - Industry News -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">Industry News</span>
+                    <i class="fas fa-chart-line icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> December 10, 2024</span>
+                    </div>
+                    <h3>Global Language Services Market Exceeds $60 Billion in 2024</h3>
+                    <p>According to industry research, the global language services market continues strong growth driven by digital transformation.</p>
+                    <a href="news-2024-market.html" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- Article 6: 2024 - Translation Tips -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">Translation Tips</span>
+                    <i class="fas fa-language icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> June 18, 2024</span>
+                    </div>
+                    <h3>Medical Translation: Accuracy Requirements and Quality Control</h3>
+                    <p>Medical translation concerns patient safety. This article introduces special requirements and strict quality control.</p>
+                    <a href="news-2024-medical-tips.html" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- Article 7: 2023 - Company News -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">Company News</span>
+                    <i class="fas fa-users icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> September 5, 2023</span>
+                    </div>
+                    <h3>Team Expansion: Senior Translation Experts Join Eadartrans</h3>
+                    <p>To meet growing demand, we recruited experienced senior translators covering multiple specialized fields.</p>
+                    <a href="news-2023-team.html" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- Article 8: 2022 - Translation Tips -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">Translation Tips</span>
+                    <i class="fas fa-desktop icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> October 12, 2022</span>
+                    </div>
+                    <h3>Technical Documentation: Maintaining Terminology Consistency</h3>
+                    <p>Terminology consistency is crucial in technical translation. Methods for building glossaries and maintaining consistency.</p>
+                    <a href="news-2022-technical-tips.html" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- Article 9: 2021 - Industry News -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">Industry News</span>
+                    <i class="fas fa-handshake icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> July 20, 2021</span>
+                    </div>
+                    <h3>Remote Interpretation Services Surge in Demand</h3>
+                    <p>In the post-pandemic era, demand for remote interpretation has grown significantly, bringing new opportunities.</p>
+                    <a href="news-2021-remote.html" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+
+            <!-- Article 10: 2020 - Company News -->
+            <article class="news-card">
+                <div class="news-image">
+                    <span class="news-category">Company News</span>
+                    <i class="fas fa-building icon"></i>
+                </div>
+                <div class="news-content">
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar"></i> March 15, 2020</span>
+                    </div>
+                    <h3>Eadartrans (Wuhan) Co., Ltd. Officially Established</h3>
+                    <p>After 6 years of team building, Eadartrans was officially registered, marking a new chapter in professional development.</p>
+                    <a href="news-2020-founded.html" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+        </div>
+
+
+    </div>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <img src="../images/logo-white.png" alt="Eadartrans">
+                <p>Eadartrans (Wuhan) Co., Ltd. is a professional language service provider dedicated to delivering high-quality language solutions.</p>
+                <div class="footer-social">
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-weixin"></i></a>
+                    <a href="mailto:serena@eadartrans.com"><i class="fas fa-envelope"></i></a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="services.html">Services</a></li>
+                    <li><a href="news.html">News</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Services</h4>
+                <ul>
+                    <li><a href="services.html">Document Translation</a></li>
+                    <li><a href="services.html">Interpretation</a></li>
+                    <li><a href="services.html">Localization</a></li>
+                    <li><a href="services.html">Certified Translation</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Contact Us</h4>
+                <ul>
+                    <li><a href="tel:+8615607161089">+86 15607161089</a></li>
+                    <li><a href="mailto:serena@eadartrans.com">serena@eadartrans.com</a></li>
+                    <li><a href="#">Building 9, Guanggu Entrepreneurship Street, Wuhan, China</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Eadartrans (Wuhan) Co., Ltd. All Rights Reserved</p>
+            <p>Professional Translation & Localization Services</p>
+        </div>
+    </footer>
+</body>
+</html>

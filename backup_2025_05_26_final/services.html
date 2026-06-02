@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我们的服务 - 谊达翻译（武汉）有限公司</title>
+    <meta name="description" content="Eadartrans 提供专业的文档翻译、口译服务、本地化服务、认证翻译、多媒体本地化和AI数据服务，覆盖50+语种，服务全球客户。">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4A6B8A;
+            --primary-light: #6B8EB5;
+            --accent: #8BA8C9;
+            --text-dark: #1a1a1a;
+            --text-gray: #666666;
+            --text-light: #999999;
+            --bg-white: #ffffff;
+            --bg-light: #f8f9fa;
+            --border: #e8e8e8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-white);
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            height: 80px;
+            text-decoration: none;
+        }
+
+        .logo img {
+            height: 80px;
+            display: block;
+            padding: 0;
+            width: auto;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+            margin-left: auto;
+            margin-right: 40px;
+            align-items: center;
+            height: 80px;
+        }
+
+        .nav-menu a {
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-menu a:hover,
+        .nav-menu a.active {
+            color: var(--primary);
+        }
+
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+
+        .nav-menu a:hover::after,
+        .nav-menu a.active::after {
+            width: 100%;
+        }
+
+        .lang-switcher {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding-right: 40px;
+            height: 80px;
+        }
+
+        .lang-btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: 1px solid var(--border);
+            color: var(--text-gray);
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .lang-btn:hover:not(.active) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Hero Section - White/Light Background */
+        .page-hero {
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
+            padding: 140px 40px 80px;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-hero::before {
+            content: '';
+            position: absolute;
+            top: -30%;
+            right: -10%;
+            width: 60%;
+            height: 150%;
+            background: radial-gradient(ellipse, rgba(30,58,95,0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .page-hero-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            text-align: center;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .page-hero h1 {
+            font-size: 56px;
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--text-dark);
+            margin-bottom: 24px;
+        }
+
+        .page-hero h1 span {
+            color: var(--primary);
+        }
+
+        .page-hero-subtitle {
+            font-size: 20px;
+            color: var(--text-gray);
+            margin-bottom: 40px;
+            line-height: 1.8;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 16px 36px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 20px rgba(30,58,95,0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(30,58,95,0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Services Cards Section */
+        .services-cards {
+            padding: 100px 40px;
+            background: var(--bg-white);
+        }
+
+        .section-header {
+            max-width: 1280px;
+            margin: 0 auto 60px;
+            text-align: center;
+        }
+
+        .section-header h2 {
+            font-size: 40px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+        }
+
+        .section-header p {
+            font-size: 18px;
+            color: var(--text-gray);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .services-grid {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+
+        .service-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px 32px;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .service-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 15px 50px rgba(30,58,95,0.12);
+            transform: translateY(-8px);
+        }
+
+        .service-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .service-icon {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            color: white;
+            font-size: 32px;
+        }
+
+        .service-card h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-dark);
+        }
+
+        .service-card .service-desc {
+            font-size: 15px;
+            color: var(--text-gray);
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .service-features-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .service-features-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--text-gray);
+            margin-bottom: 10px;
+        }
+
+        .service-features-list li i {
+            color: var(--accent);
+            font-size: 12px;
+        }
+
+        .service-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 24px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: gap 0.3s;
+        }
+
+        .service-card:hover .service-link {
+            gap: 12px;
+        }
+
+        /* Process Section */
+        .process-section {
+            padding: 100px 40px;
+            background: var(--bg-light);
+        }
+
+        .process-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .process-steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-top: 60px;
+            position: relative;
+        }
+
+        .process-steps::before {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 12.5%;
+            right: 12.5%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+            z-index: 0;
+        }
+
+        .process-step {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-number {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 3px solid var(--primary);
+            border-radius: 50%;
+            margin: 0 auto 24px;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            box-shadow: 0 4px 20px rgba(30,58,95,0.1);
+        }
+
+        .process-step h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-dark);
+        }
+
+        .process-step p {
+            font-size: 15px;
+            color: var(--text-gray);
+            line-height: 1.6;
+        }
+
+        /* Quality Assurance Section */
+        .quality-section {
+            padding: 100px 40px;
+            background: var(--bg-white);
+        }
+
+        .quality-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .quality-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+            margin-top: 60px;
+        }
+
+        .quality-text h3 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-dark);
+        }
+
+        .quality-text p {
+            font-size: 16px;
+            color: var(--text-gray);
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+
+        .quality-features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .quality-feature {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .quality-feature i {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .quality-feature div h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-dark);
+        }
+
+        .quality-feature div p {
+            font-size: 14px;
+            color: var(--text-gray);
+        }
+
+        .quality-badges {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .quality-badge {
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .quality-badge:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 30px rgba(30,58,95,0.1);
+        }
+
+        .quality-badge i {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+
+        .quality-badge h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+        }
+
+        .quality-badge p {
+            font-size: 14px;
+            color: var(--text-gray);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 100px 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            text-align: center;
+        }
+
+        .cta-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .cta-section h2 {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .cta-section p {
+            font-size: 18px;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 40px;
+        }
+
+        .cta-section .btn-primary {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .cta-section .btn-primary:hover {
+            background: var(--bg-light);
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--primary);
+            color: white;
+            padding: 80px 40px 40px;
+        }
+
+        .footer-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 3fr 1fr 1fr 2fr;
+            gap: 60px;
+            margin-bottom: 60px;
+        }
+
+        .footer-brand img {
+            height: 80px;
+            display: block;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+
+        .footer-brand p {
+            font-size: 15px;
+            line-height: 1.8;
+            opacity: 0.8;
+            margin-bottom: 24px;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 16px;
+        }
+
+        .footer-social a {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .footer-social a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-3px);
+        }
+
+        .footer-column h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column li {
+            margin-bottom: 12px;
+        }
+
+        .footer-column a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .footer-column a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .services-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .process-steps {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .process-steps::before {
+                display: none;
+            }
+
+            .quality-content {
+                grid-template-columns: 1fr;
+                gap: 60px;
+            }
+
+            .footer-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .page-hero h1 {
+                font-size: 36px;
+            }
+
+            .services-grid,
+            .process-steps,
+            .quality-features,
+            .quality-badges {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            margin-left: auto;
+            margin-right: 40px;
+            align-items: center;
+            height: 80px;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="images/logo-blue.png" alt="Eadartrans">
+            </a>
+            <ul class="nav-menu">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="about.html">关于我们</a></li>
+                <li><a href="services.html" class="active">服务</a></li>
+                <li><a href="news.html">新闻</a></li>
+                <li><a href="contact.html">联系我们</a></li>
+            </ul>
+            <div class="lang-switcher">
+                <a href="services.html" class="lang-btn active">中文</a>
+                <a href="en/services.html" class="lang-btn">EN</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="page-hero">
+        <div class="page-hero-container">
+            <h1>我们的<span>服务</span></h1>
+            <p class="page-hero-subtitle">全面的语言解决方案，助力您的全球化战略。我们提供专业的翻译与本地化服务，覆盖50+语种，服务全球1000+客户。</p>
+            <div class="hero-buttons">
+                <a href="#services" class="btn btn-primary">
+                    <i class="fas fa-th-large"></i>
+                    查看服务详情
+                </a>
+                <a href="contact.html" class="btn btn-outline">
+                    <i class="fas fa-envelope"></i>
+                    获取报价
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Cards Section -->
+    <section class="services-cards" id="services">
+        <div class="section-header">
+            <h2>核心服务</h2>
+            <p>六大专业服务领域，满足您的多元化语言需求</p>
+        </div>
+        <div class="services-grid">
+            <!-- 文档翻译 -->
+            <div class="service-card">
+                <div class="service-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h3>文档翻译</h3>
+                <p class="service-desc">专业文档翻译服务，确保术语准确、格式规范，满足各类商务需求。</p>
+                <ul class="service-features-list">
+                    <li><i class="fas fa-check"></i> 法律合同翻译</li>
+                    <li><i class="fas fa-check"></i> 技术文档翻译</li>
+                    <li><i class="fas fa-check"></i> 学术论文翻译</li>
+                    <li><i class="fas fa-check"></i> 财务报表翻译</li>
+                </ul>
+                <a href="contact.html" class="service-link">
+                    获取报价 <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- 口译服务 -->
+            <div class="service-card">
+                <div class="service-icon">
+                    <i class="fas fa-microphone"></i>
+                </div>
+                <h3>口译服务</h3>
+                <p class="service-desc">专业口译员提供同声传译、交替传译等服务，满足各类场合需求。</p>
+                <ul class="service-features-list">
+                    <li><i class="fas fa-check"></i> 同声传译</li>
+                    <li><i class="fas fa-check"></i> 交替传译</li>
+                    <li><i class="fas fa-check"></i> 陪同翻译</li>
+                    <li><i class="fas fa-check"></i> 电话/视频口译</li>
+                </ul>
+                <a href="contact.html" class="service-link">
+                    获取报价 <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- 本地化服务 -->
+            <div class="service-card">
+                <div class="service-icon">
+                    <i class="fas fa-globe"></i>
+                </div>
+                <h3>本地化服务</h3>
+                <p class="service-desc">帮助您的产品无缝进入全球市场，实现真正的本土化体验。</p>
+                <ul class="service-features-list">
+                    <li><i class="fas fa-check"></i> 网站本地化</li>
+                    <li><i class="fas fa-check"></i> 软件本地化</li>
+                    <li><i class="fas fa-check"></i> 游戏本地化</li>
+                    <li><i class="fas fa-check"></i> 移动应用本地化</li>
+                </ul>
+                <a href="contact.html" class="service-link">
+                    获取报价 <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- 认证翻译 -->
+            <div class="service-card">
+                <div class="service-icon">
+                    <i class="fas fa-certificate"></i>
+                </div>
+                <h3>认证翻译</h3>
+                <p class="service-desc">提供公证翻译、认证翻译服务，满足移民、留学等官方需求。</p>
+                <ul class="service-features-list">
+                    <li><i class="fas fa-check"></i> 移民材料翻译</li>
+                    <li><i class="fas fa-check"></i> 学历认证翻译</li>
+                    <li><i class="fas fa-check"></i> 公证翻译</li>
+                    <li><i class="fas fa-check"></i> 官方文件翻译</li>
+                </ul>
+                <a href="contact.html" class="service-link">
+                    获取报价 <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- 多媒体本地化 -->
+            <div class="service-card">
+                <div class="service-icon">
+                    <i class="fas fa-video"></i>
+                </div>
+                <h3>多媒体</h3>
+                <p class="service-desc">视频字幕、配音、音频转录，让多媒体内容在任何语言中更有效。</p>
+                <ul class="service-features-list">
+                    <li><i class="fas fa-check"></i> 视频字幕制作</li>
+                    <li><i class="fas fa-check"></i> 专业配音服务</li>
+                    <li><i class="fas fa-check"></i> 音频转录</li>
+                    <li><i class="fas fa-check"></i> 多语言制作</li>
+                </ul>
+                <a href="contact.html" class="service-link">
+                    获取报价 <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- AI数据服务 -->
+            <div class="service-card">
+                <div class="service-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h3>AI数据</h3>
+                <p class="service-desc">为人工智能应用提供高质量的数据标注、语料库构建等服务。</p>
+                <ul class="service-features-list">
+                    <li><i class="fas fa-check"></i> 数据标注服务</li>
+                    <li><i class="fas fa-check"></i> 语料库构建</li>
+                    <li><i class="fas fa-check"></i> 数据清洗整理</li>
+                    <li><i class="fas fa-check"></i> AI训练数据</li>
+                </ul>
+                <a href="contact.html" class="service-link">
+                    获取报价 <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Process Section -->
+    <section class="process-section">
+        <div class="process-container">
+            <div class="section-header">
+                <h2>服务流程</h2>
+                <p>简单四步，享受专业翻译服务</p>
+            </div>
+            <div class="process-steps">
+                <div class="process-step">
+                    <div class="step-number">1</div>
+                    <h3>咨询沟通</h3>
+                    <p>了解您的具体需求，包括语种、领域、交付时间等要求</p>
+                </div>
+                <div class="process-step">
+                    <div class="step-number">2</div>
+                    <h3>评估报价</h3>
+                    <p>根据项目复杂度评估工作量，提供透明合理的报价方案</p>
+                </div>
+                <div class="process-step">
+                    <div class="step-number">3</div>
+                    <h3>专业执行</h3>
+                    <p>分配专业译员团队，严格执行翻译、审校、质检流程</p>
+                </div>
+                <div class="process-step">
+                    <div class="step-number">4</div>
+                    <h3>交付验收</h3>
+                    <p>按时交付高质量译文，提供售后修改支持直至满意</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quality Assurance Section -->
+    <section class="quality-section">
+        <div class="quality-container">
+            <div class="section-header">
+                <h2>质量保证</h2>
+                <p>严格的质量管理体系，确保每一份译文都达到最高标准</p>
+            </div>
+            <div class="quality-content">
+                <div class="quality-text">
+                    <h3>专业品质，值得信赖</h3>
+                    <p>我们建立了完善的质量管理体系，从译员筛选、项目分配到最终交付，每个环节都有严格的质量控制。我们的译员均为母语专业人士，具备丰富的行业经验和专业资质认证。</p>
+                    <div class="quality-features">
+                        <div class="quality-feature">
+                            <i class="fas fa-user-check"></i>
+                            <div>
+                                <h4>专业译员</h4>
+                                <p>严格筛选母语专业人士</p>
+                            </div>
+                        </div>
+                        <div class="quality-feature">
+                            <i class="fas fa-layer-group"></i>
+                            <div>
+                                <h4>多重审校</h4>
+                                <p>翻译+审校+质检流程</p>
+                            </div>
+                        </div>
+                        <div class="quality-feature">
+                            <i class="fas fa-shield-alt"></i>
+                            <div>
+                                <h4>保密协议</h4>
+                                <p>严格保护客户信息安全</p>
+                            </div>
+                        </div>
+                        <div class="quality-feature">
+                            <i class="fas fa-clock"></i>
+                            <div>
+                                <h4>准时交付</h4>
+                                <p>99%项目按时完成交付</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="quality-badges">
+                    <div class="quality-badge">
+                        <i class="fas fa-user-check"></i>
+                        <h4>专业团队</h4>
+                        <p>资深译员严格筛选</p>
+                    </div>
+                    <div class="quality-badge">
+                        <i class="fas fa-layer-group"></i>
+                        <h4>多重审校</h4>
+                        <p>翻译审校质检流程</p>
+                    </div>
+                    <div class="quality-badge">
+                        <i class="fas fa-lock"></i>
+                        <h4>严格保密</h4>
+                        <p>签署保密协议保护</p>
+                    </div>
+                    <div class="quality-badge">
+                        <i class="fas fa-star"></i>
+                        <h4>99%满意度</h4>
+                        <p>客户满意度保障</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-container">
+            <h2>准备好开启全球化之旅了吗？</h2>
+            <p>联系我们的专业团队，获取量身定制的语言解决方案</p>
+            <a href="contact.html" class="btn btn-primary">
+                <i class="fas fa-envelope"></i>
+                立即咨询
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <img src="images/logo-white.png" alt="Eadartrans">
+                <p>Eadartrans (Wuhan) Co., Ltd. 是专业的语言服务提供商，致力于为全球客户提供高质量、精准、高效的语言解决方案。</p>
+                <div class="footer-social">
+                    <a href="contact.html"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="contact.html"><i class="fab fa-weixin"></i></a>
+                    <a href="contact.html"><i class="fas fa-envelope"></i></a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>快速链接</h4>
+                <ul>
+                    <li><a href="index.html">首页</a></li>
+                    <li><a href="about.html">关于我们</a></li>
+                    <li><a href="services.html">服务</a></li>
+                    <li><a href="news.html">新闻</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>服务项目</h4>
+                <ul>
+                    <li><a href="services.html">文档翻译</a></li>
+                    <li><a href="services.html">口译服务</a></li>
+                    <li><a href="services.html">本地化</a></li>
+                    <li><a href="services.html">认证翻译</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>联系我们</h4>
+                <ul>
+                    <li><a href="tel:+8615607161089">+86 15607161089</a></li>
+                    <li><a href="mailto:serena@eadartrans.com">serena@eadartrans.com</a></li>
+                    <li><a href="contact.html">武汉东湖新技术开发区光谷创业街9号楼</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 谊达翻译（武汉）有限公司 版权所有</p>
+            <p>专业翻译与本地化服务提供商</p>
+        </div>
+    </footer>
+</body>
+</html>

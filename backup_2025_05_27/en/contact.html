@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - Eadartrans (Wuhan) Co., Ltd.</title>
+    <meta name="description" content="Contact Eadartrans for professional translation and localization services. Phone, email, and online consultation available. We look forward to working with you.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #648dc9;
+            --primary-light: #648dc9;
+            --accent: #648dc9;
+            --text-dark: #0b121e;
+            --text-gray: #64748b;
+            --text-light: #999999;
+            --bg-white: #ffffff;
+            --bg-light: #f8fafc;
+            --border: rgba(100,141,201,0.2);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-white);
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            height: 80px;
+        }
+
+        .logo img {
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .logo-text .cn {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-dark);
+            line-height: 1.3;
+        }
+
+        .logo-text .en {
+            font-size: 11px;
+            color: var(--text-gray);
+            line-height: 1.3;
+            letter-spacing: 0.5px;
+        }
+
+        .placeholder{
+            height: 80px;
+            display: block;
+            padding: 0;
+            margin: 0;
+            width: auto;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+            margin-left: auto;
+            margin-right: 40px;
+            align-items: center;
+            height: 80px;
+        }
+
+        .nav-menu a {
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-menu a:hover,
+        .nav-menu a.active {
+            color: var(--primary);
+        }
+
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #f8fafc; border-top: 1px solid rgba(100,141,201,0.2); border-bottom: 1px solid var(--border);
+            transition: width 0.3s;
+        }
+
+        .nav-menu a:hover::after,
+        .nav-menu a.active::after {
+            width: 100%;
+        }
+
+        .lang-switcher {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding-right: 40px;
+            height: 80px;
+        }
+
+        .lang-btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: 1px solid var(--border);
+            color: var(--text-gray);
+        }
+
+        .lang-btn.active {
+            background: #f8fafc; border-top: 1px solid rgba(100,141,201,0.2); border-bottom: 1px solid var(--border);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .lang-btn:hover:not(.active) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .page-hero {
+            padding: 160px 40px 80px;
+            background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-hero h1 {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+        }
+
+        .page-hero p {
+            font-size: 18px;
+            color: var(--text-gray);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Contact Info Section */
+        .contact-info-section {
+            padding: 80px 40px;
+            background: var(--bg-white);
+        }
+
+        .contact-info-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+        }
+
+        .info-card {
+            background: var(--bg-light);
+            padding: 40px 30px;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .info-card:hover {
+            background: white;
+            border-color: var(--primary);
+            box-shadow: 0 10px 40px rgba(30,58,95,0.08);
+            transform: translateY(-5px);
+        }
+
+        .info-icon {
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #648dc9;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 24px;
+        }
+
+        .info-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+        }
+
+        .info-card p {
+            font-size: 15px;
+            color: var(--text-gray);
+            line-height: 1.7;
+        }
+
+        /* Contact Form Section */
+        .contact-form-section {
+            padding: 80px 40px;
+            background: var(--bg-light);
+        }
+
+        .form-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 60px;
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.06);
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .form-header h2 {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+        }
+
+        .form-header p {
+            font-size: 16px;
+            color: var(--text-gray);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .form-group label .required {
+            color: #e74c3c;
+            margin-left: 4px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s;
+            background: var(--bg-white);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(30,58,95,0.08);
+        }
+
+        .form-group textarea {
+            min-height: 140px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px 32px;
+            background: #f8fafc; border-top: 1px solid rgba(100,141,201,0.2); border-bottom: 1px solid var(--border);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit-btn:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(30,58,95,0.3);
+        }
+
+        /* Map Section */
+        .map-section {
+            padding: 80px 40px;
+            background: var(--bg-white);
+        }
+
+        .map-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section-title h2 {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+        }
+
+        .section-title p {
+            font-size: 16px;
+            color: var(--text-gray);
+        }
+
+        .map-image {
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .map-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            padding: 80px 40px;
+            background: var(--bg-light);
+        }
+
+        .faq-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .faq-list {
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .faq-item {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .faq-item:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+
+        .faq-question {
+            padding: 24px 30px;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .faq-question:hover {
+            background: var(--bg-light);
+        }
+
+        .faq-question h3 {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .faq-toggle {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc; border-top: 1px solid rgba(100,141,201,0.2); border-bottom: 1px solid var(--border);
+            border-radius: 50%;
+            color: white;
+            font-size: 14px;
+            transition: transform 0.3s;
+        }
+
+        .faq-item.active .faq-toggle {
+            transform: rotate(45deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 200px;
+        }
+
+        .faq-answer-content {
+            padding: 0 30px 24px;
+            font-size: 15px;
+            color: var(--text-gray);
+            line-height: 1.8;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 100px 40px;
+            background: var(--bg-white);
+            text-align: center;
+        }
+
+        .cta-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .cta-section h2 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-dark);
+        }
+
+        .cta-section p {
+            font-size: 18px;
+            color: var(--text-gray);
+            margin-bottom: 32px;
+        }
+
+        .btn {
+            padding: 16px 36px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: transparent;
+            color: #648dc9;
+            border: 1px solid #648dc9;
+            background: #f8fafc; border-top: 1px solid rgba(100,141,201,0.2); border-bottom: 1px solid var(--border);
+            color: white;
+            box-shadow: 0 4px 20px rgba(30,58,95,0.3);
+        }
+
+        .btn-primary:hover {
+            background: #648dc9;
+            color: #ffffff;
+            border-color: #648dc9;
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(30,58,95,0.4);
+        }
+
+        /* Footer */
+        .footer {
+            background: #f8fafc; border-top: 1px solid rgba(100,141,201,0.2); border-bottom: 1px solid var(--border);
+            color: white;
+            padding: 80px 40px 40px;
+        }
+
+        .footer-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 3fr 1fr 1fr 2fr;
+            gap: 60px;
+            margin-bottom: 60px;
+        }
+
+        .footer-brand img {
+            height: 100px; width: auto; display: block; margin: 0 0 20px 0; padding: 0;
+            margin-bottom: 20px;
+        }
+
+        .footer-brand p {
+            font-size: 15px;
+            line-height: 1.8;
+            opacity: 0.8;
+            margin-bottom: 24px;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 16px;
+        }
+
+        .footer-social a {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .footer-social a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-3px);
+        }
+
+        .footer-column h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column li {
+            margin-bottom: 12px;
+        }
+
+        .footer-column a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .footer-column a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .contact-info-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .page-hero h1 {
+                font-size: 32px;
+            }
+
+            .contact-info-container {
+                grid-template-columns: 1fr;
+            }
+
+            .form-container {
+                padding: 30px;
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="../images/logo-blue.png" alt="Eadartrans">
+            </a>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="services.html">Services</a></li>
+                <li><a href="news.html">News</a></li>
+                <li><a href="contact.html" class="active">Contact</a></li>
+            </ul>
+            <div class="lang-switcher">
+                <a href="../contact.html" class="lang-btn">中文</a>
+                <a href="contact.html" class="lang-btn active">EN</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="page-hero">
+        <h1>Contact Us</h1>
+        <p>We look forward to working with you and providing professional language service consultation</p>
+    </section>
+
+    <!-- Contact Info Section -->
+    <section class="contact-info-section">
+        <div class="contact-info-container">
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="fas fa-phone-alt"></i>
+                </div>
+                <h3>Phone</h3>
+                <p>+86 15607161089<br>Mon-Fri 9:00-18:00</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <h3>Email</h3>
+                <p>serena@eadartrans.com<br>Reply within 24 hours</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <h3>Address</h3>
+                <p>Building 9, Guanggu Entrepreneurship Street<br>Donghu New Technology Development Zone, Wuhan, China</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3>Working Hours</h3>
+                <p>Monday - Friday<br>9:00 - 18:00</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Form Section -->
+    <section class="contact-form-section">
+        <div class="form-container">
+            <div class="form-header">
+                <h2>Online Inquiry</h2>
+                <p>Fill out the form below and we will contact you soon</p>
+            </div>
+            <form>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="name">Name <span class="required">*</span></label>
+                        <input type="text" id="name" name="name" placeholder="Enter your name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="company">Company</label>
+                        <input type="text" id="company" name="company" placeholder="Enter company name">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone" name="phone" placeholder="Enter your phone number">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="service">Service Type</label>
+                        <select id="service" name="service">
+                            <option value="">Please select a service</option>
+                            <option value="document">Document Translation</option>
+                            <option value="interpretation">Interpretation</option>
+                            <option value="localization">Localization</option>
+                            <option value="certified">Certified Translation</option>
+                            <option value="multimedia">Multimedia Localization</option>
+                            <option value="ai-data">AI Data Services</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="message">Project Description <span class="required">*</span></label>
+                        <textarea id="message" name="message" placeholder="Please describe your project requirements in detail, including languages, word count, delivery time, etc..." required></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-paper-plane"></i>
+                    Submit Inquiry
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Map Section -->
+    <section class="map-section">
+        <div class="map-container">
+            <div class="section-title">
+                <h2>Our Location</h2>
+                <p>Welcome to visit us for face-to-face communication</p>
+            </div>
+            <div class="map-image">
+                <img src="../images/map.png" alt="Company Location Map">
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="faq-container">
+            <div class="section-title">
+                <h2>FAQ</h2>
+                <p>Answers to common questions about our services</p>
+            </div>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <h3>How can I get a translation quote?</h3>
+                        <div class="faq-toggle">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            You can contact us through the online inquiry form, email, or phone. Please provide the documents to be translated or a detailed description of your project requirements (including languages, word count, subject area, delivery time, etc.), and we will provide you with a detailed quote within 24 hours.
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <h3>What is the delivery time for translation projects?</h3>
+                        <div class="faq-toggle">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            The delivery time depends on the complexity and word count of the project. Generally, standard document translation is 3,000-5,000 words per day. For urgent projects, we offer expedited services, and the specific timeline can be negotiated based on your needs.
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <h3>How do you ensure translation quality?</h3>
+                        <div class="faq-toggle">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            We implement a rigorous quality control process: Professional translator → Senior reviewer → Project manager QA → Client feedback revision. All translators are native professionals with relevant field expertise, ensuring accurate and professional translations.
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <h3>Do you offer rush services?</h3>
+                        <div class="faq-toggle">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            Yes, we offer rush services. For urgent projects, we can arrange multiple translators to collaborate to ensure on-time delivery. Rush services may incur additional fees. Please specify your urgency when inquiring, and we will develop the optimal solution for you.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-container">
+            <h2>Ready to Start Your Project?</h2>
+            <p>Contact us now for professional language service solutions</p>
+            <a href="mailto:serena@eadartrans.com" class="btn btn-primary">
+                <i class="fas fa-envelope"></i>
+                Contact Now
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <img src="../images/logo-white.png" alt="Eadartrans">
+                <p>Eadartrans (Wuhan) Co., Ltd. is a professional language service provider dedicated to delivering high-quality, accurate, and efficient language solutions to clients worldwide.</p>
+                <div class="footer-social">
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-weixin"></i></a>
+                    <a href="mailto:serena@eadartrans.com"><i class="fas fa-envelope"></i></a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="services.html">Services</a></li>
+                    <li><a href="news.html">News</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Services</h4>
+                <ul>
+                    <li><a href="services.html">Document Translation</a></li>
+                    <li><a href="services.html">Interpretation</a></li>
+                    <li><a href="services.html">Localization</a></li>
+                    <li><a href="services.html">Certified Translation</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Contact Us</h4>
+                <ul>
+                    <li><a href="tel:+8615607161089">+86 15607161089</a></li>
+                    <li><a href="mailto:serena@eadartrans.com">serena@eadartrans.com</a></li>
+                    <li><a href="#">Building 9, Guanggu Entrepreneurship Street, Donghu New Technology Development Zone, Wuhan, China</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Eadartrans (Wuhan) Co., Ltd. All Rights Reserved</p>
+            <p>Professional Translation & Localization Service Provider</p>
+        </div>
+    </footer>
+
+    <script>
+        function toggleFaq(element) {
+            const faqItem = element.parentElement;
+            const isActive = faqItem.classList.contains('active');
+            
+            // Close all FAQ items
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Open clicked item if it wasn't active
+            if (!isActive) {
+                faqItem.classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>
