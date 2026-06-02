@@ -1,126 +1,23 @@
 backend:
   name: git-gateway
   branch: main
-  commit_messages:
-    create: "创建 {{collection}} '{{slug}}'"
-    update: "更新 {{collection}} '{{slug}}'"
-    delete: "删除 {{collection}} '{{slug}}'"
-    uploadMedia: "上传图片 '{{path}}'"
-    deleteMedia: "删除图片 '{{path}}'"
 
-# 媒体文件配置
 media_folder: "images/uploads"
 public_folder: "/images/uploads"
 
-# 网站语言
 locale: 'zh'
 
-# 集合配置
 collections:
-  # 中文新闻
-  - name: "news-zh"
-    label: "中文新闻"
+  - name: "news"
+    label: "新闻"
     folder: "/"
     create: true
     slug: "news-{{year}}-{{month}}-{{slug}}"
     extension: "html"
-    format: "frontmatter"
     fields:
-      - {label: "标题", name: "title", widget: "string", required: true}
-      - {label: "发布日期", name: "date", widget: "datetime", format: "YYYY-MM-DD", required: true}
-      - {label: "摘要", name: "description", widget: "text", required: true}
-      - {label: "关键词", name: "keywords", widget: "string", required: false}
-      - {label: "正文内容", name: "body", widget: "markdown", required: true}
-      - {label: "封面图片", name: "image", widget: "image", required: false}
-    editor:
-      preview: false
+      - {label: "标题", name: "title", widget: "string"}
+      - {label: "发布日期", name: "date", widget: "datetime"}
+      - {label: "摘要", name: "description", widget: "text"}
+      - {label: "正文", name: "body", widget: "markdown"}
 
-  # 英文新闻
-  - name: "news-en"
-    label: "英文新闻"
-    folder: "en/"
-    create: true
-    slug: "news-{{year}}-{{month}}-{{slug}}"
-    extension: "html"
-    format: "frontmatter"
-    fields:
-      - {label: "Title", name: "title", widget: "string", required: true}
-      - {label: "Publish Date", name: "date", widget: "datetime", format: "YYYY-MM-DD", required: true}
-      - {label: "Summary", name: "description", widget: "text", required: true}
-      - {label: "Keywords", name: "keywords", widget: "string", required: false}
-      - {label: "Content", name: "body", widget: "markdown", required: true}
-      - {label: "Cover Image", name: "image", widget: "image", required: false}
-    editor:
-      preview: false
-
-  # 中文页面
-  - name: "pages-zh"
-    label: "中文页面"
-    files:
-      - label: "首页"
-        name: "index"
-        file: "index.html"
-        fields:
-          - {label: "页面标题", name: "title", widget: "string"}
-          - {label: "页面描述", name: "description", widget: "text"}
-      - label: "关于我们"
-        name: "about"
-        file: "about.html"
-        fields:
-          - {label: "页面标题", name: "title", widget: "string"}
-          - {label: "页面描述", name: "description", widget: "text"}
-      - label: "服务"
-        name: "services"
-        file: "services.html"
-        fields:
-          - {label: "页面标题", name: "title", widget: "string"}
-          - {label: "页面描述", name: "description", widget: "text"}
-      - label: "联系我们"
-        name: "contact"
-        file: "contact.html"
-        fields:
-          - {label: "页面标题", name: "title", widget: "string"}
-          - {label: "页面描述", name: "description", widget: "text"}
-
-  # 英文页面
-  - name: "pages-en"
-    label: "英文页面"
-    files:
-      - label: "Home"
-        name: "index-en"
-        file: "en/index.html"
-        fields:
-          - {label: "Page Title", name: "title", widget: "string"}
-          - {label: "Page Description", name: "description", widget: "text"}
-      - label: "About"
-        name: "about-en"
-        file: "en/about.html"
-        fields:
-          - {label: "Page Title", name: "title", widget: "string"}
-          - {label: "Page Description", name: "description", widget: "text"}
-      - label: "Services"
-        name: "services-en"
-        file: "en/services.html"
-        fields:
-          - {label: "Page Title", name: "title", widget: "string"}
-          - {label: "Page Description", name: "description", widget: "text"}
-      - label: "Contact"
-        name: "contact-en"
-        file: "en/contact.html"
-        fields:
-          - {label: "Page Title", name: "title", widget: "string"}
-          - {label: "Page Description", name: "description", widget: "text"}
-
-# 网站设置
 site_url: https://eadar-web.netlify.app
-logo_url: https://eadar-web.netlify.app/images/logo.png
-
-# 编辑器配置
-editor:
-  preview: false
-
-# 预览链接
-slug:
-  encoding: "unicode"
-  clean_accents: false
-  sanitize_replacement: "-"
