@@ -5,8 +5,6 @@ backend:
 media_folder: "images/uploads"
 public_folder: "/images/uploads"
 
-locale: 'zh'
-
 collections:
   - name: "news"
     label: "新闻"
@@ -19,5 +17,3 @@ collections:
       - {label: "发布日期", name: "date", widget: "datetime"}
       - {label: "摘要", name: "description", widget: "text"}
       - {label: "正文", name: "body", widget: "markdown"}
-
-site_url: https://eadar-web.netlify.app
