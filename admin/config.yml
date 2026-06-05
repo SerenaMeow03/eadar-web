@@ -1,9 +1,6 @@
 backend:
   name: git-gateway
   branch: main
-  accept_roles:
-    - admin
-    - editor
 
 media_folder: "images/uploads"
 public_folder: "/images/uploads"
@@ -13,45 +10,68 @@ site_url: https://eadar-web.netlify.app
 # 发布模式：简单编辑工作流
 publish_mode: simple
 
+# CMS 集合配置
 collections:
+  # 新闻文章 - 存储在 content/news 目录
   - name: "news"
     label: "新闻文章"
-    folder: ""
+    folder: "content/news"
     create: true
-    slug: "news-{{year}}-{{month}}-{{day}}-{{slug}}"
-    extension: "html"
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    extension: "md"
     format: "frontmatter"
     fields:
-      - {label: "标题", name: "title", widget: "string", required: true}
-      - {label: "发布日期", name: "date", widget: "datetime", required: true}
-      - {label: "摘要", name: "description", widget: "text", required: false}
-      - {label: "封面图片", name: "image", widget: "image", required: false}
-      - {label: "正文内容", name: "body", widget: "markdown", required: true}
+      - label: "标题"
+        name: "title"
+        widget: "string"
+        required: true
+      - label: "发布日期"
+        name: "date"
+        widget: "datetime"
+        required: true
+        date_format: "YYYY-MM-DD"
+        time_format: "HH:mm"
+      - label: "摘要"
+        name: "description"
+        widget: "text"
+        required: false
+      - label: "封面图片"
+        name: "image"
+        widget: "image"
+        required: false
+      - label: "正文内容"
+        name: "body"
+        widget: "markdown"
+        required: true
 
+  # 页面内容 - 单文件编辑
   - name: "pages"
     label: "页面内容"
     files:
       - name: "homepage"
         label: "首页"
-        file: "index.html"
+        file: "content/pages/homepage.md"
         fields:
           - {label: "页面标题", name: "title", widget: "string"}
           - {label: "Meta描述", name: "description", widget: "text"}
+          - {label: "页面内容", name: "body", widget: "markdown"}
       - name: "about"
         label: "关于我们"
-        file: "about.html"
+        file: "content/pages/about.md"
         fields:
           - {label: "页面标题", name: "title", widget: "string"}
           - {label: "Meta描述", name: "description", widget: "text"}
-      - name: "services"
-        label: "服务页面"
-        file: "services.html"
+          - {label: "页面内容", name: "body", widget: "markdown"}
+
+  # 站点设置
+  - name: "settings"
+    label: "站点设置"
+    files:
+      - name: "general"
+        label: "基本设置"
+        file: "content/settings/general.json"
         fields:
-          - {label: "页面标题", name: "title", widget: "string"}
-          - {label: "Meta描述", name: "description", widget: "text"}
-      - name: "contact"
-        label: "联系我们"
-        file: "contact.html"
-        fields:
-          - {label: "页面标题", name: "title", widget: "string"}
-          - {label: "Meta描述", name: "description", widget: "text"}
+          - {label: "网站标题", name: "site_title", widget: "string"}
+          - {label: "网站描述", name: "site_description", widget: "text"}
+          - {label: "联系电话", name: "phone", widget: "string"}
+          - {label: "联系邮箱", name: "email", widget: "string"}
