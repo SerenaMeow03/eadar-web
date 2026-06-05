@@ -26,6 +26,16 @@
     <meta name="twitter:description" content="20年专业翻译经验，50+语种服务">
     <meta name="twitter:image" content="https://www.eadartrans.com/images/logo.png">
     
+    <!-- 检测 Identity 邀请/重置链接并重定向 -->
+    <script>
+        (function() {
+            const hash = window.location.hash;
+            if (hash.includes('invite_token=') || hash.includes('recovery_token=') || hash.includes('confirmation_token=')) {
+                window.location.replace('/admin/confirmation.html' + hash);
+            }
+        })();
+    </script>
+    
     <!-- Schema.org Structured Data -->
     <script type="application/ld+json">
     {
