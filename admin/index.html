@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>内容管理后台 - 谊达翻译</title>
+    <title>登录 - 谊达翻译内容管理</title>
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     <style>
         * {
@@ -159,9 +159,6 @@
         .error-message.show {
             display: block;
         }
-        .netlify-identity-menu {
-            display: none !important;
-        }
     </style>
 </head>
 <body>
@@ -182,7 +179,7 @@
         <div class="user-info" id="userInfo">
             <div class="user-avatar">👤</div>
             <p class="user-email" id="userEmail"></p>
-            <a href="#" class="enter-cms-btn" onclick="enterCMS(event)">进入内容管理系统</a>
+            <a href="cms.html" class="enter-cms-btn">进入内容管理系统</a>
             <br>
             <button class="logout-btn" onclick="handleLogout()">退出登录</button>
         </div>
@@ -194,57 +191,31 @@
         // 检查是否是邀请或重置链接
         const hash = window.location.hash;
         if (hash.includes('invite_token=') || hash.includes('recovery_token=') || hash.includes('confirmation_token=')) {
-            // 重定向到确认页面
             window.location.href = '/admin/confirmation.html' + window.location.hash.replace('#', '?');
         }
-        
-        // 监听 CMS 加载，清除 body 样式
-        window.addEventListener('load', function() {
-            // 如果 URL 包含 #/collections 或 #/edit，说明 CMS 已加载
-            if (window.location.hash.includes('#/collections') || window.location.hash.includes('#/edit')) {
-                document.body.style.display = 'block';
-                document.body.style.justifyContent = 'initial';
-                document.body.style.alignItems = 'initial';
-                document.body.style.background = 'transparent';
-                // 隐藏登录容器
-                const loginContainer = document.querySelector('.login-container');
-                if (loginContainer) {
-                    loginContainer.style.display = 'none';
-                }
-            }
-        });
         
         // 初始化 Netlify Identity
         if (window.netlifyIdentity) {
             netlifyIdentity.init();
             
-            // 页面加载时检查登录状态
             netlifyIdentity.on('init', user => {
                 if (user) {
                     showUserInfo(user);
                 }
             });
             
-            // 登录成功
             netlifyIdentity.on('login', user => {
-                console.log('登录成功:', user);
                 showUserInfo(user);
                 netlifyIdentity.close();
             });
             
-            // 注销
             netlifyIdentity.on('logout', () => {
-                console.log('已注销');
                 hideUserInfo();
             });
             
-            // 错误处理
             netlifyIdentity.on('error', err => {
-                console.error('Identity错误:', err);
                 showError('登录过程中出现错误，请重试');
             });
-        } else {
-            showError('Netlify Identity 加载失败，请刷新页面重试');
         }
         
         function handleLogin() {
@@ -258,37 +229,6 @@
             if (window.netlifyIdentity) {
                 netlifyIdentity.logout();
             }
-        }
-        
-        function enterCMS(e) {
-            e.preventDefault();
-            // 加载 Netlify CMS
-            showLoading(true);
-            
-            // 创建 CMS 容器
-            let cmsContainer = document.getElementById('nc-root');
-            if (!cmsContainer) {
-                cmsContainer = document.createElement('div');
-                cmsContainer.id = 'nc-root';
-                document.body.appendChild(cmsContainer);
-            }
-            
-            // 隐藏登录界面，显示 CMS
-            document.querySelector('.login-container').style.display = 'none';
-            
-            // 加载 CMS 脚本
-            const script = document.createElement('script');
-            script.src = 'https://unpkg.com/netlify-cms@2.10.192/dist/netlify-cms.js';
-            script.onload = function() {
-                showLoading(false);
-                console.log('CMS 加载完成');
-            };
-            script.onerror = function() {
-                showLoading(false);
-                showError('CMS 加载失败，请刷新页面重试');
-                document.querySelector('.login-container').style.display = 'block';
-            };
-            document.head.appendChild(script);
         }
         
         function showUserInfo(user) {
@@ -313,9 +253,7 @@
             const errorEl = document.getElementById('errorMessage');
             errorEl.textContent = message;
             errorEl.classList.add('show');
-            setTimeout(() => {
-                errorEl.classList.remove('show');
-            }, 5000);
+            setTimeout(() => errorEl.classList.remove('show'), 5000);
         }
     </script>
 </body>

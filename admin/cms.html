@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内容管理系统 - 谊达翻译</title>
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        #nc-root {
+            min-height: 100vh;
+        }
+        .logout-bar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            z-index: 10000;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.9);
+            border-bottom-left-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .logout-btn {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .logout-btn:hover {
+            background: #c53030;
+        }
+    </style>
+</head>
+<body>
+    <div id="nc-root"></div>
+    
+    <script src="https://unpkg.com/netlify-cms@2.10.192/dist/netlify-cms.js"></script>
+    <script>
+        // 初始化 Netlify Identity
+        if (window.netlifyIdentity) {
+            netlifyIdentity.init();
+            
+            // 检查登录状态
+            netlifyIdentity.on('init', user => {
+                if (!user) {
+                    // 未登录，跳转到登录页
+                    window.location.href = '/admin/';
+                }
+            });
+            
+            // 注销处理
+            netlifyIdentity.on('logout', () => {
+                window.location.href = '/admin/';
+            });
+        }
+    </script>
+</body>
+</html>
