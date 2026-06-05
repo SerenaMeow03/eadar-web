@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置密码 - 谊达翻译</title>
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            text-align: center;
+            padding: 50px 40px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 90%;
+        }
+        .logo {
+            width: 80px;
+            margin-bottom: 24px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #4A6B8A;
+        }
+        .submit-btn {
+            background: linear-gradient(135deg, #4A6B8A 0%, #6B8EB5 100%);
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(74, 107, 138, 0.4);
+        }
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .message {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+        .message.success {
+            display: block;
+            background: #f0fff4;
+            color: #276749;
+            border: 1px solid #9ae6b4;
+        }
+        .message.error {
+            display: block;
+            background: #fff5f5;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+        }
+        .back-link {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .back-link a {
+            color: #4A6B8A;
+            text-decoration: none;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+        .loading.show {
+            display: block;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4A6B8A;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="../images/logo-blue.png" alt="谊达翻译" class="logo" onerror="this.style.display='none'">
+        
+        <!-- 邀请确认界面 -->
+        <div id="inviteSection">
+            <h1>激活您的账号</h1>
+            <p class="subtitle">请设置密码以完成账号激活</p>
+            
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label for="password">设置密码</label>
+                    <input type="password" id="password" name="password" required 
+                           placeholder="请输入至少6位密码" minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">确认密码</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required 
+                           placeholder="请再次输入密码">
+                </div>
+                <button type="submit" class="submit-btn" id="submitBtn">激活账号</button>
+            </form>
+        </div>
+        
+        <!-- 密码重置界面 -->
+        <div id="recoverySection" style="display: none;">
+            <h1>重置密码</h1>
+            <p class="subtitle">请设置您的新密码</p>
+            
+            <form id="recoveryForm">
+                <div class="form-group">
+                    <label for="newPassword">新密码</label>
+                    <input type="password" id="newPassword" name="newPassword" required 
+                           placeholder="请输入至少6位密码" minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="confirmNewPassword">确认新密码</label>
+                    <input type="password" id="confirmNewPassword" name="confirmNewPassword" required 
+                           placeholder="请再次输入密码">
+                </div>
+                <button type="submit" class="submit-btn" id="recoveryBtn">重置密码</button>
+            </form>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="color: #666; font-size: 14px;">处理中...</p>
+        </div>
+        
+        <div class="message" id="message"></div>
+        
+        <div class="back-link">
+            <a href="/admin/">返回登录页面</a>
+        </div>
+    </div>
+
+    <script>
+        // 初始化 Netlify Identity
+        if (window.netlifyIdentity) {
+            netlifyIdentity.init();
+        }
+        
+        // 解析 URL 参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const inviteToken = urlParams.get('invite_token');
+        const recoveryToken = urlParams.get('recovery_token');
+        
+        // 根据 token 类型显示不同界面
+        if (recoveryToken) {
+            document.getElementById('inviteSection').style.display = 'none';
+            document.getElementById('recoverySection').style.display = 'block';
+        } else if (!inviteToken) {
+            showMessage('无效的链接，请重新获取邀请邮件或密码重置邮件', 'error');
+            document.getElementById('inviteSection').style.display = 'none';
+            document.getElementById('recoverySection').style.display = 'none';
+        }
+        
+        // 处理邀请确认（设置密码）
+        document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                showMessage('两次输入的密码不一致', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showMessage('密码至少需要6位', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                // 使用 Netlify Identity API 接受邀请
+                const response = await fetch('/.netlify/identity/accept', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: inviteToken,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('账号激活成功！正在跳转到登录页面...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/admin/';
+                    }, 2000);
+                } else {
+                    showMessage(data.msg || '激活失败，请重试', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('网络错误，请重试', 'error');
+            } finally {
+                showLoading(false);
+            }
+        });
+        
+        // 处理密码重置
+        document.getElementById('recoveryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const password = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmNewPassword').value;
+            
+            if (password !== confirmPassword) {
+                showMessage('两次输入的密码不一致', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showMessage('密码至少需要6位', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                // 使用 Netlify Identity API 重置密码
+                const response = await fetch('/.netlify/identity/recover', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: recoveryToken,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('密码重置成功！正在跳转到登录页面...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/admin/';
+                    }, 2000);
+                } else {
+                    showMessage(data.msg || '重置失败，请重试', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('网络错误，请重试', 'error');
+            } finally {
+                showLoading(false);
+            }
+        });
+        
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('show', show);
+            document.getElementById('submitBtn').disabled = show;
+            document.getElementById('recoveryBtn').disabled = show;
+        }
+        
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = 'message ' + type;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# Netlify 路由规则
+
+# 确保 admin 目录可以访问
+/admin/*  /admin/:splat  200
+
+# SPA 回退（可选）
+# /*    /index.html   200

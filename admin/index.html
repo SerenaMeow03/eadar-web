@@ -191,6 +191,13 @@
     </div>
 
     <script>
+        // 检查是否是邀请或重置链接
+        const hash = window.location.hash;
+        if (hash.includes('invite_token=') || hash.includes('recovery_token=') || hash.includes('confirmation_token=')) {
+            // 重定向到确认页面
+            window.location.href = '/admin/confirmation.html' + window.location.hash.replace('#', '?');
+        }
+        
         // 初始化 Netlify Identity
         if (window.netlifyIdentity) {
             netlifyIdentity.init();
