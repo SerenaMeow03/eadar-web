@@ -3,5 +3,8 @@
 # 确保 admin 目录可以访问
 /admin/*  /admin/:splat  200
 
+# CMS 页面重定向（支持无 .html 后缀访问）
+/admin/cms  /admin/cms.html  200
+
 # SPA 回退（可选）
 # /*    /index.html   200
