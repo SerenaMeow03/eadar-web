@@ -1,19 +1,57 @@
 backend:
   name: git-gateway
   branch: main
+  accept_roles:
+    - admin
+    - editor
 
 media_folder: "images/uploads"
 public_folder: "/images/uploads"
 
+site_url: https://eadar-web.netlify.app
+
+# 发布模式：简单编辑工作流
+publish_mode: simple
+
 collections:
   - name: "news"
-    label: "新闻"
-    folder: "/"
+    label: "新闻文章"
+    folder: ""
     create: true
-    slug: "news-{{year}}-{{month}}-{{slug}}"
+    slug: "news-{{year}}-{{month}}-{{day}}-{{slug}}"
     extension: "html"
+    format: "frontmatter"
     fields:
-      - {label: "标题", name: "title", widget: "string"}
-      - {label: "发布日期", name: "date", widget: "datetime"}
-      - {label: "摘要", name: "description", widget: "text"}
-      - {label: "正文", name: "body", widget: "markdown"}
+      - {label: "标题", name: "title", widget: "string", required: true}
+      - {label: "发布日期", name: "date", widget: "datetime", required: true}
+      - {label: "摘要", name: "description", widget: "text", required: false}
+      - {label: "封面图片", name: "image", widget: "image", required: false}
+      - {label: "正文内容", name: "body", widget: "markdown", required: true}
+
+  - name: "pages"
+    label: "页面内容"
+    files:
+      - name: "homepage"
+        label: "首页"
+        file: "index.html"
+        fields:
+          - {label: "页面标题", name: "title", widget: "string"}
+          - {label: "Meta描述", name: "description", widget: "text"}
+      - name: "about"
+        label: "关于我们"
+        file: "about.html"
+        fields:
+          - {label: "页面标题", name: "title", widget: "string"}
+          - {label: "Meta描述", name: "description", widget: "text"}
+      - name: "services"
+        label: "服务页面"
+        file: "services.html"
+        fields:
+          - {label: "页面标题", name: "title", widget: "string"}
+          - {label: "Meta描述", name: "description", widget: "text"}
+      - name: "contact"
+        label: "联系我们"
+        file: "contact.html"
+        fields:
+          - {label: "页面标题", name: "title", widget: "string"}
+          - {label: "Meta描述", name: "description", widget: "text"}

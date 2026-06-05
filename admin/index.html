@@ -3,86 +3,296 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>内容管理 - 谊达翻译</title>
+    <title>内容管理后台 - 谊达翻译</title>
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background: #f5f5f5;
         }
         .login-container {
             text-align: center;
-            padding: 40px;
+            padding: 50px 40px;
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 90%;
         }
         .logo {
-            width: 80px;
-            margin-bottom: 20px;
+            width: 100px;
+            margin-bottom: 24px;
         }
         h1 {
             color: #333;
-            margin-bottom: 30px;
+            margin-bottom: 12px;
             font-size: 24px;
+            font-weight: 600;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 32px;
+            font-size: 14px;
         }
         .login-btn {
+            background: linear-gradient(135deg, #4A6B8A 0%, #6B8EB5 100%);
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            width: 100%;
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(74, 107, 138, 0.4);
+        }
+        .login-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .user-info {
+            display: none;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #eee;
+        }
+        .user-info.show {
+            display: block;
+        }
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-bottom: 12px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: auto;
+            margin-right: auto;
+            font-size: 24px;
+        }
+        .user-email {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 16px;
+            word-break: break-all;
+        }
+        .enter-cms-btn {
             background: #00ad9f;
             color: white;
             border: none;
             padding: 12px 32px;
-            font-size: 16px;
-            border-radius: 4px;
+            font-size: 15px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 12px;
         }
-        .login-btn:hover {
+        .enter-cms-btn:hover {
             background: #008b7f;
+            transform: translateY(-2px);
+        }
+        .logout-btn {
+            background: transparent;
+            color: #999;
+            border: 1px solid #ddd;
+            padding: 8px 20px;
+            font-size: 13px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .logout-btn:hover {
+            background: #f5f5f5;
+            color: #666;
+        }
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+        .loading.show {
+            display: block;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4A6B8A;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error-message {
+            display: none;
+            background: #fff5f5;
+            color: #e53e3e;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-top: 16px;
+            border: 1px solid #feb2b2;
+        }
+        .error-message.show {
+            display: block;
         }
         .netlify-identity-menu {
-            margin-top: 20px;
+            display: none !important;
         }
     </style>
 </head>
 <body>
     <div class="login-container">
+        <img src="../images/logo-blue.png" alt="谊达翻译" class="logo" onerror="this.style.display='none'">
         <h1>谊达翻译内容管理</h1>
-        <div data-netlify-identity-menu></div>
-        <button class="login-btn" onclick="netlifyIdentity.open()">
+        <p class="subtitle">请登录以管理网站内容</p>
+        
+        <button class="login-btn" id="loginBtn" onclick="handleLogin()">
             登录 / 注册
         </button>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="color: #666; font-size: 14px;">正在加载...</p>
+        </div>
+        
+        <div class="user-info" id="userInfo">
+            <div class="user-avatar">👤</div>
+            <p class="user-email" id="userEmail"></p>
+            <a href="#" class="enter-cms-btn" onclick="enterCMS(event)">进入内容管理系统</a>
+            <br>
+            <button class="logout-btn" onclick="handleLogout()">退出登录</button>
+        </div>
+        
+        <div class="error-message" id="errorMessage"></div>
     </div>
 
-    <script src="https://unpkg.com/netlify-cms@2.10.192/dist/netlify-cms.js"></script>
     <script>
         // 初始化 Netlify Identity
         if (window.netlifyIdentity) {
             netlifyIdentity.init();
             
-            // 登录成功后跳转到 CMS
-            netlifyIdentity.on('login', user => {
-                console.log('登录成功:', user);
-                window.location.href = '/admin/';
-            });
-            
-            // 注销处理
-            netlifyIdentity.on('logout', () => {
-                console.log('已注销');
-            });
-            
-            // 检查是否已登录
+            // 页面加载时检查登录状态
             netlifyIdentity.on('init', user => {
                 if (user) {
-                    console.log('已登录用户:', user);
-                } else {
-                    console.log('未登录，显示登录按钮');
+                    showUserInfo(user);
                 }
             });
+            
+            // 登录成功
+            netlifyIdentity.on('login', user => {
+                console.log('登录成功:', user);
+                showUserInfo(user);
+                netlifyIdentity.close();
+            });
+            
+            // 注销
+            netlifyIdentity.on('logout', () => {
+                console.log('已注销');
+                hideUserInfo();
+            });
+            
+            // 错误处理
+            netlifyIdentity.on('error', err => {
+                console.error('Identity错误:', err);
+                showError('登录过程中出现错误，请重试');
+            });
+        } else {
+            showError('Netlify Identity 加载失败，请刷新页面重试');
+        }
+        
+        function handleLogin() {
+            if (window.netlifyIdentity) {
+                showLoading(true);
+                netlifyIdentity.open('login');
+            }
+        }
+        
+        function handleLogout() {
+            if (window.netlifyIdentity) {
+                netlifyIdentity.logout();
+            }
+        }
+        
+        function enterCMS(e) {
+            e.preventDefault();
+            // 加载 Netlify CMS
+            showLoading(true);
+            
+            // 创建 CMS 容器
+            let cmsContainer = document.getElementById('nc-root');
+            if (!cmsContainer) {
+                cmsContainer = document.createElement('div');
+                cmsContainer.id = 'nc-root';
+                document.body.appendChild(cmsContainer);
+            }
+            
+            // 隐藏登录界面，显示 CMS
+            document.querySelector('.login-container').style.display = 'none';
+            
+            // 加载 CMS 脚本
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/netlify-cms@2.10.192/dist/netlify-cms.js';
+            script.onload = function() {
+                showLoading(false);
+                console.log('CMS 加载完成');
+            };
+            script.onerror = function() {
+                showLoading(false);
+                showError('CMS 加载失败，请刷新页面重试');
+                document.querySelector('.login-container').style.display = 'block';
+            };
+            document.head.appendChild(script);
+        }
+        
+        function showUserInfo(user) {
+            showLoading(false);
+            document.getElementById('loginBtn').style.display = 'none';
+            document.getElementById('userInfo').classList.add('show');
+            document.getElementById('userEmail').textContent = user.email || '已登录用户';
+        }
+        
+        function hideUserInfo() {
+            document.getElementById('loginBtn').style.display = 'inline-block';
+            document.getElementById('userInfo').classList.remove('show');
+        }
+        
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('show', show);
+            document.getElementById('loginBtn').disabled = show;
+        }
+        
+        function showError(message) {
+            showLoading(false);
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+            setTimeout(() => {
+                errorEl.classList.remove('show');
+            }, 5000);
         }
     </script>
 </body>
