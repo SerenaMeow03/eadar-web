@@ -44,9 +44,9 @@ collections:
         widget: "markdown"
         required: true
 
-  # 页面内容 - 单文件编辑
+  # 页面内容 - 中文
   - name: "pages"
-    label: "页面内容"
+    label: "页面内容 (中文)"
     files:
       - name: "homepage"
         label: "首页"
@@ -83,6 +83,46 @@ collections:
           - {label: "页面标题", name: "title", widget: "string"}
           - {label: "Meta描述", name: "description", widget: "text"}
           - {label: "页面内容", name: "body", widget: "markdown"}
+
+  # 页面内容 - 英文
+  - name: "pages_en"
+    label: "页面内容 (English)"
+    files:
+      - name: "homepage_en"
+        label: "Home"
+        file: "content/pages/en/homepage.md"
+        fields:
+          - {label: "Page Title", name: "title", widget: "string"}
+          - {label: "Meta Description", name: "description", widget: "text"}
+          - {label: "Page Content", name: "body", widget: "markdown"}
+      - name: "about_en"
+        label: "About Us"
+        file: "content/pages/en/about.md"
+        fields:
+          - {label: "Page Title", name: "title", widget: "string"}
+          - {label: "Meta Description", name: "description", widget: "text"}
+          - {label: "Page Content", name: "body", widget: "markdown"}
+      - name: "services_en"
+        label: "Services"
+        file: "content/pages/en/services.md"
+        fields:
+          - {label: "Page Title", name: "title", widget: "string"}
+          - {label: "Meta Description", name: "description", widget: "text"}
+          - {label: "Page Content", name: "body", widget: "markdown"}
+      - name: "contact_en"
+        label: "Contact Us"
+        file: "content/pages/en/contact.md"
+        fields:
+          - {label: "Page Title", name: "title", widget: "string"}
+          - {label: "Meta Description", name: "description", widget: "text"}
+          - {label: "Page Content", name: "body", widget: "markdown"}
+      - name: "news_en"
+        label: "News Center"
+        file: "content/pages/en/news.md"
+        fields:
+          - {label: "Page Title", name: "title", widget: "string"}
+          - {label: "Meta Description", name: "description", widget: "text"}
+          - {label: "Page Content", name: "body", widget: "markdown"}
 
   # 站点设置
   - name: "settings"
