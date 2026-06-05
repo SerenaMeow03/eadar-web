@@ -43,6 +43,17 @@
     
     <script src="https://unpkg.com/netlify-cms@2.10.192/dist/netlify-cms.js"></script>
     <script>
+        // 清除 CMS 缓存，强制重新加载配置
+        if (window.localStorage) {
+            // 清除 Netlify CMS 相关的缓存
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('netlify-cms') || key.startsWith('nc-')) {
+                    localStorage.removeItem(key);
+                }
+            });
+            console.log('CMS cache cleared');
+        }
+        
         // 初始化 Netlify Identity
         if (window.netlifyIdentity) {
             netlifyIdentity.init();
