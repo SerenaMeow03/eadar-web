@@ -225,6 +225,15 @@
         console.log('inviteToken:', inviteToken);
         console.log('recoveryToken:', recoveryToken);
         
+        // 如果已登录且是密码重置流程，先退出登录
+        if (recoveryToken && window.netlifyIdentity) {
+            const user = netlifyIdentity.currentUser();
+            if (user) {
+                console.log('已登录用户，先退出:', user.email);
+                netlifyIdentity.logout();
+            }
+        }
+        
         // 根据 token 类型显示不同界面
         if (recoveryToken) {
             document.getElementById('inviteSection').style.display = 'none';
@@ -352,7 +361,11 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showMessage(error.message || '重置失败，请重试', 'error');
+                let errorMsg = error.message || '重置失败，请重试';
+                if (errorMsg.includes('User not found')) {
+                    errorMsg = '链接已过期或无效，请重新发送密码重置邮件';
+                }
+                showMessage(errorMsg, 'error');
             } finally {
                 showLoading(false);
             }
