@@ -204,16 +204,35 @@
             netlifyIdentity.init();
         }
         
-        // 解析 URL 参数
-        const urlParams = new URLSearchParams(window.location.search);
-        const inviteToken = urlParams.get('invite_token');
-        const recoveryToken = urlParams.get('recovery_token');
+        // 解析 URL 参数（支持 query string 和 hash）
+        function getTokenFromUrl(paramName) {
+            // 先尝试从 query string 获取
+            const urlParams = new URLSearchParams(window.location.search);
+            let token = urlParams.get(paramName);
+            
+            // 如果没有，尝试从 hash 获取
+            if (!token && window.location.hash) {
+                const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
+                token = hashParams.get(paramName);
+            }
+            
+            return token;
+        }
+        
+        const inviteToken = getTokenFromUrl('invite_token');
+        const recoveryToken = getTokenFromUrl('recovery_token');
+        
+        console.log('inviteToken:', inviteToken);
+        console.log('recoveryToken:', recoveryToken);
         
         // 根据 token 类型显示不同界面
         if (recoveryToken) {
             document.getElementById('inviteSection').style.display = 'none';
             document.getElementById('recoverySection').style.display = 'block';
-        } else if (!inviteToken) {
+        } else if (inviteToken) {
+            document.getElementById('inviteSection').style.display = 'block';
+            document.getElementById('recoverySection').style.display = 'none';
+        } else {
             showMessage('无效的链接，请重新获取邀请邮件或密码重置邮件', 'error');
             document.getElementById('inviteSection').style.display = 'none';
             document.getElementById('recoverySection').style.display = 'none';
