@@ -196,7 +196,10 @@
         
         // 初始化 Netlify Identity
         if (window.netlifyIdentity) {
-            netlifyIdentity.init();
+            netlifyIdentity.init({
+                // 禁用自动刷新页面
+                autorefresh: false
+            });
             
             netlifyIdentity.on('init', user => {
                 if (user) {
@@ -207,6 +210,8 @@
             netlifyIdentity.on('login', user => {
                 showUserInfo(user);
                 netlifyIdentity.close();
+                // 阻止默认跳转行为
+                return false;
             });
             
             netlifyIdentity.on('logout', () => {
@@ -215,6 +220,15 @@
             
             netlifyIdentity.on('error', err => {
                 showError('登录过程中出现错误，请重试');
+            });
+            
+            // 处理登录回调
+            netlifyIdentity.on('init', user => {
+                // 如果 URL 中有 access_token，说明是从 OAuth 回调回来的
+                if (window.location.hash.includes('access_token=')) {
+                    // 清除 hash，防止重复处理
+                    history.replaceState(null, null, ' ');
+                }
             });
         }
         
