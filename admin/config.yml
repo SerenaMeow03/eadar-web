@@ -62,6 +62,20 @@ collections:
           - {label: "页面标题", name: "title", widget: "string"}
           - {label: "Meta描述", name: "description", widget: "text"}
           - {label: "页面内容", name: "body", widget: "markdown"}
+      - name: "services"
+        label: "服务页面"
+        file: "content/pages/services.md"
+        fields:
+          - {label: "页面标题", name: "title", widget: "string"}
+          - {label: "Meta描述", name: "description", widget: "text"}
+          - {label: "页面内容", name: "body", widget: "markdown"}
+      - name: "contact"
+        label: "联系我们"
+        file: "content/pages/contact.md"
+        fields:
+          - {label: "页面标题", name: "title", widget: "string"}
+          - {label: "Meta描述", name: "description", widget: "text"}
+          - {label: "页面内容", name: "body", widget: "markdown"}
 
   # 站点设置
   - name: "settings"
