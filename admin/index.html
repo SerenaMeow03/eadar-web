@@ -198,6 +198,22 @@
             window.location.href = '/admin/confirmation.html' + window.location.hash.replace('#', '?');
         }
         
+        // 监听 CMS 加载，清除 body 样式
+        window.addEventListener('load', function() {
+            // 如果 URL 包含 #/collections 或 #/edit，说明 CMS 已加载
+            if (window.location.hash.includes('#/collections') || window.location.hash.includes('#/edit')) {
+                document.body.style.display = 'block';
+                document.body.style.justifyContent = 'initial';
+                document.body.style.alignItems = 'initial';
+                document.body.style.background = 'transparent';
+                // 隐藏登录容器
+                const loginContainer = document.querySelector('.login-container');
+                if (loginContainer) {
+                    loginContainer.style.display = 'none';
+                }
+            }
+        });
+        
         // 初始化 Netlify Identity
         if (window.netlifyIdentity) {
             netlifyIdentity.init();
