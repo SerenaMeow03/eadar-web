@@ -76,6 +76,13 @@ collections:
           - {label: "页面标题", name: "title", widget: "string"}
           - {label: "Meta描述", name: "description", widget: "text"}
           - {label: "页面内容", name: "body", widget: "markdown"}
+      - name: "news"
+        label: "新闻中心"
+        file: "content/pages/news.md"
+        fields:
+          - {label: "页面标题", name: "title", widget: "string"}
+          - {label: "Meta描述", name: "description", widget: "text"}
+          - {label: "页面内容", name: "body", widget: "markdown"}
 
   # 站点设置
   - name: "settings"
