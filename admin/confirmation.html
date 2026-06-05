@@ -308,31 +308,51 @@
             showLoading(true);
             
             try {
-                // 使用 Netlify Identity API 重置密码
-                const response = await fetch('/.netlify/identity/recover', {
+                // 使用 Netlify Identity API 验证 token 并设置新密码
+                // 先验证 recovery token
+                const verifyResponse = await fetch('/.netlify/identity/verify', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         token: recoveryToken,
+                        type: 'recovery'
+                    })
+                });
+                
+                if (!verifyResponse.ok) {
+                    const errorData = await verifyResponse.json();
+                    throw new Error(errorData.msg || '验证失败');
+                }
+                
+                const verifyData = await verifyResponse.json();
+                console.log('验证成功:', verifyData);
+                
+                // 验证成功后，使用返回的 token 更新密码
+                const updateResponse = await fetch('/.netlify/identity/user', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + verifyData.token
+                    },
+                    body: JSON.stringify({
                         password: password
                     })
                 });
                 
-                const data = await response.json();
-                
-                if (response.ok) {
+                if (updateResponse.ok) {
                     showMessage('密码重置成功！正在跳转到登录页面...', 'success');
                     setTimeout(() => {
                         window.location.href = '/admin/';
                     }, 2000);
                 } else {
-                    showMessage(data.msg || '重置失败，请重试', 'error');
+                    const errorData = await updateResponse.json();
+                    throw new Error(errorData.msg || '密码更新失败');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showMessage('网络错误，请重试', 'error');
+                showMessage(error.message || '重置失败，请重试', 'error');
             } finally {
                 showLoading(false);
             }
