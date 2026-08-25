@@ -1,0 +1,17 @@
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/translator/*"
+  to = "/translator/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/en/*"
+  to = "/en/:splat"
+  status = 200
