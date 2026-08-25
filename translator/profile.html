@@ -446,9 +446,15 @@
             // 更新本地数据
             translatorData = { ...translatorData, ...bankInfo };
 
-            // 退出编辑模式
+            // 退出编辑模式 - 直接调用而不是通过 toggle
             isBankEditing = false;
-            toggleBankEdit();
+            const inputs = ['bankName', 'bankCard', 'bankHolder', 'bankBranch'];
+            inputs.forEach(id => {
+                document.getElementById(id).readOnly = true;
+                document.getElementById(id).style.background = '#fafafa';
+            });
+            document.getElementById('editBankBtn').style.display = 'inline-block';
+            document.getElementById('bankButtons').style.display = 'none';
 
             // 显示成功消息
             const successMsg = document.getElementById('successMessage');
