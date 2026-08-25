@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人信息 - 谊达翻译</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 20px;
+            font-weight: 500;
+        }
+        .nav-menu {
+            display: flex;
+            gap: 20px;
+        }
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: background 0.3s;
+            font-size: 14px;
+        }
+        .nav-menu a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .nav-menu a.active {
+            background: rgba(255,255,255,0.3);
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.3s;
+        }
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .profile-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .profile-header {
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+        .avatar {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin: 0 auto 15px;
+        }
+        .profile-name {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .profile-id {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .profile-body {
+            padding: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section:last-child {
+            margin-bottom: 0;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .edit-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.3s;
+        }
+        .edit-btn:hover {
+            background: #5568d3;
+        }
+        .edit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            background: #fafafa;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+        .form-group input:read-only {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+        .info-display {
+            background: #fafafa;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid #f0f0f0;
+            color: #333;
+            font-size: 14px;
+        }
+        .info-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+        .save-btn {
+            background: #52c41a;
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+        .save-btn:hover {
+            background: #73d13d;
+        }
+        .cancel-btn {
+            background: white;
+            color: #666;
+            border: 1px solid #d9d9d9;
+            padding: 12px 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            margin-right: 12px;
+            transition: all 0.3s;
+        }
+        .cancel-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        .button-group {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        .success-message {
+            display: none;
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .success-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>谊达翻译 · 译员工作台</h1>
+            <nav class="nav-menu">
+                <a href="orders.html">我的订单</a>
+                <a href="profile.html" class="active">个人信息</a>
+            </nav>
+            <div class="user-info">
+                <span id="userName">译员姓名</span>
+                <button class="logout-btn" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="avatar">👤</div>
+                <div class="profile-name" id="profileName">译员姓名</div>
+                <div class="profile-id">译员编号：<span id="profileId">-</span></div>
+            </div>
+
+            <div class="profile-body">
+                <div class="success-message" id="successMessage">
+                    ✅ 信息保存成功！
+                </div>
+
+                <!-- 基本信息 -->
+                <div class="section">
+                    <div class="section-title">
+                        基本信息
+                        <span style="font-size: 12px; color: #999; font-weight: normal;">（如需修改请联系管理员）</span>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>真实姓名</label>
+                            <input type="text" id="realName" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>手机号码</label>
+                            <input type="tel" id="phone" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>电子邮箱</label>
+                            <input type="email" id="email" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>身份证号</label>
+                            <input type="text" id="idCard" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 收款信息 -->
+                <div class="section">
+                    <div class="section-title">
+                        收款信息
+                        <button class="edit-btn" id="editBankBtn" onclick="toggleBankEdit()">编辑</button>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>开户银行 <span style="color: #f5222d;">*</span></label>
+                            <input type="text" id="bankName" placeholder="如：中国工商银行" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>银行卡号 <span style="color: #f5222d;">*</span></label>
+                            <input type="text" id="bankCard" placeholder="请输入银行卡号" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>开户人姓名 <span style="color: #f5222d;">*</span></label>
+                            <input type="text" id="bankHolder" placeholder="请输入开户人姓名" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>开户行支行</label>
+                            <input type="text" id="bankBranch" placeholder="如：北京市分行朝阳支行" readonly>
+                        </div>
+                    </div>
+                    <div class="button-group" id="bankButtons" style="display: none;">
+                        <button class="cancel-btn" onclick="cancelBankEdit()">取消</button>
+                        <button class="save-btn" onclick="saveBankInfo()">保存</button>
+                    </div>
+                </div>
+
+                <!-- 工作信息 -->
+                <div class="section">
+                    <div class="section-title">
+                        工作信息
+                        <span style="font-size: 12px; color: #999; font-weight: normal;">（如需修改请联系管理员）</span>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>擅长语种</label>
+                            <input type="text" id="languages" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>专业领域</label>
+                            <input type="text" id="specialties" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>标准费率（元/千字）</label>
+                            <input type="text" id="standardRate" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>加急费率（元/千字）</label>
+                            <input type="text" id="urgentRate" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 检查登录状态
+        const currentTranslator = JSON.parse(localStorage.getItem('currentTranslator'));
+        if (!currentTranslator) {
+            window.location.href = 'login.html';
+        }
+
+        // 显示用户信息
+        document.getElementById('userName').textContent = currentTranslator.name;
+        document.getElementById('profileName').textContent = currentTranslator.name;
+        document.getElementById('profileId').textContent = currentTranslator.id;
+
+        // 模拟译员详细信息
+        let translatorData = {
+            realName: currentTranslator.name,
+            phone: '138****8888',
+            email: 'translator@example.com',
+            idCard: '110101********1234',
+            bankName: '中国工商银行',
+            bankCard: '6222 **** **** 8888',
+            bankHolder: currentTranslator.name,
+            bankBranch: '北京市分行朝阳支行',
+            languages: '中文、英文',
+            specialties: '化工、医疗、法律',
+            standardRate: '150',
+            urgentRate: '200'
+        };
+
+        // 从localStorage读取保存的银行信息
+        const savedBankInfo = localStorage.getItem('translatorBankInfo_' + currentTranslator.id);
+        if (savedBankInfo) {
+            const bankInfo = JSON.parse(savedBankInfo);
+            translatorData = { ...translatorData, ...bankInfo };
+        }
+
+        // 填充表单数据
+        function fillForm() {
+            document.getElementById('realName').value = translatorData.realName;
+            document.getElementById('phone').value = translatorData.phone;
+            document.getElementById('email').value = translatorData.email;
+            document.getElementById('idCard').value = translatorData.idCard;
+            document.getElementById('bankName').value = translatorData.bankName;
+            document.getElementById('bankCard').value = translatorData.bankCard;
+            document.getElementById('bankHolder').value = translatorData.bankHolder;
+            document.getElementById('bankBranch').value = translatorData.bankBranch;
+            document.getElementById('languages').value = translatorData.languages;
+            document.getElementById('specialties').value = translatorData.specialties;
+            document.getElementById('standardRate').value = translatorData.standardRate;
+            document.getElementById('urgentRate').value = translatorData.urgentRate;
+        }
+
+        // 切换银行信息编辑模式
+        let isBankEditing = false;
+        function toggleBankEdit() {
+            isBankEditing = !isBankEditing;
+            const inputs = ['bankName', 'bankCard', 'bankHolder', 'bankBranch'];
+            
+            inputs.forEach(id => {
+                document.getElementById(id).readOnly = !isBankEditing;
+                document.getElementById(id).style.background = isBankEditing ? 'white' : '#fafafa';
+            });
+
+            document.getElementById('editBankBtn').style.display = isBankEditing ? 'none' : 'inline-block';
+            document.getElementById('bankButtons').style.display = isBankEditing ? 'flex' : 'none';
+        }
+
+        function cancelBankEdit() {
+            isBankEditing = false;
+            fillForm(); // 恢复原值
+            toggleBankEdit();
+        }
+
+        function saveBankInfo() {
+            const bankName = document.getElementById('bankName').value.trim();
+            const bankCard = document.getElementById('bankCard').value.trim();
+            const bankHolder = document.getElementById('bankHolder').value.trim();
+
+            if (!bankName || !bankCard || !bankHolder) {
+                alert('请填写必填项：开户银行、银行卡号、开户人姓名');
+                return;
+            }
+
+            // 保存到localStorage（实际应用中应该调用API保存到服务器）
+            const bankInfo = {
+                bankName: bankName,
+                bankCard: bankCard,
+                bankHolder: bankHolder,
+                bankBranch: document.getElementById('bankBranch').value.trim()
+            };
+            localStorage.setItem('translatorBankInfo_' + currentTranslator.id, JSON.stringify(bankInfo));
+
+            // 更新本地数据
+            translatorData = { ...translatorData, ...bankInfo };
+
+            // 退出编辑模式
+            isBankEditing = false;
+            toggleBankEdit();
+
+            // 显示成功消息
+            const successMsg = document.getElementById('successMessage');
+            successMsg.classList.add('show');
+            setTimeout(() => successMsg.classList.remove('show'), 3000);
+        }
+
+        function logout() {
+            localStorage.removeItem('currentTranslator');
+            window.location.href = 'login.html';
+        }
+
+        // 初始化
+        fillForm();
+    </script>
+</body>
+</html>

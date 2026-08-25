@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单详情 - 谊达翻译</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 20px;
+            font-weight: 500;
+        }
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .order-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .order-header {
+            padding: 24px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .order-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .order-id {
+            font-size: 14px;
+            color: #666;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .status-pending {
+            background: #fff7e6;
+            color: #fa8c16;
+        }
+        .status-progress {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+        .status-completed {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+        .order-body {
+            padding: 24px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+        .info-item {
+            background: #fafafa;
+            padding: 16px;
+            border-radius: 8px;
+        }
+        .info-label {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .info-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        .info-value.amount {
+            color: #f5222d;
+            font-size: 24px;
+        }
+        .section {
+            margin-bottom: 24px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .section-content {
+            color: #666;
+            line-height: 1.8;
+            font-size: 14px;
+        }
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: #fafafa;
+            border-radius: 8px;
+            border: 1px solid #f0f0f0;
+        }
+        .file-icon {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+        .file-info {
+            flex: 1;
+        }
+        .file-name {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .file-size {
+            font-size: 12px;
+            color: #999;
+        }
+        .file-action {
+            color: #667eea;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .file-action:hover {
+            text-decoration: underline;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+            padding-top: 24px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        .btn-success {
+            background: #52c41a;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #73d13d;
+        }
+        .btn-default {
+            background: white;
+            color: #666;
+            border: 1px solid #d9d9d9;
+        }
+        .btn-default:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 24px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 6px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #f0f0f0;
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 20px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -22px;
+            top: 2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #667eea;
+        }
+        .timeline-item.completed::before {
+            background: #52c41a;
+            box-shadow: 0 0 0 2px #52c41a;
+        }
+        .timeline-time {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+        .timeline-content {
+            font-size: 14px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>谊达翻译 · 译员工作台</h1>
+            <nav class="nav-menu" style="display: flex; gap: 20px;">
+                <a href="orders.html" style="color: white; text-decoration: none; font-size: 14px;">我的订单</a>
+                <a href="profile.html" style="color: white; text-decoration: none; font-size: 14px;">个人信息</a>
+            </nav>
+            <div class="user-info" style="display: flex; align-items: center; gap: 15px;">
+                <span class="user-name" id="userName" style="font-size: 14px;">译员姓名</span>
+                <button class="logout-btn" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="order-card">
+            <div class="order-header">
+                <div>
+                    <div class="order-title" id="orderName">项目名称</div>
+                    <div class="order-id">订单编号：<span id="orderId">-</span></div>
+                </div>
+                <span class="status-badge" id="orderStatus">-</span>
+            </div>
+
+            <div class="order-body">
+                <!-- 基本信息 -->
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">字数</div>
+                        <div class="info-value" id="orderWords">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">费率</div>
+                        <div class="info-value" id="orderRate">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">金额</div>
+                        <div class="info-value amount" id="orderAmount">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">截止日期</div>
+                        <div class="info-value" id="orderDeadline">-</div>
+                    </div>
+                </div>
+
+                <!-- 项目描述 -->
+                <div class="section">
+                    <div class="section-title">项目描述</div>
+                    <div class="section-content" id="orderDesc">
+                        暂无描述
+                    </div>
+                </div>
+
+                <!-- 源文件 -->
+                <div class="section">
+                    <div class="section-title">源文件</div>
+                    <div class="file-list" id="sourceFiles">
+                        <div class="file-item">
+                            <span class="file-icon">📄</span>
+                            <div class="file-info">
+                                <div class="file-name">source_document.docx</div>
+                                <div class="file-size">2.5 MB</div>
+                            </div>
+                            <a href="#" class="file-action">下载</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 项目进度 -->
+                <div class="section">
+                    <div class="section-title">项目进度</div>
+                    <div class="timeline" id="orderTimeline">
+                        <div class="timeline-item completed">
+                            <div class="timeline-time">2024-08-20 10:30</div>
+                            <div class="timeline-content">订单已创建并分配给您</div>
+                        </div>
+                        <div class="timeline-item completed">
+                            <div class="timeline-time">2024-08-20 14:00</div>
+                            <div class="timeline-content">您已确认接单</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-time">进行中</div>
+                            <div class="timeline-content">翻译进行中</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="action-buttons" id="actionButtons">
+                    <button class="btn btn-primary" onclick="startWork()">开始翻译</button>
+                    <button class="btn btn-success" onclick="submitWork()">提交译文</button>
+                    <button class="btn btn-default" onclick="contactPM()">联系项目经理</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 检查登录状态
+        const currentTranslator = JSON.parse(localStorage.getItem('currentTranslator'));
+        if (!currentTranslator) {
+            window.location.href = 'login.html';
+        }
+
+        // 获取URL参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('id');
+
+        if (!orderId) {
+            alert('订单ID不存在');
+            window.location.href = 'orders.html';
+        }
+
+        // 模拟订单数据
+        const ordersData = {
+            'YD20240825001': {
+                name: '化工产品说明书翻译',
+                words: 5000,
+                rate: 0.15,
+                deadline: '2024-08-28',
+                status: 'pending',
+                desc: '需要将化工产品说明书从中文翻译成英文，涉及专业术语较多，请确保翻译准确。客户要求使用专业化工术语，并保持格式一致。',
+                files: [
+                    { name: '化工产品说明书_v1.docx', size: '1.2 MB' },
+                    { name: '术语表.xlsx', size: '156 KB' }
+                ]
+            },
+            'YD20240824002': {
+                name: '医疗器械注册资料',
+                words: 12000,
+                rate: 0.18,
+                deadline: '2024-08-30',
+                status: 'progress',
+                desc: '医疗器械注册资料翻译，包括产品说明、临床试验报告等。要求符合医疗器械行业标准，术语准确。',
+                files: [
+                    { name: '注册资料_完整版.pdf', size: '5.8 MB' },
+                    { name: '参考译文_sample.docx', size: '890 KB' }
+                ]
+            },
+            'YD20240820003': {
+                name: '法律合同文件',
+                words: 8000,
+                rate: 0.20,
+                deadline: '2024-08-25',
+                status: 'completed',
+                desc: '商务合同翻译，涉及国际贸易条款。已按时完成并交付。',
+                files: [
+                    { name: '合同原文.docx', size: '2.1 MB' }
+                ]
+            }
+        };
+
+        // 加载订单详情
+        const order = ordersData[orderId];
+        if (!order) {
+            alert('订单不存在');
+            window.location.href = 'orders.html';
+        }
+
+        // 填充页面数据
+        document.getElementById('orderName').textContent = order.name;
+        document.getElementById('orderId').textContent = orderId;
+        document.getElementById('orderWords').textContent = order.words.toLocaleString() + ' 字';
+        document.getElementById('orderRate').textContent = '¥' + order.rate + '/字';
+        document.getElementById('orderAmount').textContent = '¥' + (order.words * order.rate).toFixed(2);
+        document.getElementById('orderDeadline').textContent = order.deadline;
+        document.getElementById('orderDesc').textContent = order.desc;
+
+        // 设置状态
+        const statusEl = document.getElementById('orderStatus');
+        statusEl.className = 'status-badge status-' + order.status;
+        statusEl.textContent = getStatusText(order.status);
+
+        // 渲染文件列表
+        const filesHtml = order.files.map(file => `
+            <div class="file-item">
+                <span class="file-icon">📄</span>
+                <div class="file-info">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-size">${file.size}</div>
+                </div>
+                <a href="#" class="file-action" onclick="downloadFile('${file.name}')">下载</a>
+            </div>
+        `).join('');
+        document.getElementById('sourceFiles').innerHTML = filesHtml;
+
+        // 根据状态显示不同按钮
+        updateActionButtons(order.status);
+
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '待处理',
+                'progress': '进行中',
+                'completed': '已完成'
+            };
+            return statusMap[status] || status;
+        }
+
+        function updateActionButtons(status) {
+            const buttonsEl = document.getElementById('actionButtons');
+            if (status === 'completed') {
+                buttonsEl.innerHTML = `
+                    <button class="btn btn-default" onclick="contactPM()">联系项目经理</button>
+                `;
+            } else if (status === 'pending') {
+                buttonsEl.innerHTML = `
+                    <button class="btn btn-primary" onclick="acceptOrder()">接受订单</button>
+                    <button class="btn btn-default" onclick="contactPM()">联系项目经理</button>
+                `;
+            }
+        }
+
+        function acceptOrder() {
+            alert('订单已接受！请尽快开始翻译工作。');
+            // 实际应用中这里会调用API更新订单状态
+        }
+
+        function startWork() {
+            alert('开始翻译工作！请确保在截止日期前完成。');
+        }
+
+        function submitWork() {
+            alert('提交译文功能 - 这里可以上传完成的译文文件');
+        }
+
+        function contactPM() {
+            alert('联系项目经理：pm@yidafanyi.com');
+        }
+
+        function downloadFile(filename) {
+            alert('下载文件：' + filename);
+        }
+    </script>
+</body>
+</html>
