@@ -107,54 +107,56 @@
         </form>
     </div>
 
-    <!-- Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script>
-        // 使用 IIFE 避免全局变量污染
-        (function() {
-            // Supabase 配置
-            const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
-            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMTQ0NDIsImV4cCI6MjA3MTY5MDQ0Mn0.XBT_c6pP3nM2EYfH7EAbwjlZp2F4R2e8tM9V9p0Rr-c';
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+        
+        const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMTQ0NDIsImV4cCI6MjA3MTY5MDQ0Mn0.XBT_c6pP3nM2EYfH7EAbwjlZp2F4R2e8tM9V9p0Rr-c';
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
             
-            // 初始化 Supabase 客户端
-            const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-            document.getElementById('loginForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const username = document.getElementById('username').value;
-                const password = document.getElementById('password').value;
-
-                try {
-                    // 从 Supabase 查询译员
-                    const { data, error } = await supabaseClient
-                        .from('translators')
-                        .select('*')
-                        .eq('username', username)
-                        .single();
-
-                    if (error || !data) {
-                        alert('用户名或密码错误');
-                        return;
-                    }
-
-                    if (data.password === password) {
-                        // 登录成功，保存用户信息
-                        localStorage.setItem('currentTranslator', JSON.stringify({
-                            username: data.username,
-                            name: data.name,
-                            id: data.id
-                        }));
-                        // 跳转到订单列表
-                        window.location.href = 'orders.html';
-                    } else {
-                        alert('用户名或密码错误');
-                    }
-                } catch (err) {
-                    console.error('登录失败:', err);
-                    alert('登录失败，请检查网络连接');
+            try {
+                // 使用 Supabase Auth 登录
+                const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+                    email: username,
+                    password: password
+                });
+                
+                if (authError) {
+                    alert('登录失败：' + authError.message);
+                    return;
                 }
-            });
-        })();
+                
+                // 登录成功，从 translators 表获取额外信息
+                const { data: translatorData, error: translatorError } = await supabaseClient
+                    .from('translators')
+                    .select('*')
+                    .eq('email', username)
+                    .single();
+                
+                if (translatorError || !translatorData) {
+                    alert('未找到译员信息，请联系管理员');
+                    return;
+                }
+                
+                // 保存译员信息
+                localStorage.setItem('currentTranslator', JSON.stringify({
+                    username: username,
+                    name: translatorData.name,
+                    id: translatorData.id
+                }));
+                
+                // 跳转到订单列表
+                window.location.href = 'orders.html';
+            } catch (err) {
+                console.error('登录失败:', err);
+                alert('登录失败，请检查网络连接');
+            }
+        });
     </script>
 </body>
 </html>
