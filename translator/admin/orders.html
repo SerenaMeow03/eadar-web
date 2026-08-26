@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单管理 - 谊达翻译</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 20px;
+            font-weight: 500;
+        }
+        .nav-menu {
+            display: flex;
+            gap: 30px;
+        }
+        .nav-menu a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+        .nav-menu a:hover, .nav-menu a.active {
+            color: white;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.3s;
+        }
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .section-header h2 {
+            font-size: 20px;
+            color: #333;
+        }
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+        }
+        .filter-tab {
+            padding: 8px 16px;
+            border: 1px solid #d9d9d9;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .filter-tab:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        .filter-tab.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5a6fd6;
+        }
+        .btn-danger {
+            background: #ff4d4f;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #ff7875;
+        }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background: #d9d9d9;
+        }
+        .orders-table {
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .orders-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .orders-table th {
+            background: #fafafa;
+            padding: 16px;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .orders-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            color: #333;
+        }
+        .orders-table tr:hover {
+            background: #fafafa;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-pending {
+            background: #fff7e6;
+            color: #fa8c16;
+        }
+        .status-progress {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+        .status-completed {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+        .amount {
+            font-weight: 600;
+            color: #f5222d;
+        }
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+        .action-btns button {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h3 {
+            font-size: 18px;
+            color: #333;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+        .toast.success {
+            background: #52c41a;
+        }
+        .toast.error {
+            background: #ff4d4f;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>谊达翻译 · 管理后台</h1>
+            <nav class="nav-menu">
+                <a href="dashboard.html">首页</a>
+                <a href="translators.html">译员管理</a>
+                <a href="orders.html" class="active">订单管理</a>
+            </nav>
+            <div class="user-info">
+                <span>管理员</span>
+                <button class="logout-btn" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="section-header">
+            <h2>订单列表</h2>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all">全部</button>
+                    <button class="filter-tab" data-filter="pending">待处理</button>
+                    <button class="filter-tab" data-filter="progress">进行中</button>
+                    <button class="filter-tab" data-filter="completed">已完成</button>
+                </div>
+                <button class="btn btn-primary" onclick="openModal()">+ 登记订单</button>
+            </div>
+        </div>
+
+        <div class="orders-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>订单编号</th>
+                        <th>项目名称</th>
+                        <th>指派译员</th>
+                        <th>字数</th>
+                        <th>费率</th>
+                        <th>金额</th>
+                        <th>截止日期</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    <!-- 动态插入 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 登记/编辑订单弹窗 -->
+    <div class="modal" id="orderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">登记订单</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="orderForm">
+                <input type="hidden" id="orderId">
+                <div class="form-group">
+                    <label>项目名称 *</label>
+                    <input type="text" id="projectName" required placeholder="请输入项目名称">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>字数 *</label>
+                        <input type="number" id="wordCount" required placeholder="请输入字数" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>费率 (元/字) *</label>
+                        <input type="number" id="rate" required placeholder="如: 0.15" min="0.01" step="0.01">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>截止日期 *</label>
+                        <input type="date" id="deadline" required>
+                    </div>
+                    <div class="form-group">
+                        <label>指派译员 *</label>
+                        <select id="translatorId" required>
+                            <option value="">请选择译员</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <textarea id="remark" placeholder="可选：填写订单备注信息"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 检查登录状态
+        const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));
+        if (!currentAdmin || currentAdmin.role !== 'admin') {
+            window.location.href = 'login.html';
+        }
+
+        // 获取译员列表
+        function getTranslators() {
+            const defaultTranslators = [
+                { id: 'T001', name: '张三', username: 'translator1' },
+                { id: 'T002', name: '李四', username: 'translator2' },
+                { id: 'T003', name: '王五', username: 'translator3' }
+            ];
+            return JSON.parse(localStorage.getItem('adminTranslators')) || defaultTranslators;
+        }
+
+        // 获取订单列表
+        function getOrders() {
+            return JSON.parse(localStorage.getItem('adminOrders') || '[]');
+        }
+
+        // 保存订单列表
+        function saveOrders(orders) {
+            localStorage.setItem('adminOrders', JSON.stringify(orders));
+            // 同时更新译员端的订单数据
+            updateTranslatorOrders(orders);
+        }
+
+        // 更新译员端订单数据
+        function updateTranslatorOrders(orders) {
+            const translatorOrders = {};
+            orders.forEach(order => {
+                if (!translatorOrders[order.translatorId]) {
+                    translatorOrders[order.translatorId] = [];
+                }
+                translatorOrders[order.translatorId].push(order);
+            });
+            localStorage.setItem('translatorOrders', JSON.stringify(translatorOrders));
+        }
+
+        // 加载译员选项
+        function loadTranslatorOptions() {
+            const translators = getTranslators();
+            const select = document.getElementById('translatorId');
+            select.innerHTML = '<option value="">请选择译员</option>' + 
+                translators.map(t => `<option value="${t.id}">${t.name} (${t.username})</option>`).join('');
+        }
+
+        // 渲染订单列表
+        function renderOrders(filter = 'all') {
+            const orders = getOrders();
+            const translators = getTranslators();
+            const tbody = document.getElementById('ordersTableBody');
+            
+            const filteredOrders = filter === 'all' 
+                ? orders 
+                : orders.filter(o => o.status === filter);
+
+            if (filteredOrders.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <p>暂无订单</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filteredOrders.map(order => {
+                const translator = translators.find(t => t.id === order.translatorId);
+                const translatorName = translator ? translator.name : '未知';
+                
+                return `
+                    <tr>
+                        <td>${order.id}</td>
+                        <td>${order.projectName}</td>
+                        <td>${translatorName}</td>
+                        <td>${order.wordCount.toLocaleString()}</td>
+                        <td>¥${order.rate}</td>
+                        <td class="amount">¥${order.amount}</td>
+                        <td>${order.deadline}</td>
+                        <td><span class="status-badge status-${order.status}">${getStatusText(order.status)}</span></td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn btn-primary" onclick="editOrder('${order.id}')">编辑</button>
+                                <button class="btn btn-danger" onclick="deleteOrder('${order.id}')">删除</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 获取状态文本
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '待处理',
+                'progress': '进行中',
+                'completed': '已完成'
+            };
+            return statusMap[status] || status;
+        }
+
+        // 生成订单编号
+        function generateOrderId() {
+            const date = new Date();
+            const dateStr = date.toISOString().slice(0,10).replace(/-/g, '');
+            const orders = getOrders();
+            const count = orders.length + 1;
+            return `YD${dateStr}${String(count).padStart(3, '0')}`;
+        }
+
+        // 打开弹窗
+        function openModal(orderId = null) {
+            const modal = document.getElementById('orderModal');
+            const title = document.getElementById('modalTitle');
+            const form = document.getElementById('orderForm');
+            
+            loadTranslatorOptions();
+            
+            if (orderId) {
+                const orders = getOrders();
+                const order = orders.find(o => o.id === orderId);
+                if (order) {
+                    title.textContent = '编辑订单';
+                    document.getElementById('orderId').value = order.id;
+                    document.getElementById('projectName').value = order.projectName;
+                    document.getElementById('wordCount').value = order.wordCount;
+                    document.getElementById('rate').value = order.rate;
+                    document.getElementById('deadline').value = order.deadline;
+                    document.getElementById('translatorId').value = order.translatorId;
+                    document.getElementById('remark').value = order.remark || '';
+                }
+            } else {
+                title.textContent = '登记订单';
+                form.reset();
+                document.getElementById('orderId').value = '';
+                // 设置默认截止日期为7天后
+                const nextWeek = new Date();
+                nextWeek.setDate(nextWeek.getDate() + 7);
+                document.getElementById('deadline').value = nextWeek.toISOString().split('T')[0];
+            }
+            
+            modal.classList.add('active');
+        }
+
+        // 关闭弹窗
+        function closeModal() {
+            document.getElementById('orderModal').classList.remove('active');
+        }
+
+        // 编辑订单
+        function editOrder(id) {
+            openModal(id);
+        }
+
+        // 删除订单
+        function deleteOrder(id) {
+            if (!confirm('确定要删除该订单吗？')) return;
+            
+            let orders = getOrders();
+            orders = orders.filter(o => o.id !== id);
+            saveOrders(orders);
+            renderOrders(getCurrentFilter());
+            showToast('订单删除成功', 'success');
+        }
+
+        // 获取当前筛选状态
+        function getCurrentFilter() {
+            const activeTab = document.querySelector('.filter-tab.active');
+            return activeTab ? activeTab.dataset.filter : 'all';
+        }
+
+        // 显示提示
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // 表单提交
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('orderId').value;
+            const projectName = document.getElementById('projectName').value;
+            const wordCount = parseInt(document.getElementById('wordCount').value);
+            const rate = parseFloat(document.getElementById('rate').value);
+            const deadline = document.getElementById('deadline').value;
+            const translatorId = document.getElementById('translatorId').value;
+            const remark = document.getElementById('remark').value;
+            
+            const amount = (wordCount * rate).toFixed(2);
+            
+            let orders = getOrders();
+            
+            if (id) {
+                // 编辑
+                const index = orders.findIndex(o => o.id === id);
+                if (index !== -1) {
+                    orders[index] = {
+                        ...orders[index],
+                        projectName,
+                        wordCount,
+                        rate,
+                        amount,
+                        deadline,
+                        translatorId,
+                        remark
+                    };
+                }
+                showToast('订单更新成功', 'success');
+            } else {
+                // 添加
+                const newOrder = {
+                    id: generateOrderId(),
+                    projectName,
+                    wordCount,
+                    rate,
+                    amount,
+                    deadline,
+                    translatorId,
+                    remark,
+                    status: 'pending',
+                    createdAt: new Date().toISOString().split('T')[0]
+                };
+                orders.push(newOrder);
+                showToast('订单登记成功', 'success');
+            }
+            
+            saveOrders(orders);
+            renderOrders(getCurrentFilter());
+            closeModal();
+        });
+
+        // 筛选标签切换
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                renderOrders(this.dataset.filter);
+            });
+        });
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('currentAdmin');
+            window.location.href = 'login.html';
+        }
+
+        // 初始化
+        renderOrders();
+    </script>
+</body>
+</html>

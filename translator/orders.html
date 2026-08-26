@@ -271,55 +271,26 @@
         // 显示译员姓名
         document.getElementById('userName').textContent = currentTranslator.name;
 
-        // 模拟订单数据
-        const ordersData = [
-            {
-                id: 'YD20240825001',
-                name: '化工产品说明书翻译',
-                words: 5000,
-                rate: 0.15,
-                deadline: '2024-08-28',
-                status: 'pending'
-            },
-            {
-                id: 'YD20240824002',
-                name: '医疗器械注册资料',
-                words: 12000,
-                rate: 0.18,
-                deadline: '2024-08-30',
-                status: 'progress'
-            },
-            {
-                id: 'YD20240820003',
-                name: '法律合同文件',
-                words: 8000,
-                rate: 0.20,
-                deadline: '2024-08-25',
-                status: 'completed'
-            },
-            {
-                id: 'YD20240815004',
-                name: '技术规格书翻译',
-                words: 15000,
-                rate: 0.16,
-                deadline: '2024-08-20',
-                status: 'completed'
-            },
-            {
-                id: 'YD20240810005',
-                name: '市场调研报告',
-                words: 6000,
-                rate: 0.14,
-                deadline: '2024-08-15',
-                status: 'completed'
-            }
-        ];
+        // 获取译员的订单数据（从管理员系统同步）
+        function getMyOrders() {
+            const allOrders = JSON.parse(localStorage.getItem('adminOrders') || '[]');
+            // 根据译员ID过滤订单
+            return allOrders
+                .filter(order => order.translatorId === currentTranslator.id)
+                .map(order => ({
+                    id: order.id,
+                    name: order.projectName,
+                    words: order.wordCount,
+                    rate: order.rate,
+                    amount: order.amount,
+                    deadline: order.deadline,
+                    status: order.status,
+                    remark: order.remark
+                }));
+        }
 
-        // 根据译员ID过滤订单（模拟）
-        const myOrders = ordersData.map(order => ({
-            ...order,
-            amount: (order.words * order.rate).toFixed(2)
-        }));
+        // 当前译员的订单
+        let myOrders = getMyOrders();
 
         // 渲染订单列表
         function renderOrders(filter = 'all') {
@@ -397,8 +368,19 @@
         });
 
         // 初始化
+        myOrders = getMyOrders();
         renderOrders();
         updateStats();
+        
+        // 监听存储变化，实时更新订单
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'adminOrders') {
+                myOrders = getMyOrders();
+                const activeFilter = document.querySelector('.filter-tab.active');
+                renderOrders(activeFilter ? activeFilter.dataset.filter : 'all');
+                updateStats();
+            }
+        });
     </script>
 </body>
 </html>
