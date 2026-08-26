@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>个人信息 - 谊达翻译</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -391,6 +393,11 @@
     </div>
 
     <script>
+        // Supabase 配置
+        const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         // 检查登录状态
         const currentTranslator = JSON.parse(localStorage.getItem('currentTranslator'));
         if (!currentTranslator) {
@@ -402,7 +409,7 @@
         document.getElementById('profileName').textContent = currentTranslator.name;
         document.getElementById('profileId').textContent = currentTranslator.id;
 
-        // 模拟译员详细信息
+        // 译员详细信息
         let translatorData = {
             realName: currentTranslator.name,
             phone: '138****8888',
@@ -418,11 +425,23 @@
             urgentRate: '200'
         };
 
-        // 从localStorage读取保存的银行信息
-        const savedBankInfo = localStorage.getItem('translatorBankInfo_' + currentTranslator.id);
-        if (savedBankInfo) {
-            const bankInfo = JSON.parse(savedBankInfo);
-            translatorData = { ...translatorData, ...bankInfo };
+        // 从 Supabase 加载译员数据（包括银行信息）
+        async function loadTranslatorData() {
+            try {
+                const { data, error } = await supabase
+                    .from('translators')
+                    .select('*')
+                    .eq('id', currentTranslator.id)
+                    .single();
+                
+                if (data && data.bank_info) {
+                    const bankInfo = data.bank_info;
+                    translatorData = { ...translatorData, ...bankInfo };
+                    fillForm();
+                }
+            } catch (err) {
+                console.error('加载数据失败:', err);
+            }
         }
 
         // 填充表单数据
@@ -462,7 +481,7 @@
             toggleBankEdit();
         }
 
-        function saveBankInfo() {
+        async function saveBankInfo() {
             const bankName = document.getElementById('bankName').value.trim();
             const bankCard = document.getElementById('bankCard').value.trim();
             const bankHolder = document.getElementById('bankHolder').value.trim();
@@ -472,29 +491,39 @@
                 return;
             }
 
-            // 保存到localStorage（实际应用中应该调用API保存到服务器）
             const bankInfo = {
                 bankName: bankName,
                 bankCard: bankCard,
                 bankHolder: bankHolder,
                 bankBranch: document.getElementById('bankBranch').value.trim()
             };
-            localStorage.setItem('translatorBankInfo_' + currentTranslator.id, JSON.stringify(bankInfo));
 
-            // 更新本地数据
-            translatorData = { ...translatorData, ...bankInfo };
+            try {
+                // 保存到 Supabase
+                const { error } = await supabase
+                    .from('translators')
+                    .update({ bank_info: bankInfo })
+                    .eq('id', currentTranslator.id);
 
-            // 退出编辑模式 - 直接调用而不是通过 toggle
-            isBankEditing = false;
-            const inputs = ['bankName', 'bankCard', 'bankHolder', 'bankBranch'];
-            inputs.forEach(id => {
-                document.getElementById(id).readOnly = true;
-                document.getElementById(id).style.background = '#fafafa';
-            });
-            document.getElementById('editBankBtn').style.display = 'inline-block';
-            document.getElementById('bankButtons').style.display = 'none';
+                if (error) {
+                    alert('保存失败：' + error.message);
+                    return;
+                }
 
-            // 显示成功消息
+                // 更新本地数据
+                translatorData = { ...translatorData, ...bankInfo };
+
+                // 退出编辑模式
+                isBankEditing = false;
+                const inputs = ['bankName', 'bankCard', 'bankHolder', 'bankBranch'];
+                inputs.forEach(id => {
+                    document.getElementById(id).readOnly = true;
+                    document.getElementById(id).style.background = '#fafafa';
+                });
+                document.getElementById('editBankBtn').style.display = 'inline-block';
+                document.getElementById('bankButtons').style.display = 'none';
+
+                // 显示成功消息
             const successMsg = document.getElementById('successMessage');
             successMsg.classList.add('show');
             setTimeout(() => successMsg.classList.remove('show'), 3000);
@@ -525,7 +554,7 @@
             togglePasswordEdit();
         }
 
-        function savePassword() {
+        async function savePassword() {
             const currentPwd = document.getElementById('currentPassword').value;
             const newPwd = document.getElementById('newPassword').value;
             const confirmPwd = document.getElementById('confirmPassword').value;
@@ -546,27 +575,35 @@
                 return;
             }
 
-            // 获取译员账号数据
-            const translatorAccounts = JSON.parse(localStorage.getItem('translatorAccounts') || '{}');
-            const username = currentTranslator.username;
+            try {
+                // 从 Supabase 获取当前译员数据验证密码
+                const { data, error } = await supabase
+                    .from('translators')
+                    .select('password')
+                    .eq('id', currentTranslator.id)
+                    .single();
 
-            // 验证当前密码
-            if (!translatorAccounts[username] || translatorAccounts[username].password !== currentPwd) {
-                alert('当前密码错误');
-                return;
-            }
+                if (error || !data) {
+                    alert('验证失败');
+                    return;
+                }
 
-            // 更新密码
-            translatorAccounts[username].password = newPwd;
-            localStorage.setItem('translatorAccounts', JSON.stringify(translatorAccounts));
+                // 验证当前密码
+                if (data.password !== currentPwd) {
+                    alert('当前密码错误');
+                    return;
+                }
 
-            // 同时更新 adminTranslators 中的密码
-            const adminTranslators = JSON.parse(localStorage.getItem('adminTranslators') || '[]');
-            const translatorIndex = adminTranslators.findIndex(t => t.username === username);
-            if (translatorIndex !== -1) {
-                adminTranslators[translatorIndex].password = newPwd;
-                localStorage.setItem('adminTranslators', JSON.stringify(adminTranslators));
-            }
+                // 更新密码到 Supabase
+                const { error: updateError } = await supabase
+                    .from('translators')
+                    .update({ password: newPwd })
+                    .eq('id', currentTranslator.id);
+
+                if (updateError) {
+                    alert('密码修改失败：' + updateError.message);
+                    return;
+                }
 
             // 退出编辑模式
             isPasswordEditing = false;
@@ -590,7 +627,12 @@
         }
 
         // 初始化
-        fillForm();
+        async function init() {
+            fillForm();
+            await loadTranslatorData();
+        }
+        
+        init();
     </script>
 </body>
 </html>

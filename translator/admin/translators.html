@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>译员管理 - 谊达翻译</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -260,6 +261,11 @@
                 opacity: 1;
             }
         }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
     </style>
 </head>
 <body>
@@ -300,7 +306,7 @@
                     </tr>
                 </thead>
                 <tbody id="translatorsTableBody">
-                    <!-- 动态插入 -->
+                    <tr><td colspan="6" class="loading">加载中...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -336,48 +342,48 @@
     </div>
 
     <script>
+        // Supabase 配置
+        const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         // 检查登录状态
         const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));
         if (!currentAdmin || currentAdmin.role !== 'admin') {
             window.location.href = 'login.html';
         }
 
-        // 默认译员数据
-        const defaultTranslators = [
-            { id: 'T001', name: '张三', username: 'translator1', password: '123456', bankInfo: null, createdAt: '2024-08-01' },
-            { id: 'T002', name: '李四', username: 'translator2', password: '123456', bankInfo: null, createdAt: '2024-08-01' },
-            { id: 'T003', name: '王五', username: 'translator3', password: '123456', bankInfo: null, createdAt: '2024-08-01' }
-        ];
+        // 从 Supabase 加载译员列表
+        async function loadTranslators() {
+            const { data, error } = await supabase
+                .from('translators')
+                .select('*')
+                .order('created_at', { ascending: false });
 
-        // 获取译员列表
-        function getTranslators() {
-            return JSON.parse(localStorage.getItem('adminTranslators')) || defaultTranslators;
-        }
-
-        // 保存译员列表
-        function saveTranslators(translators) {
-            localStorage.setItem('adminTranslators', JSON.stringify(translators));
-            // 同时更新译员端可访问的数据
-            const translatorAccounts = {};
-            translators.forEach(t => {
-                translatorAccounts[t.username] = {
-                    password: t.password,
-                    name: t.name,
-                    id: t.id
-                };
-            });
-            localStorage.setItem('translatorAccounts', JSON.stringify(translatorAccounts));
+            if (error) {
+                showToast('加载译员列表失败: ' + error.message, 'error');
+                return [];
+            }
+            return data || [];
         }
 
         // 渲染译员列表
-        function renderTranslators() {
-            const translators = getTranslators();
+        async function renderTranslators() {
+            const translators = await loadTranslators();
             const tbody = document.getElementById('translatorsTableBody');
             
+            if (translators.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="loading">暂无译员数据</td></tr>';
+                return;
+            }
+            
             tbody.innerHTML = translators.map(t => {
-                const bankStatus = t.bankInfo 
-                    ? `<div class="bank-info">已填写: ${t.bankInfo.bankName}</div>`
+                const bankInfo = t.bank_info;
+                const bankStatus = bankInfo && bankInfo.bankName
+                    ? `<div class="bank-info">已填写: ${bankInfo.bankName}</div>`
                     : `<div class="bank-info empty">未填写</div>`;
+                
+                const createdAt = t.created_at ? t.created_at.split('T')[0] : '-';
                 
                 return `
                     <tr>
@@ -385,7 +391,7 @@
                         <td>${t.name}</td>
                         <td>${t.username}</td>
                         <td>${bankStatus}</td>
-                        <td>${t.createdAt}</td>
+                        <td>${createdAt}</td>
                         <td>
                             <div class="action-btns">
                                 <button class="btn btn-primary" onclick="editTranslator('${t.id}')">编辑</button>
@@ -398,21 +404,28 @@
         }
 
         // 打开弹窗
-        function openModal(translatorId = null) {
+        async function openModal(translatorId = null) {
             const modal = document.getElementById('translatorModal');
             const title = document.getElementById('modalTitle');
             const form = document.getElementById('translatorForm');
             
             if (translatorId) {
-                const translators = getTranslators();
-                const t = translators.find(x => x.id === translatorId);
-                if (t) {
-                    title.textContent = '编辑译员';
-                    document.getElementById('translatorId').value = t.id;
-                    document.getElementById('name').value = t.name;
-                    document.getElementById('username').value = t.username;
-                    document.getElementById('password').value = t.password;
+                const { data, error } = await supabase
+                    .from('translators')
+                    .select('*')
+                    .eq('id', translatorId)
+                    .single();
+                
+                if (error) {
+                    showToast('获取译员信息失败', 'error');
+                    return;
                 }
+                
+                title.textContent = '编辑译员';
+                document.getElementById('translatorId').value = data.id;
+                document.getElementById('name').value = data.name;
+                document.getElementById('username').value = data.username;
+                document.getElementById('password').value = data.password;
             } else {
                 title.textContent = '添加译员';
                 form.reset();
@@ -433,13 +446,20 @@
         }
 
         // 删除译员
-        function deleteTranslator(id) {
+        async function deleteTranslator(id) {
             if (!confirm('确定要删除该译员吗？')) return;
             
-            let translators = getTranslators();
-            translators = translators.filter(t => t.id !== id);
-            saveTranslators(translators);
-            renderTranslators();
+            const { error } = await supabase
+                .from('translators')
+                .delete()
+                .eq('id', id);
+            
+            if (error) {
+                showToast('删除失败: ' + error.message, 'error');
+                return;
+            }
+            
+            await renderTranslators();
             showToast('删除成功', 'success');
         }
 
@@ -453,7 +473,7 @@
         }
 
         // 表单提交
-        document.getElementById('translatorForm').addEventListener('submit', function(e) {
+        document.getElementById('translatorForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const id = document.getElementById('translatorId').value;
@@ -461,39 +481,32 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             
-            let translators = getTranslators();
-            
             if (id) {
                 // 编辑
-                const index = translators.findIndex(t => t.id === id);
-                if (index !== -1) {
-                    // 保留原有的银行卡信息
-                    const bankInfo = translators[index].bankInfo;
-                    translators[index] = { 
-                        ...translators[index], 
-                        name, 
-                        username, 
-                        password 
-                    };
+                const { error } = await supabase
+                    .from('translators')
+                    .update({ name, username, password })
+                    .eq('id', id);
+                
+                if (error) {
+                    showToast('更新失败: ' + error.message, 'error');
+                    return;
                 }
                 showToast('译员信息更新成功', 'success');
             } else {
                 // 添加
-                const newId = 'T' + String(translators.length + 1).padStart(3, '0');
-                const today = new Date().toISOString().split('T')[0];
-                translators.push({
-                    id: newId,
-                    name,
-                    username,
-                    password,
-                    bankInfo: null,
-                    createdAt: today
-                });
+                const { error } = await supabase
+                    .from('translators')
+                    .insert([{ name, username, password }]);
+                
+                if (error) {
+                    showToast('添加失败: ' + error.message, 'error');
+                    return;
+                }
                 showToast('译员添加成功', 'success');
             }
             
-            saveTranslators(translators);
-            renderTranslators();
+            await renderTranslators();
             closeModal();
         });
 

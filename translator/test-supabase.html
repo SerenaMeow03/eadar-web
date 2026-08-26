@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase 连接测试 - 谊达翻译</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f7fa;
+        }
+        h1 {
+            color: #1a1a2e;
+            text-align: center;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-item {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #f6ffed;
+            color: #52c41a;
+            border-left: 4px solid #52c41a;
+        }
+        .error {
+            background: #fff1f0;
+            color: #ff4d4f;
+            border-left: 4px solid #ff4d4f;
+        }
+        .pending {
+            background: #e6f7ff;
+            color: #1890ff;
+            border-left: 4px solid #1890ff;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #5a6fd6;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Supabase 连接测试</h1>
+    
+    <div class="test-section">
+        <h3>配置信息</h3>
+        <p><strong>Supabase URL:</strong> <span id="url"></span></p>
+        <p><strong>Supabase Key:</strong> <span id="key"></span></p>
+    </div>
+
+    <div class="test-section">
+        <h3>测试项目</h3>
+        <div id="testResults"></div>
+        <button onclick="runAllTests()">运行所有测试</button>
+    </div>
+
+    <script>
+        // Supabase 配置
+        const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
+        const SUPABASE_KEY = '***';
+        
+        // 等待 Supabase SDK 加载
+        let supabase;
+        function initSupabase() {
+            if (window.supabase) {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log('Supabase 初始化成功');
+                return true;
+            }
+            console.log('Supabase SDK 未加载，等待...');
+            return false;
+        }
+        
+        // 尝试初始化
+        if (!initSupabase()) {
+            // 如果还没加载，等 500ms 再试
+            setTimeout(initSupabase, 500);
+        }
+
+        // 显示配置
+        document.getElementById('url').textContent = SUPABASE_URL;
+        document.getElementById('key').textContent = SUPABASE_KEY.substring(0, 20) + '...';
+
+        const resultsDiv = document.getElementById('testResults');
+
+        function addResult(name, status, message) {
+            const div = document.createElement('div');
+            div.className = `test-item ${status}`;
+            div.innerHTML = `<strong>${name}</strong>: ${message}`;
+            resultsDiv.appendChild(div);
+        }
+
+        async function testConnection() {
+            try {
+                const { data, error } = await supabase.from('admin').select('count').single();
+                if (error) throw error;
+                addResult('数据库连接', 'success', '连接成功');
+                return true;
+            } catch (err) {
+                addResult('数据库连接', 'error', err.message);
+                return false;
+            }
+        }
+
+        async function testAdminLogin() {
+            try {
+                const { data, error } = await supabase
+                    .from('admin')
+                    .select('*')
+                    .eq('username', 'admin')
+                    .eq('password', '123456')
+                    .single();
+                
+                if (error) throw error;
+                if (data) {
+                    addResult('管理员登录', 'success', `找到管理员: ${data.username}`);
+                } else {
+                    addResult('管理员登录', 'error', '管理员账号不存在');
+                }
+            } catch (err) {
+                addResult('管理员登录', 'error', err.message);
+            }
+        }
+
+        async function testTranslators() {
+            try {
+                const { data, error } = await supabase
+                    .from('translators')
+                    .select('*');
+                
+                if (error) throw error;
+                addResult('译员列表', 'success', `找到 ${data.length} 名译员`);
+                if (data.length > 0) {
+                    addResult('译员详情', 'success', `第一个译员: ${data[0].name} (${data[0].username})`);
+                }
+            } catch (err) {
+                addResult('译员列表', 'error', err.message);
+            }
+        }
+
+        async function testOrders() {
+            try {
+                const { data, error } = await supabase
+                    .from('orders')
+                    .select('*');
+                
+                if (error) throw error;
+                addResult('订单列表', 'success', `找到 ${data.length} 个订单`);
+            } catch (err) {
+                addResult('订单列表', 'error', err.message);
+            }
+        }
+
+        async function testInsertTranslator() {
+            try {
+                const testId = 'TEST' + Date.now();
+                const { data, error } = await supabase
+                    .from('translators')
+                    .insert([{
+                        id: testId,
+                        name: '测试译员',
+                        username: 'test' + Date.now(),
+                        password: 'test123'
+                    }])
+                    .select();
+                
+                if (error) throw error;
+                addResult('插入译员', 'success', `成功插入测试译员: ${testId}`);
+                
+                // 清理测试数据
+                await supabase.from('translators').delete().eq('id', testId);
+                addResult('清理测试数据', 'success', '已删除测试译员');
+            } catch (err) {
+                addResult('插入译员', 'error', err.message);
+            }
+        }
+
+        async function runAllTests() {
+            console.log('runAllTests 被调用');
+            resultsDiv.innerHTML = '';
+            addResult('开始测试', 'pending', '正在运行测试...');
+            
+            // 检查 supabase 是否初始化
+            if (!supabase) {
+                addResult('初始化检查', 'error', 'Supabase 客户端未初始化');
+                return;
+            }
+            addResult('初始化检查', 'success', 'Supabase 客户端已初始化');
+            
+            const connected = await testConnection();
+            if (!connected) {
+                addResult('测试中断', 'error', '数据库连接失败，后续测试跳过');
+                return;
+            }
+            
+            await testAdminLogin();
+            await testTranslators();
+            await testOrders();
+            await testInsertTranslator();
+            
+            addResult('测试完成', 'success', '所有测试已执行完毕');
+        }
+
+        // 页面加载时自动运行测试
+        window.onload = function() {
+            console.log('页面加载完成，开始测试...');
+            runAllTests();
+        };
+    </script>
+</body>
+</html>

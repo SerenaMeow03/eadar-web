@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理员登录 - 谊达翻译</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -119,40 +120,36 @@
     </div>
 
     <script>
-        // 默认管理员账号
-        const defaultAdmin = {
-            username: 'admin',
-            password: '123456'
-        };
+        // Supabase 配置
+        const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 获取管理员账号（优先从 localStorage 读取，否则使用默认）
-        function getAdminAccount() {
-            const stored = localStorage.getItem('adminAccount');
-            if (stored) {
-                return JSON.parse(stored);
-            }
-            // 首次使用，保存默认账号到 localStorage
-            localStorage.setItem('adminAccount', JSON.stringify(defaultAdmin));
-            return defaultAdmin;
-        }
-
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
-            const adminAccount = getAdminAccount();
-            if (username === adminAccount.username && password === adminAccount.password) {
-                // 登录成功，保存管理员信息
-                localStorage.setItem('currentAdmin', JSON.stringify({
-                    username: username,
-                    role: 'admin'
-                }));
-                // 跳转到管理后台
-                window.location.href = 'dashboard.html';
-            } else {
+            // 从 Supabase 验证管理员账号
+            const { data, error } = await supabase
+                .from('admin')
+                .select('*')
+                .eq('username', username)
+                .eq('password', password)
+                .single();
+
+            if (error || !data) {
                 alert('用户名或密码错误');
+                return;
             }
+
+            // 登录成功，保存管理员信息
+            localStorage.setItem('currentAdmin', JSON.stringify({
+                username: username,
+                role: 'admin'
+            }));
+            // 跳转到管理后台
+            window.location.href = 'dashboard.html';
         });
     </script>
 </body>

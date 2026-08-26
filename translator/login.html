@@ -105,43 +105,47 @@
 
     </div>
 
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script>
-        // 默认译员数据
-        const defaultTranslators = {
-            'translator1': { password: '123456', name: '张三', id: 'T001' },
-            'translator2': { password: '123456', name: '李四', id: 'T002' },
-            'translator3': { password: '123456', name: '王五', id: 'T003' }
-        };
+        // Supabase 配置
+        const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 获取译员账号数据（优先从管理员同步的数据读取）
-        function getTranslators() {
-            const storedAccounts = localStorage.getItem('translatorAccounts');
-            if (storedAccounts) {
-                return JSON.parse(storedAccounts);
-            }
-            // 如果没有存储的数据，使用默认数据并保存
-            localStorage.setItem('translatorAccounts', JSON.stringify(defaultTranslators));
-            return defaultTranslators;
-        }
-
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
-            const translators = getTranslators();
-            const translator = translators[username];
-            if (translator && translator.password === password) {
-                // 登录成功，保存用户信息
-                localStorage.setItem('currentTranslator', JSON.stringify({
-                    username: username,
-                    name: translator.name,
-                    id: translator.id
-                }));
-                // 跳转到订单列表
-                window.location.href = 'orders.html';
-            } else {
-                alert('用户名或密码错误');
+            try {
+                // 从 Supabase 查询译员
+                const { data, error } = await supabase
+                    .from('translators')
+                    .select('*')
+                    .eq('username', username)
+                    .single();
+
+                if (error || !data) {
+                    alert('用户名或密码错误');
+                    return;
+                }
+
+                if (data.password === password) {
+                    // 登录成功，保存用户信息
+                    localStorage.setItem('currentTranslator', JSON.stringify({
+                        username: data.username,
+                        name: data.name,
+                        id: data.id
+                    }));
+                    // 跳转到订单列表
+                    window.location.href = 'orders.html';
+                } else {
+                    alert('用户名或密码错误');
+                }
+            } catch (err) {
+                console.error('登录失败:', err);
+                alert('登录失败，请检查网络连接');
             }
         });
     </script>

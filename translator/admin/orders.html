@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>订单管理 - 谊达翻译</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -320,6 +321,11 @@
             font-size: 48px;
             margin-bottom: 16px;
         }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
     </style>
 </head>
 <body>
@@ -372,7 +378,7 @@
                     </tr>
                 </thead>
                 <tbody id="ordersTableBody">
-                    <!-- 动态插入 -->
+                    <tr><td colspan="10" class="loading">加载中...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -443,58 +449,57 @@
     </div>
 
     <script>
+        // Supabase 配置
+        const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         // 检查登录状态
         const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));
         if (!currentAdmin || currentAdmin.role !== 'admin') {
             window.location.href = 'login.html';
         }
 
-        // 获取译员列表
-        function getTranslators() {
-            const defaultTranslators = [
-                { id: 'T001', name: '张三', username: 'translator1' },
-                { id: 'T002', name: '李四', username: 'translator2' },
-                { id: 'T003', name: '王五', username: 'translator3' }
-            ];
-            return JSON.parse(localStorage.getItem('adminTranslators')) || defaultTranslators;
+        // 从 Supabase 加载译员列表
+        async function loadTranslators() {
+            const { data, error } = await supabase
+                .from('translators')
+                .select('id, name, username')
+                .order('name');
+            
+            if (error) {
+                showToast('加载译员列表失败', 'error');
+                return [];
+            }
+            return data || [];
         }
 
-        // 获取订单列表
-        function getOrders() {
-            return JSON.parse(localStorage.getItem('adminOrders') || '[]');
-        }
-
-        // 保存订单列表
-        function saveOrders(orders) {
-            localStorage.setItem('adminOrders', JSON.stringify(orders));
-            // 同时更新译员端的订单数据
-            updateTranslatorOrders(orders);
-        }
-
-        // 更新译员端订单数据
-        function updateTranslatorOrders(orders) {
-            const translatorOrders = {};
-            orders.forEach(order => {
-                if (!translatorOrders[order.translatorId]) {
-                    translatorOrders[order.translatorId] = [];
-                }
-                translatorOrders[order.translatorId].push(order);
-            });
-            localStorage.setItem('translatorOrders', JSON.stringify(translatorOrders));
+        // 从 Supabase 加载订单列表
+        async function loadOrders() {
+            const { data, error } = await supabase
+                .from('orders')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (error) {
+                showToast('加载订单列表失败: ' + error.message, 'error');
+                return [];
+            }
+            return data || [];
         }
 
         // 加载译员选项
-        function loadTranslatorOptions() {
-            const translators = getTranslators();
+        async function loadTranslatorOptions() {
+            const translators = await loadTranslators();
             const select = document.getElementById('translatorId');
             select.innerHTML = '<option value="">请选择译员</option>' + 
                 translators.map(t => `<option value="${t.id}">${t.name} (${t.username})</option>`).join('');
         }
 
         // 渲染订单列表
-        function renderOrders(filter = 'all') {
-            const orders = getOrders();
-            const translators = getTranslators();
+        async function renderOrders(filter = 'all') {
+            const orders = await loadOrders();
+            const translators = await loadTranslators();
             const tbody = document.getElementById('ordersTableBody');
             
             const filteredOrders = filter === 'all' 
@@ -504,7 +509,7 @@
             if (filteredOrders.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="9" class="empty-state">
+                        <td colspan="10" class="empty-state">
                             <div class="empty-state-icon">📋</div>
                             <p>暂无订单</p>
                         </td>
@@ -514,19 +519,20 @@
             }
 
             tbody.innerHTML = filteredOrders.map(order => {
-                const translator = translators.find(t => t.id === order.translatorId);
+                const translator = translators.find(t => t.id === order.translator_id);
                 const translatorName = translator ? translator.name : '未知';
-                const paymentStatus = order.paymentStatus || 'unpaid';
+                const paymentStatus = order.payment_status || 'unpaid';
+                const deadline = order.deadline ? order.deadline.split('T')[0] : '-';
                 
                 return `
                     <tr>
                         <td>${order.id}</td>
-                        <td>${order.projectName}</td>
+                        <td>${order.project_name}</td>
                         <td>${translatorName}</td>
-                        <td>${order.wordCount.toLocaleString()}</td>
+                        <td>${order.word_count?.toLocaleString() || 0}</td>
                         <td>¥${order.rate}</td>
                         <td class="amount">¥${order.amount}</td>
-                        <td>${order.deadline}</td>
+                        <td>${deadline}</td>
                         <td><span class="status-badge status-${order.status}">${getStatusText(order.status)}</span></td>
                         <td><span class="status-badge payment-${paymentStatus}">${getPaymentStatusText(paymentStatus)}</span></td>
                         <td>
@@ -559,38 +565,36 @@
             return statusMap[status] || '未结算';
         }
 
-        // 生成订单编号
-        function generateOrderId() {
-            const date = new Date();
-            const dateStr = date.toISOString().slice(0,10).replace(/-/g, '');
-            const orders = getOrders();
-            const count = orders.length + 1;
-            return `YD${dateStr}${String(count).padStart(3, '0')}`;
-        }
-
         // 打开弹窗
-        function openModal(orderId = null) {
+        async function openModal(orderId = null) {
             const modal = document.getElementById('orderModal');
             const title = document.getElementById('modalTitle');
             const form = document.getElementById('orderForm');
             
-            loadTranslatorOptions();
+            await loadTranslatorOptions();
             
             if (orderId) {
-                const orders = getOrders();
-                const order = orders.find(o => o.id === orderId);
-                if (order) {
-                    title.textContent = '编辑订单';
-                    document.getElementById('orderId').value = order.id;
-                    document.getElementById('projectName').value = order.projectName;
-                    document.getElementById('wordCount').value = order.wordCount;
-                    document.getElementById('rate').value = order.rate;
-                    document.getElementById('deadline').value = order.deadline;
-                    document.getElementById('translatorId').value = order.translatorId;
-                    document.getElementById('status').value = order.status || 'pending';
-                    document.getElementById('paymentStatus').value = order.paymentStatus || 'unpaid';
-                    document.getElementById('remark').value = order.remark || '';
+                const { data: order, error } = await supabase
+                    .from('orders')
+                    .select('*')
+                    .eq('id', orderId)
+                    .single();
+                
+                if (error) {
+                    showToast('获取订单信息失败', 'error');
+                    return;
                 }
+                
+                title.textContent = '编辑订单';
+                document.getElementById('orderId').value = order.id;
+                document.getElementById('projectName').value = order.project_name;
+                document.getElementById('wordCount').value = order.word_count;
+                document.getElementById('rate').value = order.rate;
+                document.getElementById('deadline').value = order.deadline ? order.deadline.split('T')[0] : '';
+                document.getElementById('translatorId').value = order.translator_id;
+                document.getElementById('status').value = order.status || 'pending';
+                document.getElementById('paymentStatus').value = order.payment_status || 'unpaid';
+                document.getElementById('remark').value = order.remark || '';
             } else {
                 title.textContent = '登记订单';
                 form.reset();
@@ -615,13 +619,20 @@
         }
 
         // 删除订单
-        function deleteOrder(id) {
+        async function deleteOrder(id) {
             if (!confirm('确定要删除该订单吗？')) return;
             
-            let orders = getOrders();
-            orders = orders.filter(o => o.id !== id);
-            saveOrders(orders);
-            renderOrders(getCurrentFilter());
+            const { error } = await supabase
+                .from('orders')
+                .delete()
+                .eq('id', id);
+            
+            if (error) {
+                showToast('删除失败: ' + error.message, 'error');
+                return;
+            }
+            
+            await renderOrders(getCurrentFilter());
             showToast('订单删除成功', 'success');
         }
 
@@ -641,7 +652,7 @@
         }
 
         // 表单提交
-        document.getElementById('orderForm').addEventListener('submit', function(e) {
+        document.getElementById('orderForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const id = document.getElementById('orderId').value;
@@ -656,47 +667,44 @@
             
             const amount = (wordCount * rate).toFixed(2);
             
-            let orders = getOrders();
+            const orderData = {
+                project_name: projectName,
+                word_count: wordCount,
+                rate: rate,
+                amount: amount,
+                deadline: deadline,
+                translator_id: translatorId,
+                status: status,
+                payment_status: paymentStatus,
+                remark: remark
+            };
             
             if (id) {
                 // 编辑
-                const index = orders.findIndex(o => o.id === id);
-                if (index !== -1) {
-                    orders[index] = {
-                        ...orders[index],
-                        projectName,
-                        wordCount,
-                        rate,
-                        amount,
-                        deadline,
-                        translatorId,
-                        status,
-                        paymentStatus,
-                        remark
-                    };
+                const { error } = await supabase
+                    .from('orders')
+                    .update(orderData)
+                    .eq('id', id);
+                
+                if (error) {
+                    showToast('更新失败: ' + error.message, 'error');
+                    return;
                 }
                 showToast('订单更新成功', 'success');
             } else {
                 // 添加
-                const newOrder = {
-                    id: generateOrderId(),
-                    projectName,
-                    wordCount,
-                    rate,
-                    amount,
-                    deadline,
-                    translatorId,
-                    status,
-                    paymentStatus,
-                    remark,
-                    createdAt: new Date().toISOString().split('T')[0]
-                };
-                orders.push(newOrder);
+                const { error } = await supabase
+                    .from('orders')
+                    .insert([orderData]);
+                
+                if (error) {
+                    showToast('登记失败: ' + error.message, 'error');
+                    return;
+                }
                 showToast('订单登记成功', 'success');
             }
             
-            saveOrders(orders);
-            renderOrders(getCurrentFilter());
+            await renderOrders(getCurrentFilter());
             closeModal();
         });
 

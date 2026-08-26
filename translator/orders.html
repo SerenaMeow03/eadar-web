@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的订单 - 谊达翻译</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -290,6 +291,11 @@
     </div>
 
     <script>
+        // Supabase 配置
+        const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         // 检查登录状态
         const currentTranslator = JSON.parse(localStorage.getItem('currentTranslator'));
         if (!currentTranslator) {
@@ -299,26 +305,38 @@
         // 显示译员姓名
         document.getElementById('userName').textContent = currentTranslator.name;
 
-        // 获取译员的订单数据（从管理员系统同步）
-        function getMyOrders() {
-            const allOrders = JSON.parse(localStorage.getItem('adminOrders') || '[]');
-            // 根据译员ID过滤订单
-            return allOrders
-                .filter(order => order.translatorId === currentTranslator.id)
-                .map(order => ({
+        // 从 Supabase 获取译员的订单数据
+        async function getMyOrders() {
+            try {
+                const { data, error } = await supabase
+                    .from('orders')
+                    .select('*')
+                    .eq('translator_id', currentTranslator.id);
+                
+                if (error) {
+                    console.error('获取订单失败:', error);
+                    return [];
+                }
+                
+                return data.map(order => ({
                     id: order.id,
-                    name: order.projectName,
-                    words: order.wordCount,
+                    name: order.project_name,
+                    words: order.word_count,
                     rate: order.rate,
                     amount: order.amount,
                     deadline: order.deadline,
                     status: order.status,
+                    paymentStatus: order.payment_status,
                     remark: order.remark
                 }));
+            } catch (err) {
+                console.error('获取订单失败:', err);
+                return [];
+            }
         }
 
         // 当前译员的订单
-        let myOrders = getMyOrders();
+        let myOrders = [];
 
         // 渲染订单列表
         function renderOrders(filter = 'all') {
@@ -400,19 +418,13 @@
         });
 
         // 初始化
-        myOrders = getMyOrders();
-        renderOrders();
-        updateStats();
+        async function init() {
+            myOrders = await getMyOrders();
+            renderOrders();
+            updateStats();
+        }
         
-        // 监听存储变化，实时更新订单
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'adminOrders') {
-                myOrders = getMyOrders();
-                const activeFilter = document.querySelector('.filter-tab.active');
-                renderOrders(activeFilter ? activeFilter.dataset.filter : 'all');
-                updateStats();
-            }
-        });
+        init();
     </script>
 </body>
 </html>
