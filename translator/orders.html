@@ -180,6 +180,21 @@
             background: #f6ffed;
             color: #52c41a;
         }
+        .payment-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .payment-unpaid {
+            background: #fff1f0;
+            color: #ff4d4f;
+        }
+        .payment-paid {
+            background: #f6ffed;
+            color: #52c41a;
+        }
         .amount {
             font-weight: 600;
             color: #f5222d;
@@ -251,7 +266,8 @@
                         <th>费率</th>
                         <th>金额</th>
                         <th>截止日期</th>
-                        <th>状态</th>
+                        <th>订单状态</th>
+                        <th>结算状态</th>
                     </tr>
                 </thead>
                 <tbody id="ordersTableBody">
@@ -302,7 +318,7 @@
             if (filteredOrders.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="7" class="empty-state">
+                        <td colspan="8" class="empty-state">
                             <div class="empty-state-icon">📋</div>
                             <p>暂无订单</p>
                         </td>
@@ -311,7 +327,10 @@
                 return;
             }
 
-            tbody.innerHTML = filteredOrders.map(order => `
+            tbody.innerHTML = filteredOrders.map(order => {
+                const paymentStatus = order.paymentStatus || 'unpaid';
+                const paymentText = paymentStatus === 'paid' ? '已结算' : '未结算';
+                return `
                 <tr>
                     <td><span class="order-id" onclick="viewOrder('${order.id}')">${order.id}</span></td>
                     <td>${order.name}</td>
@@ -320,8 +339,9 @@
                     <td class="amount">¥${order.amount}</td>
                     <td>${order.deadline}</td>
                     <td><span class="status-badge status-${order.status}">${getStatusText(order.status)}</span></td>
+                    <td><span class="payment-status payment-${paymentStatus}">${paymentText}</span></td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
         // 获取状态文本

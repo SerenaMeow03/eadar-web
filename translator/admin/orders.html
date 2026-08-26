@@ -178,6 +178,14 @@
             background: #f6ffed;
             color: #52c41a;
         }
+        .payment-unpaid {
+            background: #fff1f0;
+            color: #ff4d4f;
+        }
+        .payment-paid {
+            background: #f6ffed;
+            color: #52c41a;
+        }
         .amount {
             font-weight: 600;
             color: #f5222d;
@@ -346,7 +354,8 @@
                         <th>费率</th>
                         <th>金额</th>
                         <th>截止日期</th>
-                        <th>状态</th>
+                        <th>订单状态</th>
+                        <th>结算状态</th>
                         <th>操作</th>
                     </tr>
                 </thead>
@@ -389,6 +398,23 @@
                         <label>指派译员 *</label>
                         <select id="translatorId" required>
                             <option value="">请选择译员</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>订单状态</label>
+                        <select id="status">
+                            <option value="pending">待处理</option>
+                            <option value="progress">进行中</option>
+                            <option value="completed">已完成</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>结算状态</label>
+                        <select id="paymentStatus">
+                            <option value="unpaid">未结算</option>
+                            <option value="paid">已结算</option>
                         </select>
                     </div>
                 </div>
@@ -478,6 +504,7 @@
             tbody.innerHTML = filteredOrders.map(order => {
                 const translator = translators.find(t => t.id === order.translatorId);
                 const translatorName = translator ? translator.name : '未知';
+                const paymentStatus = order.paymentStatus || 'unpaid';
                 
                 return `
                     <tr>
@@ -489,6 +516,7 @@
                         <td class="amount">¥${order.amount}</td>
                         <td>${order.deadline}</td>
                         <td><span class="status-badge status-${order.status}">${getStatusText(order.status)}</span></td>
+                        <td><span class="status-badge payment-${paymentStatus}">${getPaymentStatusText(paymentStatus)}</span></td>
                         <td>
                             <div class="action-btns">
                                 <button class="btn btn-primary" onclick="editOrder('${order.id}')">编辑</button>
@@ -508,6 +536,15 @@
                 'completed': '已完成'
             };
             return statusMap[status] || status;
+        }
+
+        // 获取结算状态文本
+        function getPaymentStatusText(status) {
+            const statusMap = {
+                'unpaid': '未结算',
+                'paid': '已结算'
+            };
+            return statusMap[status] || '未结算';
         }
 
         // 生成订单编号
@@ -538,6 +575,8 @@
                     document.getElementById('rate').value = order.rate;
                     document.getElementById('deadline').value = order.deadline;
                     document.getElementById('translatorId').value = order.translatorId;
+                    document.getElementById('status').value = order.status || 'pending';
+                    document.getElementById('paymentStatus').value = order.paymentStatus || 'unpaid';
                     document.getElementById('remark').value = order.remark || '';
                 }
             } else {
@@ -599,6 +638,8 @@
             const rate = parseFloat(document.getElementById('rate').value);
             const deadline = document.getElementById('deadline').value;
             const translatorId = document.getElementById('translatorId').value;
+            const status = document.getElementById('status').value;
+            const paymentStatus = document.getElementById('paymentStatus').value;
             const remark = document.getElementById('remark').value;
             
             const amount = (wordCount * rate).toFixed(2);
@@ -617,6 +658,8 @@
                         amount,
                         deadline,
                         translatorId,
+                        status,
+                        paymentStatus,
                         remark
                     };
                 }
@@ -631,8 +674,9 @@
                     amount,
                     deadline,
                     translatorId,
+                    status,
+                    paymentStatus,
                     remark,
-                    status: 'pending',
                     createdAt: new Date().toISOString().split('T')[0]
                 };
                 orders.push(newOrder);
