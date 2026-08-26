@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="新源联合化工（青岛）有限公司-专业选矿药剂生产厂家，主营黄原酸盐、起泡剂、捕收剂、黑药等矿业浮选药剂。产品出口全球市场，通过ISO认证。">
+    <meta name="keywords" content="新源联合化工,青岛新源,选矿药剂,黄原酸盐,起泡剂,捕收剂,黑药,浮选药剂">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.sunrunchem.com/index3.html">
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.sunrunchem.com/index3.html">
+    <meta property="og:title" content="新源联合化工（青岛）有限公司 | 专业选矿药剂解决方案">
+    <meta property="og:description" content="专业选矿药剂生产厂家，主营黄原酸盐、起泡剂、捕收剂、黑药等矿业浮选药剂。产品出口全球市场，通过ISO认证。">
+    
+    <title>新源联合化工（青岛）有限公司 | 专业选矿药剂解决方案</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* TransPerfect 风格 - 深蓝 + 青绿 */
+            --primary-blue: #003B71;
+            --primary-blue-dark: #01164E;
+            --primary-blue-light: #004d8c;
+            
+            --accent-teal: #3BBEB6;
+            --accent-cyan: #139DD8;
+            --accent-orange: #F37027;
+            
+            /* 中性色 */
+            --bg-light: #F8F8F8;
+            --bg-gray: #F1F1EF;
+            --bg-white: #FFFFFF;
+            
+            /* 文字色 */
+            --text-dark: #01164E;
+            --text-medium: #6A6A6A;
+            --text-light: #8A8A8A;
+            --white: #FFFFFF;
+            
+            /* 渐变 */
+            --gradient-primary: linear-gradient(90deg, #003B71 0%, #139DD8 100%);
+            --gradient-hero: linear-gradient(68deg, #003B71 32.65%, #139DD8 84.16%);
+            --gradient-card: linear-gradient(180deg, #01164E 8.27%, rgba(1, 22, 78, 0.4) 50%, rgba(0, 32, 62, 0) 80%);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--bg-white);
+            overflow-x: hidden;
+        }
+
+        /* 导航栏 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 0;
+            transition: all 0.4s ease;
+            background: transparent;
+        }
+
+        .navbar.scrolled {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 2px 30px rgba(0,0,0,0.08);
+        }
+
+        .navbar.scrolled .nav-menu a {
+            color: var(--text-dark);
+        }
+
+        .navbar.scrolled .logo-text {
+            color: var(--primary-blue);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: var(--gradient-primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .logo-text {
+            color: var(--white);
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            transition: color 0.3s;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+        }
+
+        .nav-menu a {
+            color: var(--white);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            position: relative;
+            padding: 8px 0;
+        }
+
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent-teal);
+            transition: width 0.3s;
+        }
+
+        .nav-menu a:hover::after {
+            width: 100%;
+        }
+
+        .nav-menu a:hover {
+            color: var(--accent-teal);
+        }
+
+        .navbar.scrolled .nav-menu a:hover {
+            color: var(--accent-cyan);
+        }
+
+        /* 下拉菜单 */
+        .nav-menu li.dropdown {
+            position: relative;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background: var(--bg-white);
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            padding: 20px;
+            min-width: 280px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .dropdown-menu::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 10px solid var(--bg-white);
+        }
+
+        .nav-menu li.dropdown:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: var(--text-dark);
+            transition: all 0.3s;
+            margin-bottom: 8px;
+        }
+
+        .dropdown-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-light);
+            transform: translateX(5px);
+        }
+
+        .dropdown-icon {
+            width: 45px;
+            height: 45px;
+            background: var(--gradient-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .dropdown-text h4 {
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            margin-bottom: 3px;
+        }
+
+        .dropdown-text p {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        /* 语言切换 */
+        .lang-switcher {
+            display: flex;
+            gap: 8px;
+            margin-left: 30px;
+        }
+
+        .lang-btn {
+            padding: 8px 18px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: var(--white);
+        }
+
+        .navbar.scrolled .lang-btn {
+            border-color: var(--text-light);
+            color: var(--text-dark);
+        }
+
+        .lang-btn.active {
+            background: var(--accent-teal);
+            border-color: var(--accent-teal);
+            color: var(--white);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            color: var(--white);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .navbar.scrolled .mobile-menu-btn {
+            color: var(--text-dark);
+        }
+
+        /* Hero 区域 - TransPerfect 风格 */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            text-align: left;
+            color: var(--white);
+            position: relative;
+            overflow: hidden;
+            background: var(--primary-blue);
+            border-bottom-left-radius: 200px;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60%;
+            height: 100%;
+            background: url('images/factory-banner.jpg') center/cover;
+            z-index: 1;
+        }
+
+        .hero-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to right, 
+                var(--primary-blue) 2%, 
+                rgba(0, 59, 113, 0.88) 10%, 
+                rgba(0, 59, 113, 0.74) 20%, 
+                rgba(0, 59, 113, 0.47) 32%, 
+                rgba(0, 59, 113, 0) 100%);
+            z-index: 2;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 3;
+            max-width: 800px;
+            padding: 0 80px;
+            animation: fadeInUp 1s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 400;
+            line-height: 1.1;
+            margin-bottom: 25px;
+        }
+
+        .hero h1 .highlight {
+            color: var(--accent-teal);
+            font-weight: 700;
+        }
+
+        .hero h1 .accent {
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        .hero-desc {
+            font-size: 1.4rem;
+            line-height: 1.5;
+            margin-bottom: 40px;
+            max-width: 600px;
+            font-weight: 300;
+            opacity: 0.95;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 16px 36px;
+            border-radius: 15px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: none;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .btn-primary {
+            background: var(--accent-teal);
+            color: var(--white);
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            bottom: -14px;
+            left: 8px;
+            width: 0;
+            height: 0;
+            border-left: 2px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 15px solid var(--accent-teal);
+            filter: blur(0.5px);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-cyan);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(19, 157, 216, 0.3);
+        }
+
+        .btn-primary:hover::before {
+            border-top-color: var(--accent-cyan);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--white);
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--white);
+        }
+
+        /* 卡片区域 - 悬浮在 Hero 下方 */
+        .cards-section {
+            margin-top: -180px;
+            position: relative;
+            z-index: 10;
+            padding: 0 40px;
+        }
+
+        .cards-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+        }
+
+        .card {
+            position: relative;
+            background: var(--bg-gray);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            border: none;
+            height: 380px;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .card-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            transition: opacity 0.4s ease;
+        }
+
+        .card-image::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: var(--gradient-card);
+            z-index: 1;
+        }
+
+        .card:hover .card-image {
+            opacity: 0;
+        }
+
+        .card-content {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding: 25px;
+            color: var(--white);
+            z-index: 2;
+            transition: all 0.4s ease;
+        }
+
+        .card:hover .card-content {
+            background: var(--bg-gray);
+            color: var(--text-dark);
+            justify-content: center;
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.4s;
+        }
+
+        .card:hover .card-category {
+            color: var(--accent-cyan);
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            line-height: 1.3;
+            transition: color 0.4s;
+        }
+
+        .card-desc {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease;
+            color: var(--text-medium);
+        }
+
+        .card:hover .card-desc {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card-link {
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+            display: inline-block;
+            margin-top: auto;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease;
+        }
+
+        .card-link::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: var(--accent-cyan);
+            transition: width 0.3s ease;
+        }
+
+        .card:hover .card-link {
+            opacity: 1;
+            transform: translateY(0);
+            color: var(--accent-cyan);
+        }
+
+        .card:hover .card-link::after {
+            width: 60px;
+        }
+
+        /* 关于区域 */
+        .about-section {
+            padding: 120px 40px;
+            background: var(--bg-white);
+        }
+
+        .about-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .about-content {
+            position: relative;
+        }
+
+        .section-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+
+        .section-underline {
+            width: 50px;
+            height: 3px;
+            background: var(--accent-cyan);
+            margin-bottom: 25px;
+        }
+
+        .about-content h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 25px;
+            line-height: 1.2;
+        }
+
+        .about-content p {
+            color: var(--text-medium);
+            font-size: 1.05rem;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .about-image {
+            position: relative;
+        }
+
+        .about-image img {
+            width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+        }
+
+        .about-image::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            right: 20px;
+            bottom: 20px;
+            background: var(--gradient-primary);
+            border-radius: 20px;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        /* 产品区域 - 轮播 */
+        .products-section {
+            padding: 100px 40px;
+            background: var(--bg-light);
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 60px;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 15px;
+        }
+
+        .section-header p {
+            color: var(--text-medium);
+            font-size: 1.1rem;
+        }
+
+        .products-slider {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .swiper {
+            padding: 20px 10px 60px;
+        }
+
+        .product-slide {
+            background: var(--bg-white);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            transition: all 0.4s ease;
+        }
+
+        .product-slide:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .product-image {
+            height: 200px;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .product-slide:hover .product-image img {
+            transform: scale(1.05);
+        }
+
+        .product-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: var(--accent-teal);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .product-info {
+            padding: 30px;
+        }
+
+        .product-info h3 {
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .product-info p {
+            color: var(--text-medium);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .product-link {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            transition: gap 0.3s;
+        }
+
+        .product-link:hover {
+            gap: 12px;
+        }
+
+        .swiper-button-next,
+        .swiper-button-prev {
+            color: var(--primary-blue);
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .swiper-button-next:after,
+        .swiper-button-prev:after {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .swiper-pagination-bullet-active {
+            background: var(--accent-cyan);
+        }
+
+        /* 行业应用区域 */
+        .industries-section {
+            padding: 100px 40px;
+            background: var(--bg-white);
+        }
+
+        .industries-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 0;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+
+        .industries-intro {
+            background: var(--gradient-primary);
+            color: var(--white);
+            padding: 50px;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .industries-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .industries-underline {
+            width: 50px;
+            height: 2px;
+            background: var(--accent-cyan);
+            margin-bottom: 25px;
+        }
+
+        .industries-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .industries-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            flex: 1;
+        }
+
+        .industry-item {
+            position: relative;
+            height: 280px;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 25px;
+            color: var(--white);
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .industry-item::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            transition: background 0.3s;
+        }
+
+        .industry-item:hover::after {
+            background: rgba(0,0,0,0.7);
+        }
+
+        .industry-title {
+            position: relative;
+            z-index: 2;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0;
+            transition: all 0.3s;
+        }
+
+        .industry-content {
+            position: absolute;
+            bottom: 25px;
+            left: 25px;
+            right: 25px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 2;
+        }
+
+        .industry-item:hover .industry-title {
+            opacity: 0;
+        }
+
+        .industry-item:hover .industry-content {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .industry-content h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .industry-content p {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .industry-link {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .industry-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent-cyan);
+            transition: width 0.3s;
+        }
+
+        .industry-link:hover::after {
+            width: 100%;
+        }
+
+        /* 统计数据 */
+        .stats-section {
+            padding: 80px 40px;
+            background: var(--gradient-hero);
+            color: var(--white);
+            border-radius: 200px 0 0 0;
+        }
+
+        .stats-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .stat-number {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        /* CTA 区域 */
+        .cta-section {
+            padding: 100px 40px;
+            background: var(--bg-white);
+            text-align: center;
+        }
+
+        .cta-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--gradient-hero);
+            border-radius: 30px;
+            padding: 80px 60px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-container::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .cta-container h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-container p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            margin-bottom: 35px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-white {
+            background: white;
+            color: var(--primary-blue);
+        }
+
+        .btn-white:hover {
+            background: var(--bg-light);
+            transform: translateY(-2px);
+        }
+
+        /* 页脚 */
+        .footer {
+            background: var(--primary-blue-dark);
+            color: var(--white);
+            padding: 80px 40px 30px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+        }
+
+        .footer-brand h3 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--white);
+        }
+
+        .footer-brand p {
+            color: rgba(255,255,255,0.6);
+            line-height: 1.8;
+            margin-bottom: 25px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .social-links a {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .social-links a:hover {
+            background: var(--accent-teal);
+            transform: translateY(-3px);
+        }
+
+        .footer-section h4 {
+            color: var(--white);
+            font-size: 1rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section li {
+            margin-bottom: 12px;
+        }
+
+        .footer-section a {
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-section a:hover {
+            color: var(--accent-teal);
+        }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 60px auto 0;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.9rem;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .industries-container {
+                flex-direction: column;
+            }
+            
+            .industries-intro {
+                width: 100%;
+                border-radius: 15px 15px 0 0;
+            }
+            
+            .industries-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-container {
+                padding: 15px 20px;
+            }
+            
+            .nav-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: white;
+                flex-direction: column;
+                padding: 20px;
+                gap: 0;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            }
+            
+            .nav-menu.active {
+                display: flex;
+            }
+            
+            .nav-menu li {
+                border-bottom: 1px solid #eee;
+            }
+            
+            .nav-menu a {
+                color: var(--text-dark);
+                padding: 15px 0;
+                display: block;
+            }
+            
+            .lang-switcher {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .hero {
+                border-bottom-left-radius: 50px;
+            }
+            
+            .hero-bg {
+                width: 100%;
+                opacity: 0.3;
+            }
+            
+            .hero-content {
+                padding: 0 30px;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero-desc {
+                font-size: 1.1rem;
+            }
+            
+            .cards-section {
+                margin-top: 40px;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .card {
+                height: 300px;
+            }
+            
+            .about-container {
+                grid-template-columns: 1fr;
+                gap: 50px;
+            }
+            
+            .about-content h2,
+            .section-header h2 {
+                font-size: 1.8rem;
+            }
+            
+            .industries-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .industry-item {
+                height: 200px;
+            }
+            
+            .stats-section {
+                border-radius: 50px 0 0 0;
+            }
+            
+            .stat-number {
+                font-size: 2.5rem;
+            }
+            
+            .cta-container {
+                padding: 50px 30px;
+            }
+            
+            .cta-container h2 {
+                font-size: 1.8rem;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            
+            .footer-bottom {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <div class="logo-icon">E</div>
+                <span class="logo-text">Eadar</span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index3.html">首页</a></li>
+                <li><a href="about.html">关于我们</a></li>
+                <li class="dropdown">
+                    <a href="products.html">产品中心</a>
+                    <div class="dropdown-menu">
+                        <a href="products-xanthate.html" class="dropdown-item">
+                            <div class="dropdown-icon"><i class="fas fa-flask"></i></div>
+                            <div class="dropdown-text">
+                                <h4>黄原酸盐系列</h4>
+                                <p>高效捕收剂产品</p>
+                            </div>
+                        </a>
+                        <a href="products-foaming.html" class="dropdown-item">
+                            <div class="dropdown-icon"><i class="fas fa-wind"></i></div>
+                            <div class="dropdown-text">
+                                <h4>起泡剂系列</h4>
+                                <p>MIBC等起泡剂</p>
+                            </div>
+                        </a>
+                        <a href="products-collector.html" class="dropdown-item">
+                            <div class="dropdown-icon"><i class="fas fa-atom"></i></div>
+                            <div class="dropdown-text">
+                                <h4>捕收剂系列</h4>
+                                <p>乙硫氨酯等产品</p>
+                            </div>
+                        </a>
+                        <a href="products-black.html" class="dropdown-item">
+                            <div class="dropdown-icon"><i class="fas fa-vial"></i></div>
+                            <div class="dropdown-text">
+                                <h4>黑药系列</h4>
+                                <p>多金属矿捕收剂</p>
+                            </div>
+                        </a>
+                    </div>
+                </li>
+                <li><a href="news.html">新闻动态</a></li>
+                <li><a href="contact.html">联系我们</a></li>
+            </ul>
+            <div class="lang-switcher">
+                <a href="index3.html" class="lang-btn active">中文</a>
+                <a href="en/index3.html" class="lang-btn">EN</a>
+            </div>
+            <div class="mobile-menu-btn" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero 区域 -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+            <h1>
+                <span class="highlight">创新化学</span>
+                <br>
+                <span class="accent">驱动矿业未来</span>
+            </h1>
+            <p class="hero-desc">
+                新源联合化工致力于为全球矿业客户提供高品质选矿药剂和专业技术服务，以科技创新推动行业可持续发展
+            </p>
+            <div class="hero-buttons">
+                <a href="products.html" class="btn btn-primary">
+                    <span>探索产品</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+                <a href="contact.html" class="btn btn-secondary">
+                    <span>联系我们</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 卡片区域 -->
+    <section class="cards-section">
+        <div class="cards-container">
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-image" style="background-image: url('images/product-pentyl-xanthate.jpg')"></div>
+                    <div class="card-content">
+                        <div class="card-category">核心产品</div>
+                        <h3 class="card-title">黄原酸盐系列</h3>
+                        <p class="card-desc">选择性优良的捕收剂，广泛应用于铜、锌、镍及含金黄铁矿的浮选工艺</p>
+                        <a href="products-xanthate.html" class="card-link">了解更多</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-image" style="background-image: url('images/product-mibc.jpg')"></div>
+                    <div class="card-content">
+                        <div class="card-category">核心产品</div>
+                        <h3 class="card-title">起泡剂系列</h3>
+                        <p class="card-desc">高效MIBC起泡剂，泡沫稳定，选择性好，广泛用于各类金属矿浮选</p>
+                        <a href="products-foaming.html" class="card-link">了解更多</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-image" style="background-image: url('images/about-tanks.jpg')"></div>
+                    <div class="card-content">
+                        <div class="card-category">关于我们</div>
+                        <h3 class="card-title">企业实力</h3>
+                        <p class="card-desc">600+员工，30000吨年产能，与必和必拓、淡水河谷等巨头长期合作</p>
+                        <a href="about.html" class="card-link">了解更多</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-image" style="background-image: url('images/factory-banner.jpg')"></div>
+                    <div class="card-content">
+                        <div class="card-category">服务支持</div>
+                        <h3 class="card-title">全球服务</h3>
+                        <p class="card-desc">产品出口30+国家，提供专业选矿技术服务和全套解决方案</p>
+                        <a href="contact.html" class="card-link">了解更多</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 关于区域 -->
+    <section class="about-section">
+        <div class="about-container">
+            <div class="about-content">
+                <div class="section-label">关于我们</div>
+                <div class="section-underline"></div>
+                <h2>专业的选矿药剂<br>生产企业</h2>
+                <p>新源联合化工（青岛）有限公司主营选矿药剂研发生产，现有员工600余人，专业技术团队实力雄厚。</p>
+                <p>企业年产药剂3万吨，主营黄原酸盐、MIBC、乙硫氨酯、黑药、起泡剂等产品，八成产品出口多国，和海内外矿山企业保持长期合作。</p>
+                <p>公司携手高校共建产学研平台，深耕绿色药剂研发，拥有7项国家专利，多项科研成果，且通过多项体系认证。</p>
+                <a href="about.html" class="btn btn-primary" style="margin-top: 20px;">
+                    <span>了解更多</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="about-image">
+                <img src="images/about-tanks.jpg" alt="新源联合化工现代化生产基地" loading="lazy">
+            </div>
+        </div>
+    </section>
+
+    <!-- 产品轮播 -->
+    <section class="products-section">
+        <div class="section-header">
+            <h2>核心产品</h2>
+            <p>高品质选矿药剂，助力全球矿业高效发展</p>
+        </div>
+        <div class="products-slider">
+            <div class="swiper productSwiper">
+                <div class="swiper-wrapper">
+                    <div class="swiper-slide product-slide">
+                        <div class="product-image">
+                            <img src="images/product-pentyl-xanthate.jpg" alt="戊基黄原酸钾/钠">
+                            <span class="product-badge">热销</span>
+                        </div>
+                        <div class="product-info">
+                            <h3>戊基黄原酸钾/钠</h3>
+                            <p>选择性较好的捕收剂，广泛应用于铜、锌、镍及含金黄铁矿的浮选。</p>
+                            <a href="product-pentyl-xanthate.html" class="product-link">查看详情 <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="swiper-slide product-slide">
+                        <div class="product-image">
+                            <img src="images/product-butyl-xanthate.jpg" alt="丁基黄原酸钾/钠">
+                        </div>
+                        <div class="product-info">
+                            <h3>丁基黄原酸钾/钠</h3>
+                            <p>捕收能力强，适用于复杂多金属硫化矿的浮选分离，回收率高。</p>
+                            <a href="product-butyl-xanthate.html" class="product-link">查看详情 <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="swiper-slide product-slide">
+                        <div class="product-image">
+                            <img src="images/product-mibc.jpg" alt="MIBC起泡剂">
+                            <span class="product-badge">环保</span>
+                        </div>
+                        <div class="product-info">
+                            <h3>MIBC 起泡剂</h3>
+                            <p>高效起泡剂，泡沫稳定，选择性好，广泛用于各类金属矿浮选工艺。</p>
+                            <a href="product-mibc.html" class="product-link">查看详情 <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="swiper-slide product-slide">
+                        <div class="product-image">
+                            <img src="images/product-ethyl-thionocarbamate.jpg" alt="乙硫氨酯">
+                        </div>
+                        <div class="product-info">
+                            <h3>乙硫氨酯</h3>
+                            <p>高效铜矿捕收剂，选择性强，特别适用于铜硫分离，浮选指标优异。</p>
+                            <a href="product-ethyl-thionocarbamate.html" class="product-link">查看详情 <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="swiper-slide product-slide">
+                        <div class="product-image">
+                            <img src="images/product-butyl-ammonium-black.jpg" alt="丁铵黑药">
+                        </div>
+                        <div class="product-info">
+                            <h3>丁铵黑药</h3>
+                            <p>高效捕收剂，选择性强，特别适用于铜、铅、锌等多金属硫化矿浮选。</p>
+                            <a href="product-butyl-ammonium-black.html" class="product-link">查看详情 <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-pagination"></div>
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 行业应用 -->
+    <section class="industries-section">
+        <div class="section-header">
+            <h2>应用领域</h2>
+            <p>我们的产品广泛应用于各类矿业领域</p>
+        </div>
+        <div class="industries-container">
+            <div class="industries-intro">
+                <div class="industries-label">应用领域</div>
+                <div class="industries-underline"></div>
+                <div class="industries-text">
+                    为全球各类矿山提供专业选矿解决方案
+                </div>
+            </div>
+            <div class="industries-grid">
+                <div class="industry-item" style="background-image: url('images/industry-copper.jpg')">
+                    <h3 class="industry-title">铜矿开采</h3>
+                    <div class="industry-content">
+                        <h4>铜矿开采</h4>
+                        <p>专业铜矿浮选药剂，提升铜回收率和精矿品位</p>
+                        <a href="#" class="industry-link">了解更多</a>
+                    </div>
+                </div>
+                <div class="industry-item" style="background-image: url('images/industry-gold.jpg')">
+                    <h3 class="industry-title">金矿提取</h3>
+                    <div class="industry-content">
+                        <h4>金矿提取</h4>
+                        <p>高效含金矿石捕收剂，提高金回收效率</p>
+                        <a href="#" class="industry-link">了解更多</a>
+                    </div>
+                </div>
+                <div class="industry-item" style="background-image: url('images/industry-zinc.jpg')">
+                    <h3 class="industry-title">锌铅矿选矿</h3>
+                    <div class="industry-content">
+                        <h4>锌铅矿选矿</h4>
+                        <p>多金属分离专用药剂，实现高效分离</p>
+                        <a href="#" class="industry-link">了解更多</a>
+                    </div>
+                </div>
+                <div class="industry-item" style="background-image: url('images/industry-nickel.jpg')">
+                    <h3 class="industry-title">镍矿浮选</h3>
+                    <div class="industry-content">
+                        <h4>镍矿浮选</h4>
+                        <p>镍矿专用捕收剂，优化浮选工艺指标</p>
+                        <a href="#" class="industry-link">了解更多</a>
+                    </div>
+                </div>
+                <div class="industry-item" style="background-image: url('images/industry-iron.jpg')">
+                    <h3 class="industry-title">铁矿选矿</h3>
+                    <div class="industry-content">
+                        <h4>铁矿选矿</h4>
+                        <p>铁矿反浮选药剂，提升铁精矿品位</p>
+                        <a href="#" class="industry-link">了解更多</a>
+                    </div>
+                </div>
+                <div class="industry-item" style="background-image: url('images/industry-rare.jpg')">
+                    <h3 class="industry-title">稀有金属</h3>
+                    <div class="industry-content">
+                        <h4>稀有金属</h4>
+                        <p>稀有金属矿专用药剂，满足特殊选矿需求</p>
+                        <a href="#" class="industry-link">了解更多</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 统计数据 -->
+    <section class="stats-section">
+        <div class="stats-container">
+            <div class="stat-item">
+                <div class="stat-number">15+</div>
+                <div class="stat-label">年行业经验</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">30,000</div>
+                <div class="stat-label">吨年产能</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">30+</div>
+                <div class="stat-label">出口国家</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">500+</div>
+                <div class="stat-label">全球合作伙伴</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">7</div>
+                <div class="stat-label">项国家专利</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA 区域 -->
+    <section class="cta-section">
+        <div class="cta-container">
+            <h2>开启合作之旅</h2>
+            <p>无论您是需要产品咨询、技术支持还是定制化解决方案，我们的专业团队随时准备为您服务</p>
+            <a href="contact.html" class="btn btn-white">
+                <span>联系我们</span>
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h3>Eadar</h3>
+                <p>新源联合化工（青岛）有限公司致力于为全球矿业客户提供高品质选矿药剂和专业技术服务，以创新驱动可持续发展。</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-weixin"></i></a>
+                    <a href="#"><i class="fas fa-envelope"></i></a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4>快速链接</h4>
+                <ul>
+                    <li><a href="index3.html">首页</a></li>
+                    <li><a href="about.html">关于我们</a></li>
+                    <li><a href="products.html">产品中心</a></li>
+                    <li><a href="news.html">新闻动态</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>产品系列</h4>
+                <ul>
+                    <li><a href="products-xanthate.html">黄原酸盐系列</a></li>
+                    <li><a href="products-foaming.html">起泡剂系列</a></li>
+                    <li><a href="products-collector.html">捕收剂系列</a></li>
+                    <li><a href="products-black.html">黑药系列</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>联系方式</h4>
+                <ul>
+                    <li><i class="fas fa-phone" style="margin-right: 8px;"></i> +86-532-80989030</li>
+                    <li><i class="fas fa-envelope" style="margin-right: 8px;"></i> Wangjian@sunrunchem.com</li>
+                    <li><i class="fas fa-map-marker-alt" style="margin-right: 8px;"></i> 青岛市西海岸新区化工园区</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 新源联合化工（青岛）有限公司 版权所有</p>
+            <p>Eadar - Professional Mining Solutions</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script>
+        // 导航栏滚动效果
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // 移动端菜单切换
+        function toggleMenu() {
+            document.getElementById('navMenu').classList.toggle('active');
+        }
+
+        // Swiper 轮播初始化
+        const productSwiper = new Swiper('.productSwiper', {
+            slidesPerView: 1,
+            spaceBetween: 30,
+            loop: true,
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            breakpoints: {
+                640: {
+                    slidesPerView: 2,
+                    spaceBetween: 20,
+                },
+                1024: {
+                    slidesPerView: 3,
+                    spaceBetween: 30,
+                },
+                1400: {
+                    slidesPerView: 4,
+                    spaceBetween: 30,
+                },
+            },
+        });
+
+        // 数字动画
+        function animateNumbers() {
+            const statNumbers = document.querySelectorAll('.stat-number');
+            statNumbers.forEach(stat => {
+                const target = stat.textContent;
+                const numericValue = parseInt(target.replace(/[^0-9]/g, ''));
+                const suffix = target.replace(/[0-9]/g, '');
+                
+                if (!isNaN(numericValue)) {
+                    let current = 0;
+                    const increment = numericValue / 50;
+                    const timer = setInterval(() => {
+                        current += increment;
+                        if (current >= numericValue) {
+                            stat.textContent = target;
+                            clearInterval(timer);
+                        } else {
+                            stat.textContent = Math.floor(current) + suffix;
+                        }
+                    }, 30);
+                }
+            });
+        }
+
+        // 滚动触发动画
+        const observerOptions = {
+            threshold: 0.3,
+            rootMargin: '0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    if (entry.target.classList.contains('stats-section')) {
+                        animateNumbers();
+                    }
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // 观察元素
+        document.querySelectorAll('.stats-section, .about-section, .products-section').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'all 0.8s ease';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>

@@ -396,7 +396,7 @@
         // Supabase 配置
         const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
         const SUPABASE_KEY = '***';
-        var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        if (!window.appSupabase) { window.appSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // 检查登录状态
         const currentTranslator = JSON.parse(localStorage.getItem('currentTranslator'));
