@@ -33,6 +33,15 @@
             font-size: 20px;
             font-weight: 500;
         }
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header-logo img {
+            height: 40px;
+            width: auto;
+        }
         .user-info {
             display: flex;
             align-items: center;
@@ -136,7 +145,10 @@
 <body>
     <header class="header">
         <div class="header-content">
-            <h1>谊达翻译 · 管理后台</h1>
+            <div class="header-logo">
+                <img src="../images/logo-white.png" alt="谊达翻译">
+                <h1>管理后台</h1>
+            </div>
             <div class="user-info">
                 <span class="user-name">管理员</span>
                 <button class="logout-btn" onclick="logout()">退出登录</button>

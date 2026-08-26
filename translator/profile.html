@@ -33,6 +33,15 @@
             font-size: 20px;
             font-weight: 500;
         }
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header-logo img {
+            height: 40px;
+            width: auto;
+        }
         .nav-menu {
             display: flex;
             gap: 20px;
@@ -242,7 +251,10 @@
 <body>
     <header class="header">
         <div class="header-content">
-            <h1>谊达翻译 · 译员工作台</h1>
+            <div class="header-logo">
+                <img src="images/logo-blue.png" alt="谊达翻译">
+                <h1>译员工作台</h1>
+            </div>
             <nav class="nav-menu">
                 <a href="orders.html">我的订单</a>
                 <a href="profile.html" class="active">个人信息</a>
