@@ -82,7 +82,6 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
         }
-
     </style>
 </head>
 <body>
@@ -102,52 +101,56 @@
             </div>
             <button type="submit" class="login-btn">登录</button>
         </form>
-
     </div>
 
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script>
-        // Supabase 配置
-        const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
-        const SUPABASE_KEY = '***';
-        var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // 使用 IIFE 避免全局变量污染
+        (function() {
+            // Supabase 配置
+            const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
+            const SUPABASE_KEY = '***';
+            
+            // 初始化 Supabase 客户端
+            const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+            document.getElementById('loginForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
 
-            try {
-                // 从 Supabase 查询译员
-                const { data, error } = await supabase
-                    .from('translators')
-                    .select('*')
-                    .eq('username', username)
-                    .single();
+                try {
+                    // 从 Supabase 查询译员
+                    const { data, error } = await supabaseClient
+                        .from('translators')
+                        .select('*')
+                        .eq('username', username)
+                        .single();
 
-                if (error || !data) {
-                    alert('用户名或密码错误');
-                    return;
+                    if (error || !data) {
+                        alert('用户名或密码错误');
+                        return;
+                    }
+
+                    if (data.password === password) {
+                        // 登录成功，保存用户信息
+                        localStorage.setItem('currentTranslator', JSON.stringify({
+                            username: data.username,
+                            name: data.name,
+                            id: data.id
+                        }));
+                        // 跳转到订单列表
+                        window.location.href = 'orders.html';
+                    } else {
+                        alert('用户名或密码错误');
+                    }
+                } catch (err) {
+                    console.error('登录失败:', err);
+                    alert('登录失败，请检查网络连接');
                 }
-
-                if (data.password === password) {
-                    // 登录成功，保存用户信息
-                    localStorage.setItem('currentTranslator', JSON.stringify({
-                        username: data.username,
-                        name: data.name,
-                        id: data.id
-                    }));
-                    // 跳转到订单列表
-                    window.location.href = 'orders.html';
-                } else {
-                    alert('用户名或密码错误');
-                }
-            } catch (err) {
-                console.error('登录失败:', err);
-                alert('登录失败，请检查网络连接');
-            }
-        });
+            });
+        })();
     </script>
 </body>
 </html>
