@@ -202,7 +202,7 @@
         // 获取统计数据
         function updateStats() {
             // 获取译员数据
-            const translators = JSON.parse(localStorage.getItem('translators') || '[]');
+            const translators = JSON.parse(localStorage.getItem('adminTranslators') || '[]');
             document.getElementById('translatorCount').textContent = translators.length || 3;
 
             // 获取订单数据

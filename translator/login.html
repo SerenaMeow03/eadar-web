@@ -106,18 +106,30 @@
     </div>
 
     <script>
-        // 模拟译员数据库
-        const translators = {
+        // 默认译员数据
+        const defaultTranslators = {
             'translator1': { password: '123456', name: '张三', id: 'T001' },
             'translator2': { password: '123456', name: '李四', id: 'T002' },
             'translator3': { password: '123456', name: '王五', id: 'T003' }
         };
+
+        // 获取译员账号数据（优先从管理员同步的数据读取）
+        function getTranslators() {
+            const storedAccounts = localStorage.getItem('translatorAccounts');
+            if (storedAccounts) {
+                return JSON.parse(storedAccounts);
+            }
+            // 如果没有存储的数据，使用默认数据并保存
+            localStorage.setItem('translatorAccounts', JSON.stringify(defaultTranslators));
+            return defaultTranslators;
+        }
 
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
+            const translators = getTranslators();
             const translator = translators[username];
             if (translator && translator.password === password) {
                 // 登录成功，保存用户信息
