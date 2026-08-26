@@ -360,6 +360,32 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 修改密码 -->
+                <div class="section">
+                    <div class="section-title">
+                        修改密码
+                        <button class="edit-btn" id="editPasswordBtn" onclick="togglePasswordEdit()">修改</button>
+                    </div>
+                    <div class="form-grid" id="passwordForm" style="display: none;">
+                        <div class="form-group">
+                            <label>当前密码 <span style="color: #f5222d;">*</span></label>
+                            <input type="password" id="currentPassword" placeholder="请输入当前密码">
+                        </div>
+                        <div class="form-group">
+                            <label>新密码 <span style="color: #f5222d;">*</span></label>
+                            <input type="password" id="newPassword" placeholder="请输入新密码（至少6位）">
+                        </div>
+                        <div class="form-group">
+                            <label>确认新密码 <span style="color: #f5222d;">*</span></label>
+                            <input type="password" id="confirmPassword" placeholder="请再次输入新密码">
+                        </div>
+                    </div>
+                    <div class="button-group" id="passwordButtons" style="display: none;">
+                        <button class="cancel-btn" onclick="cancelPasswordEdit()">取消</button>
+                        <button class="save-btn" onclick="savePassword()">保存</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -470,6 +496,90 @@
 
             // 显示成功消息
             const successMsg = document.getElementById('successMessage');
+            successMsg.classList.add('show');
+            setTimeout(() => successMsg.classList.remove('show'), 3000);
+        }
+
+        // 密码修改相关
+        let isPasswordEditing = false;
+
+        function togglePasswordEdit() {
+            isPasswordEditing = !isPasswordEditing;
+            document.getElementById('passwordForm').style.display = isPasswordEditing ? 'grid' : 'none';
+            document.getElementById('passwordButtons').style.display = isPasswordEditing ? 'flex' : 'none';
+            document.getElementById('editPasswordBtn').style.display = isPasswordEditing ? 'none' : 'inline-block';
+            
+            if (!isPasswordEditing) {
+                // 清空密码输入框
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+            }
+        }
+
+        function cancelPasswordEdit() {
+            isPasswordEditing = false;
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            togglePasswordEdit();
+        }
+
+        function savePassword() {
+            const currentPwd = document.getElementById('currentPassword').value;
+            const newPwd = document.getElementById('newPassword').value;
+            const confirmPwd = document.getElementById('confirmPassword').value;
+
+            // 验证输入
+            if (!currentPwd || !newPwd || !confirmPwd) {
+                alert('请填写所有密码字段');
+                return;
+            }
+
+            if (newPwd.length < 6) {
+                alert('新密码至少需要6位');
+                return;
+            }
+
+            if (newPwd !== confirmPwd) {
+                alert('两次输入的新密码不一致');
+                return;
+            }
+
+            // 获取译员账号数据
+            const translatorAccounts = JSON.parse(localStorage.getItem('translatorAccounts') || '{}');
+            const username = currentTranslator.username;
+
+            // 验证当前密码
+            if (!translatorAccounts[username] || translatorAccounts[username].password !== currentPwd) {
+                alert('当前密码错误');
+                return;
+            }
+
+            // 更新密码
+            translatorAccounts[username].password = newPwd;
+            localStorage.setItem('translatorAccounts', JSON.stringify(translatorAccounts));
+
+            // 同时更新 adminTranslators 中的密码
+            const adminTranslators = JSON.parse(localStorage.getItem('adminTranslators') || '[]');
+            const translatorIndex = adminTranslators.findIndex(t => t.username === username);
+            if (translatorIndex !== -1) {
+                adminTranslators[translatorIndex].password = newPwd;
+                localStorage.setItem('adminTranslators', JSON.stringify(adminTranslators));
+            }
+
+            // 退出编辑模式
+            isPasswordEditing = false;
+            document.getElementById('passwordForm').style.display = 'none';
+            document.getElementById('passwordButtons').style.display = 'none';
+            document.getElementById('editPasswordBtn').style.display = 'inline-block';
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+
+            // 显示成功消息
+            const successMsg = document.getElementById('successMessage');
+            successMsg.textContent = '✅ 密码修改成功！';
             successMsg.classList.add('show');
             setTimeout(() => successMsg.classList.remove('show'), 3000);
         }
