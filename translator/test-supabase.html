@@ -89,7 +89,7 @@
         let supabase;
         function initSupabase() {
             if (window.supabase) {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                supabase = window.window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                 console.log('Supabase 初始化成功');
                 return true;
             }
