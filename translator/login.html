@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>译员登录 - 谊达翻译</title>
+    <!-- v2.1 - 2026-08-26 修复 supabase 重复声明 -->
     <style>
         * {
             margin: 0;
@@ -110,7 +114,7 @@
         (function() {
             // Supabase 配置
             const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
-            const SUPABASE_KEY = '***';
+            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMTQ0NDIsImV4cCI6MjA3MTY5MDQ0Mn0.XBT_c6pP3nM2EYfH7EAbwjlZp2F4R2e8tM9V9p0Rr-c';
             
             // 初始化 Supabase 客户端
             const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);

@@ -337,10 +337,12 @@
     </div>
 
     <script>
+        // 使用 IIFE 避免全局变量污染
+        (function() {
         // Supabase 配置
         const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
         const SUPABASE_KEY = '***';
-        const supabase = window.window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // 检查登录状态
         const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));
@@ -351,7 +353,7 @@
         // 获取统计数据
         async function updateStats() {
             // 获取译员数量
-            const { count: translatorCount, error: tError } = await supabase
+            const { count: translatorCount, error: tError } = await supabaseClient
                 .from('translators')
                 .select('*', { count: 'exact', head: true });
             
@@ -360,7 +362,7 @@
             }
 
             // 获取订单统计
-            const { data: orders, error: oError } = await supabase
+            const { data: orders, error: oError } = await supabaseClient
                 .from('orders')
                 .select('status');
             
@@ -413,7 +415,7 @@
             }
 
             // 验证当前密码
-            const { data: admin, error: verifyError } = await supabase
+            const { data: admin, error: verifyError } = await supabaseClient
                 .from('admin')
                 .select('*')
                 .eq('username', currentAdmin.username)
@@ -426,7 +428,7 @@
             }
 
             // 更新密码
-            const { error: updateError } = await supabase
+            const { error: updateError } = await supabaseClient
                 .from('admin')
                 .update({ password: newPwd })
                 .eq('username', currentAdmin.username);

@@ -449,10 +449,12 @@
     </div>
 
     <script>
+        // 使用 IIFE 避免全局变量污染
+        (function() {
         // Supabase 配置
         const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
         const SUPABASE_KEY = '***';
-        const supabase = window.window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // 检查登录状态
         const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));
@@ -462,7 +464,7 @@
 
         // 从 Supabase 加载译员列表
         async function loadTranslators() {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('translators')
                 .select('id, name, username')
                 .order('name');
@@ -476,7 +478,7 @@
 
         // 从 Supabase 加载订单列表
         async function loadOrders() {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('orders')
                 .select('*')
                 .order('created_at', { ascending: false });
@@ -574,7 +576,7 @@
             await loadTranslatorOptions();
             
             if (orderId) {
-                const { data: order, error } = await supabase
+                const { data: order, error } = await supabaseClient
                     .from('orders')
                     .select('*')
                     .eq('id', orderId)
@@ -622,7 +624,7 @@
         async function deleteOrder(id) {
             if (!confirm('确定要删除该订单吗？')) return;
             
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('orders')
                 .delete()
                 .eq('id', id);
@@ -681,7 +683,7 @@
             
             if (id) {
                 // 编辑
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('orders')
                     .update(orderData)
                     .eq('id', id);
@@ -693,7 +695,7 @@
                 showToast('订单更新成功', 'success');
             } else {
                 // 添加
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('orders')
                     .insert([orderData]);
                 

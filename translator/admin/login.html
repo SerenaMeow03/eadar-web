@@ -120,37 +120,45 @@
     </div>
 
     <script>
-        // Supabase 配置
-        const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
-        const SUPABASE_KEY = '***';
-        const supabase = window.window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // 使用 IIFE 避免全局变量污染
+        (function() {
+            // Supabase 配置
+            const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
+            const SUPABASE_KEY = '***';
+            const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+            document.getElementById('loginForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
 
-            // 从 Supabase 验证管理员账号
-            const { data, error } = await supabase
-                .from('admin')
-                .select('*')
-                .eq('username', username)
-                .eq('password', password)
-                .single();
+                try {
+                    // 从 Supabase 验证管理员账号
+                    const { data, error } = await supabaseClient
+                        .from('admin')
+                        .select('*')
+                        .eq('username', username)
+                        .eq('password', password)
+                        .single();
 
-            if (error || !data) {
-                alert('用户名或密码错误');
-                return;
-            }
+                    if (error || !data) {
+                        alert('用户名或密码错误');
+                        return;
+                    }
 
-            // 登录成功，保存管理员信息
-            localStorage.setItem('currentAdmin', JSON.stringify({
-                username: username,
-                role: 'admin'
-            }));
-            // 跳转到管理后台
-            window.location.href = 'dashboard.html';
-        });
+                    // 登录成功，保存管理员信息
+                    localStorage.setItem('currentAdmin', JSON.stringify({
+                        username: username,
+                        role: 'admin'
+                    }));
+                    // 跳转到管理后台
+                    window.location.href = 'dashboard.html';
+                } catch (err) {
+                    console.error('登录失败:', err);
+                    alert('登录失败，请检查网络连接');
+                }
+            });
+        })();
     </script>
 </body>
 </html>
