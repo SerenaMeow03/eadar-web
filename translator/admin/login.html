@@ -119,17 +119,29 @@
     </div>
 
     <script>
-        // 管理员账号
-        const adminAccount = {
+        // 默认管理员账号
+        const defaultAdmin = {
             username: 'admin',
             password: '123456'
         };
+
+        // 获取管理员账号（优先从 localStorage 读取，否则使用默认）
+        function getAdminAccount() {
+            const stored = localStorage.getItem('adminAccount');
+            if (stored) {
+                return JSON.parse(stored);
+            }
+            // 首次使用，保存默认账号到 localStorage
+            localStorage.setItem('adminAccount', JSON.stringify(defaultAdmin));
+            return defaultAdmin;
+        }
 
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
+            const adminAccount = getAdminAccount();
             if (username === adminAccount.username && password === adminAccount.password) {
                 // 登录成功，保存管理员信息
                 localStorage.setItem('currentAdmin', JSON.stringify({
