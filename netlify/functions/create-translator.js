@@ -28,7 +28,7 @@ exports.handler = async (event, context) => {
   try {
     // 从环境变量读取 Supabase 配置
     const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY_EADARTRANS;
 
     if (!supabaseUrl || !supabaseServiceKey) {
       return {
