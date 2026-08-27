@@ -131,23 +131,22 @@
                     return;
                 }
                 
-                // 登录成功，从 translators 表获取额外信息
-                const { data: translatorData, error: translatorError } = await supabaseClient
-                    .from('translators')
-                    .select('*')
-                    .eq('email', username)
-                    .single();
+                // 从 JWT 获取用户角色
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                const role = user?.app_metadata?.role;
                 
-                if (translatorError || !translatorData) {
-                    alert('未找到译员信息，请联系管理员');
+                // 检查是否是译员角色
+                if (role !== 'translator') {
+                    alert('该账号不是译员账号，请使用译员账号登录');
+                    await supabaseClient.auth.signOut();
                     return;
                 }
                 
                 // 保存译员信息
                 localStorage.setItem('currentTranslator', JSON.stringify({
                     username: username,
-                    name: translatorData.name,
-                    id: translatorData.id
+                    name: user?.user_metadata?.full_name || username,
+                    id: user.id
                 }));
                 
                 // 跳转到订单列表

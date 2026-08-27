@@ -141,6 +141,17 @@
                     alert('登录失败：' + error.message);
                     return;
                 }
+                // 从 JWT 获取用户角色
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                const role = user?.app_metadata?.role;
+                
+                // 检查是否是管理员角色
+                if (role !== 'admin') {
+                    alert('该账号不是管理员账号，请使用管理员账号登录');
+                    await supabaseClient.auth.signOut();
+                    return;
+                }
+                
                 // 登录成功，保存管理员信息
                 localStorage.setItem('currentAdmin', JSON.stringify({
                     username: username,
