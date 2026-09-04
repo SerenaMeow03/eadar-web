@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>订单管理 - 谊达翻译</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -451,10 +450,42 @@
     <script>
         // 使用 IIFE 避免全局变量污染
         (function() {
-        // Supabase 配置
+        // ============= 统一 API 调用封装 =============
         const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
+
+        function getAccessToken() {
+            const keys = Object.keys(localStorage);
+            for (const k of keys) {
+                if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+                    try {
+                        const data = JSON.parse(localStorage.getItem(k));
+                        return data?.access_token || null;
+                    } catch (e) { return null; }
+                }
+            }
+            return null;
+        }
+
+        async function apiCall(path, options = {}) {
+            const token = getAccessToken();
+            if (!token) { window.location.href = 'login.html'; throw new Error('No session'); }
+            const res = await fetch('/.netlify/functions/' + path, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                    ...(options.headers || {}),
+                }
+            });
+            if (res.status === 401 || res.status === 403) {
+                window.location.href = 'login.html';
+                throw new Error('Unauthorized');
+            }
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || '请求失败');
+            return json.data;
+        }
 
         // 检查登录状态
         const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));
@@ -462,40 +493,26 @@
             window.location.href = 'login.html';
         }
 
-        // 从 Supabase 加载译员列表
+        // 译员缓存（避免每次都查）
+        let translatorsCache = null;
+
         async function loadTranslators() {
-            const { data, error } = await supabaseClient
-                .from('translators')
-                .select('id, name, username')
-                .order('name');
-            
-            if (error) {
-                showToast('加载译员列表失败', 'error');
-                return [];
-            }
-            return data || [];
+            if (translatorsCache) return translatorsCache;
+            translatorsCache = await apiCall('get-translators');
+            return translatorsCache || [];
         }
 
-        // 从 Supabase 加载订单列表
+        // 加载订单列表
         async function loadOrders() {
-            const { data, error } = await supabaseClient
-                .from('orders')
-                .select('*')
-                .order('created_at', { ascending: false });
-            
-            if (error) {
-                showToast('加载订单列表失败: ' + error.message, 'error');
-                return [];
-            }
-            return data || [];
+            return await apiCall('get-orders') || [];
         }
 
         // 加载译员选项
         async function loadTranslatorOptions() {
             const translators = await loadTranslators();
             const select = document.getElementById('translatorId');
-            select.innerHTML = '<option value="">请选择译员</option>' + 
-                translators.map(t => `<option value="${t.id}">${t.name} (${t.username})</option>`).join('');
+            select.innerHTML = '<option value="">请选择译员</option>' +
+                translators.map(t => `<option value="${t.id}">${t.name} (${t.email || t.username || ''})</option>`).join('');
         }
 
         // 渲染订单列表
@@ -503,9 +520,9 @@
             const orders = await loadOrders();
             const translators = await loadTranslators();
             const tbody = document.getElementById('ordersTableBody');
-            
-            const filteredOrders = filter === 'all' 
-                ? orders 
+
+            const filteredOrders = filter === 'all'
+                ? orders
                 : orders.filter(o => o.status === filter);
 
             if (filteredOrders.length === 0) {
@@ -522,10 +539,10 @@
 
             tbody.innerHTML = filteredOrders.map(order => {
                 const translator = translators.find(t => t.id === order.translator_id);
-                const translatorName = translator ? translator.name : '未知';
+                const translatorName = translator ? translator.name : '未指派';
                 const paymentStatus = order.payment_status || 'unpaid';
                 const deadline = order.deadline ? order.deadline.split('T')[0] : '-';
-                
+
                 return `
                     <tr>
                         <td>${order.id}</td>
@@ -572,41 +589,38 @@
             const modal = document.getElementById('orderModal');
             const title = document.getElementById('modalTitle');
             const form = document.getElementById('orderForm');
-            
+
             await loadTranslatorOptions();
-            
+
             if (orderId) {
-                const { data: order, error } = await supabaseClient
-                    .from('orders')
-                    .select('*')
-                    .eq('id', orderId)
-                    .single();
-                
-                if (error) {
-                    showToast('获取订单信息失败', 'error');
+                try {
+                    const orders = await apiCall('get-orders');
+                    const order = orders.find(o => o.id === orderId);
+                    if (!order) { showToast('订单不存在', 'error'); return; }
+
+                    title.textContent = '编辑订单';
+                    document.getElementById('orderId').value = order.id;
+                    document.getElementById('projectName').value = order.project_name;
+                    document.getElementById('wordCount').value = order.word_count;
+                    document.getElementById('rate').value = order.rate;
+                    document.getElementById('deadline').value = order.deadline ? order.deadline.split('T')[0] : '';
+                    document.getElementById('translatorId').value = order.translator_id;
+                    document.getElementById('status').value = order.status || 'pending';
+                    document.getElementById('paymentStatus').value = order.payment_status || 'unpaid';
+                    document.getElementById('remark').value = order.remark || '';
+                } catch (err) {
+                    showToast('获取订单信息失败: ' + err.message, 'error');
                     return;
                 }
-                
-                title.textContent = '编辑订单';
-                document.getElementById('orderId').value = order.id;
-                document.getElementById('projectName').value = order.project_name;
-                document.getElementById('wordCount').value = order.word_count;
-                document.getElementById('rate').value = order.rate;
-                document.getElementById('deadline').value = order.deadline ? order.deadline.split('T')[0] : '';
-                document.getElementById('translatorId').value = order.translator_id;
-                document.getElementById('status').value = order.status || 'pending';
-                document.getElementById('paymentStatus').value = order.payment_status || 'unpaid';
-                document.getElementById('remark').value = order.remark || '';
             } else {
                 title.textContent = '登记订单';
                 form.reset();
                 document.getElementById('orderId').value = '';
-                // 设置默认截止日期为7天后
                 const nextWeek = new Date();
                 nextWeek.setDate(nextWeek.getDate() + 7);
                 document.getElementById('deadline').value = nextWeek.toISOString().split('T')[0];
             }
-            
+
             modal.classList.add('active');
         }
 
@@ -623,19 +637,16 @@
         // 删除订单
         async function deleteOrder(id) {
             if (!confirm('确定要删除该订单吗？')) return;
-            
-            const { error } = await supabaseClient
-                .from('orders')
-                .delete()
-                .eq('id', id);
-            
-            if (error) {
-                showToast('删除失败: ' + error.message, 'error');
-                return;
+            try {
+                await apiCall('delete-order', {
+                    method: 'POST',
+                    body: JSON.stringify({ id })
+                });
+                await renderOrders(getCurrentFilter());
+                showToast('订单删除成功', 'success');
+            } catch (err) {
+                showToast('删除失败: ' + err.message, 'error');
             }
-            
-            await renderOrders(getCurrentFilter());
-            showToast('订单删除成功', 'success');
         }
 
         // 获取当前筛选状态
@@ -683,29 +694,30 @@
             
             if (id) {
                 // 编辑
-                const { error } = await supabaseClient
-                    .from('orders')
-                    .update(orderData)
-                    .eq('id', id);
-                
-                if (error) {
-                    showToast('更新失败: ' + error.message, 'error');
+                try {
+                    await apiCall('save-order', {
+                        method: 'POST',
+                        body: JSON.stringify({ id, ...orderData })
+                    });
+                    showToast('订单更新成功', 'success');
+                } catch (err) {
+                    showToast('更新失败: ' + err.message, 'error');
                     return;
                 }
-                showToast('订单更新成功', 'success');
             } else {
                 // 添加
-                const { error } = await supabaseClient
-                    .from('orders')
-                    .insert([orderData]);
-                
-                if (error) {
-                    showToast('登记失败: ' + error.message, 'error');
+                try {
+                    await apiCall('save-order', {
+                        method: 'POST',
+                        body: JSON.stringify(orderData)
+                    });
+                    showToast('订单登记成功', 'success');
+                } catch (err) {
+                    showToast('登记失败: ' + err.message, 'error');
                     return;
                 }
-                showToast('订单登记成功', 'success');
             }
-            
+
             await renderOrders(getCurrentFilter());
             closeModal();
         });
@@ -722,12 +734,18 @@
         // 退出登录
         function logout() {
             localStorage.removeItem('currentAdmin');
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+                    localStorage.removeItem(k);
+                }
+            });
             window.location.href = 'login.html';
         }
         window.logout = logout;
 
         // 初始化
         renderOrders();
+    })();
     </script>
 </body>
 </html>

@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理后台 - 谊达翻译</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -339,10 +338,42 @@
     <script>
         // 使用 IIFE 避免全局变量污染
         (function() {
-        // Supabase 配置
+        // ============= 统一 API 调用封装 =============
         const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
+
+        function getAccessToken() {
+            const keys = Object.keys(localStorage);
+            for (const k of keys) {
+                if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+                    try {
+                        const data = JSON.parse(localStorage.getItem(k));
+                        return data?.access_token || null;
+                    } catch (e) { return null; }
+                }
+            }
+            return null;
+        }
+
+        async function apiCall(path, options = {}) {
+            const token = getAccessToken();
+            if (!token) { window.location.href = 'login.html'; throw new Error('No session'); }
+            const res = await fetch('/.netlify/functions/' + path, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                    ...(options.headers || {}),
+                }
+            });
+            if (res.status === 401 || res.status === 403) {
+                window.location.href = 'login.html';
+                throw new Error('Unauthorized');
+            }
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || '请求失败');
+            return json.data;
+        }
 
         // 检查登录状态
         const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));
@@ -352,37 +383,35 @@
 
         // 获取统计数据
         async function updateStats() {
-            // 获取译员数量
-            const { count: translatorCount, error: tError } = await supabaseClient
-                .from('translators')
-                .select('*', { count: 'exact', head: true });
-            
-            if (!tError) {
-                document.getElementById('translatorCount').textContent = translatorCount || 0;
-            }
+            try {
+                // 译员数量
+                const translators = await apiCall('get-translators');
+                document.getElementById('translatorCount').textContent = translators?.length || 0;
 
-            // 获取订单统计
-            const { data: orders, error: oError } = await supabaseClient
-                .from('orders')
-                .select('status');
-            
-            if (!oError && orders) {
-                document.getElementById('orderCount').textContent = orders.length;
-                const pendingOrders = orders.filter(o => o.status === 'pending').length;
-                const completedOrders = orders.filter(o => o.status === 'completed').length;
-                document.getElementById('pendingCount').textContent = pendingOrders;
-                document.getElementById('completedCount').textContent = completedOrders;
+                // 订单统计
+                const orders = await apiCall('get-orders');
+                const list = orders || [];
+                document.getElementById('orderCount').textContent = list.length;
+                document.getElementById('pendingCount').textContent = list.filter(o => o.status === 'pending').length;
+                document.getElementById('completedCount').textContent = list.filter(o => o.status === 'completed').length;
+            } catch (err) {
+                console.error('updateStats error:', err);
             }
         }
 
         // 退出登录
         function logout() {
             localStorage.removeItem('currentAdmin');
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+                    localStorage.removeItem(k);
+                }
+            });
             window.location.href = 'login.html';
         }
         window.logout = logout;
 
-        // 密码修改功能
+        // 密码修改功能 - 走后端 Netlify Function
         function openPasswordModal() {
             document.getElementById('passwordModal').classList.add('active');
         }
@@ -394,57 +423,45 @@
 
         document.getElementById('passwordForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const currentPwd = document.getElementById('currentPassword').value;
             const newPwd = document.getElementById('newPassword').value;
             const confirmPwd = document.getElementById('confirmPassword').value;
 
-            // 验证输入
             if (!currentPwd || !newPwd || !confirmPwd) {
                 alert('请填写所有密码字段');
                 return;
             }
+            if (newPwd.length < 6) { alert('新密码至少需要6位'); return; }
+            if (newPwd !== confirmPwd) { alert('两次输入的新密码不一致'); return; }
 
-            if (newPwd.length < 6) {
-                alert('新密码至少需要6位');
-                return;
+            // 先用当前密码登录一次，验证是否正确
+            try {
+                const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+                const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                const { error: signInErr } = await sb.auth.signInWithPassword({
+                    email: currentAdmin.email,
+                    password: currentPwd
+                });
+                if (signInErr) {
+                    alert('当前密码错误');
+                    return;
+                }
+                // 验证通过，调后端 update-password
+                await apiCall('update-password', {
+                    method: 'POST',
+                    body: JSON.stringify({ newPassword: newPwd })
+                });
+                alert('密码修改成功！');
+                closePasswordModal();
+            } catch (err) {
+                alert('密码修改失败: ' + err.message);
             }
-
-            if (newPwd !== confirmPwd) {
-                alert('两次输入的新密码不一致');
-                return;
-            }
-
-            // 验证当前密码
-            const { data: admin, error: verifyError } = await supabaseClient
-                .from('admin')
-                .select('*')
-                .eq('username', currentAdmin.username)
-                .eq('password', currentPwd)
-                .single();
-
-            if (verifyError || !admin) {
-                alert('当前密码错误');
-                return;
-            }
-
-            // 更新密码
-            const { error: updateError } = await supabaseClient
-                .from('admin')
-                .update({ password: newPwd })
-                .eq('username', currentAdmin.username);
-
-            if (updateError) {
-                alert('密码修改失败: ' + updateError.message);
-                return;
-            }
-
-            alert('密码修改成功！');
-            closePasswordModal();
         });
 
         // 初始化
         updateStats();
+    })();
     </script>
 </body>
 </html>

@@ -155,6 +155,7 @@
                 // 登录成功，保存管理员信息
                 localStorage.setItem('currentAdmin', JSON.stringify({
                     username: username,
+                    email: username,  // Supabase Auth 用 email 作为唯一标识
                     role: 'admin'
                 }));
                 // 登录成功跳转后台页面

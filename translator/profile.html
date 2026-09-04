@@ -393,10 +393,42 @@
     </div>
 
     <script>
-        // Supabase 配置
+        // ============= 统一 API 调用封装 =============
         const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
-        if (!window.appSupabase) { window.appSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
+
+        function getAccessToken() {
+            const keys = Object.keys(localStorage);
+            for (const k of keys) {
+                if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+                    try {
+                        const data = JSON.parse(localStorage.getItem(k));
+                        return data?.access_token || null;
+                    } catch (e) { return null; }
+                }
+            }
+            return null;
+        }
+
+        async function apiCall(path, options = {}) {
+            const token = getAccessToken();
+            if (!token) { window.location.href = 'login.html'; throw new Error('No session'); }
+            const res = await fetch('/.netlify/functions/' + path, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                    ...(options.headers || {}),
+                }
+            });
+            if (res.status === 401 || res.status === 403) {
+                window.location.href = 'login.html';
+                throw new Error('Unauthorized');
+            }
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || '请求失败');
+            return json.data;
+        }
 
         // 检查登录状态
         const currentTranslator = JSON.parse(localStorage.getItem('currentTranslator'));
@@ -409,36 +441,42 @@
         document.getElementById('profileName').textContent = currentTranslator.name;
         document.getElementById('profileId').textContent = currentTranslator.id;
 
-        // 译员详细信息
+        // 译员数据（默认从 localStorage + 后端补全）
         let translatorData = {
             realName: currentTranslator.name,
-            phone: '138****8888',
-            email: 'translator@example.com',
-            idCard: '110101********1234',
-            bankName: '中国工商银行',
-            bankCard: '6222 **** **** 8888',
-            bankHolder: currentTranslator.name,
-            bankBranch: '北京市分行朝阳支行',
-            languages: '中文、英文',
-            specialties: '化工、医疗、法律',
-            standardRate: '150',
-            urgentRate: '200'
+            phone: '',
+            email: currentTranslator.username || '',
+            idCard: '',
+            bankName: '',
+            bankCard: '',
+            bankHolder: '',
+            bankBranch: '',
+            languages: '',
+            specialties: '',
+            standardRate: '',
+            urgentRate: ''
         };
 
-        // 从 Supabase 加载译员数据（包括银行信息）
+        // 从后端加载译员数据
         async function loadTranslatorData() {
             try {
-                const { data, error } = await supabase
-                    .from('translators')
-                    .select('*')
-                    .eq('id', currentTranslator.id)
-                    .single();
-                
-                if (data && data.bank_info) {
-                    const bankInfo = data.bank_info;
-                    translatorData = { ...translatorData, ...bankInfo };
-                    fillForm();
+                const data = await apiCall('get-translator-me');
+                if (data) {
+                    translatorData.phone = data.phone || '';
+                    translatorData.email = data.email || '';
+                    if (data.bank_info) {
+                        Object.assign(translatorData, data.bank_info);
+                    }
+                    if (data.languages && Array.isArray(data.languages)) {
+                        translatorData.languages = data.languages.join('、');
+                    }
+                    if (data.specialties && Array.isArray(data.specialties)) {
+                        translatorData.specialties = data.specialties.join('、');
+                    }
+                    translatorData.standardRate = data.standard_rate || '';
+                    translatorData.urgentRate = data.urgent_rate || '';
                 }
+                fillForm();
             } catch (err) {
                 console.error('加载数据失败:', err);
             }
@@ -499,16 +537,11 @@
             };
 
             try {
-                // 保存到 Supabase
-                const { error } = await supabase
-                    .from('translators')
-                    .update({ bank_info: bankInfo })
-                    .eq('id', currentTranslator.id);
-
-                if (error) {
-                    alert('保存失败：' + error.message);
-                    return;
-                }
+                // 走后端 Netlify Function
+                await apiCall('update-translator-bank', {
+                    method: 'POST',
+                    body: JSON.stringify(bankInfo)
+                });
 
                 // 更新本地数据
                 translatorData = { ...translatorData, ...bankInfo };
@@ -524,9 +557,13 @@
                 document.getElementById('bankButtons').style.display = 'none';
 
                 // 显示成功消息
-            const successMsg = document.getElementById('successMessage');
-            successMsg.classList.add('show');
-            setTimeout(() => successMsg.classList.remove('show'), 3000);
+                const successMsg = document.getElementById('successMessage');
+                successMsg.textContent = '✅ 银行信息保存成功！';
+                successMsg.classList.add('show');
+                setTimeout(() => successMsg.classList.remove('show'), 3000);
+            } catch (err) {
+                alert('保存失败：' + err.message);
+            }
         }
 
         // 密码修改相关
@@ -576,53 +613,50 @@
             }
 
             try {
-                // 从 Supabase 获取当前译员数据验证密码
-                const { data, error } = await supabase
-                    .from('translators')
-                    .select('password')
-                    .eq('id', currentTranslator.id)
-                    .single();
-
-                if (error || !data) {
-                    alert('验证失败');
-                    return;
-                }
-
-                // 验证当前密码
-                if (data.password !== currentPwd) {
+                // 用当前密码试登，验证旧密码
+                const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+                const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                const { error: signInErr } = await sb.auth.signInWithPassword({
+                    email: currentTranslator.email || currentTranslator.username,
+                    password: currentPwd
+                });
+                if (signInErr) {
                     alert('当前密码错误');
                     return;
                 }
 
-                // 更新密码到 Supabase
-                const { error: updateError } = await supabase
-                    .from('translators')
-                    .update({ password: newPwd })
-                    .eq('id', currentTranslator.id);
+                // 验证通过，调后端 update-password
+                await apiCall('update-password', {
+                    method: 'POST',
+                    body: JSON.stringify({ newPassword: newPwd })
+                });
 
-                if (updateError) {
-                    alert('密码修改失败：' + updateError.message);
-                    return;
-                }
+                // 退出编辑模式
+                isPasswordEditing = false;
+                document.getElementById('passwordForm').style.display = 'none';
+                document.getElementById('passwordButtons').style.display = 'none';
+                document.getElementById('editPasswordBtn').style.display = 'inline-block';
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
 
-            // 退出编辑模式
-            isPasswordEditing = false;
-            document.getElementById('passwordForm').style.display = 'none';
-            document.getElementById('passwordButtons').style.display = 'none';
-            document.getElementById('editPasswordBtn').style.display = 'inline-block';
-            document.getElementById('currentPassword').value = '';
-            document.getElementById('newPassword').value = '';
-            document.getElementById('confirmPassword').value = '';
-
-            // 显示成功消息
-            const successMsg = document.getElementById('successMessage');
-            successMsg.textContent = '✅ 密码修改成功！';
-            successMsg.classList.add('show');
-            setTimeout(() => successMsg.classList.remove('show'), 3000);
+                // 显示成功消息
+                const successMsg = document.getElementById('successMessage');
+                successMsg.textContent = '✅ 密码修改成功！';
+                successMsg.classList.add('show');
+                setTimeout(() => successMsg.classList.remove('show'), 3000);
+            } catch (err) {
+                alert('密码修改失败：' + err.message);
+            }
         }
 
         function logout() {
             localStorage.removeItem('currentTranslator');
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+                    localStorage.removeItem(k);
+                }
+            });
             window.location.href = 'login.html';
         }
 
@@ -631,7 +665,7 @@
             fillForm();
             await loadTranslatorData();
         }
-        
+
         init();
     </script>
 </body>

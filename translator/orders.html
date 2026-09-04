@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的订单 - 谊达翻译</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -291,10 +290,24 @@
     </div>
 
     <script>
-        // Supabase 配置
+        // ============= 统一 API 调用封装 =============
+        // 把 supabase 密钥从前端移除，所有数据走 Netlify Functions
         const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
-        if (!window.appSupabase) { window.appSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
+
+        // 获取当前 session（Supabase Auth 持久化在 localStorage）
+        function getAccessToken() {
+            const keys = Object.keys(localStorage);
+            for (const k of keys) {
+                if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+                    try {
+                        const data = JSON.parse(localStorage.getItem(k));
+                        return data?.access_token || null;
+                    } catch (e) { return null; }
+                }
+            }
+            return null;
+        }
 
         // 检查登录状态
         const currentTranslator = JSON.parse(localStorage.getItem('currentTranslator'));
@@ -305,20 +318,32 @@
         // 显示译员姓名
         document.getElementById('userName').textContent = currentTranslator.name;
 
-        // 从 Supabase 获取译员的订单数据
+        // 调 Netlify Function
+        async function apiCall(path) {
+            const token = getAccessToken();
+            if (!token) {
+                window.location.href = 'login.html';
+                throw new Error('No session');
+            }
+            const res = await fetch('/.netlify/functions/' + path, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.status === 401) {
+                window.location.href = 'login.html';
+                throw new Error('Unauthorized');
+            }
+            const json = await res.json();
+            if (!res.ok) {
+                throw new Error(json.error || '请求失败');
+            }
+            return json.data;
+        }
+
+        // 从后端获取译员的订单数据
         async function getMyOrders() {
             try {
-                const { data, error } = await supabase
-                    .from('orders')
-                    .select('*')
-                    .eq('translator_id', currentTranslator.id);
-                
-                if (error) {
-                    console.error('获取订单失败:', error);
-                    return [];
-                }
-                
-                return data.map(order => ({
+                const data = await apiCall('get-orders');
+                return (data || []).map(order => ({
                     id: order.id,
                     name: order.project_name,
                     words: order.word_count,
@@ -405,6 +430,12 @@
         // 退出登录
         function logout() {
             localStorage.removeItem('currentTranslator');
+            // 清除 supabase session
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+                    localStorage.removeItem(k);
+                }
+            });
             window.location.href = 'login.html';
         }
 

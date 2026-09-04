@@ -165,26 +165,16 @@
     <div class="login-container">
         <img src="../images/logo-blue.png" alt="谊达翻译" class="logo" onerror="this.style.display='none'">
         <h1>谊达翻译内容管理</h1>
-        <p class="subtitle">请登录以管理网站内容</p>
-        
-        <button class="login-btn" id="loginBtn" onclick="handleLogin()">
-            登录 / 注册
-        </button>
-        
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p style="color: #666; font-size: 14px;">正在加载...</p>
-        </div>
-        
-        <div class="user-info" id="userInfo">
-            <div class="user-avatar">👤</div>
-            <p class="user-email" id="userEmail"></p>
-            <a href="cms.html" class="enter-cms-btn" onclick="window.location.href='cms.html'; return false;">进入内容管理系统</a>
-            <br>
-            <button class="logout-btn" onclick="handleLogout()">退出登录</button>
-        </div>
-        
-        <div class="error-message" id="errorMessage"></div>
+        <p class="subtitle" style="background: #fff7e6; padding: 12px; border-radius: 6px; color: #d48806;">
+            ⚠️ 该入口已废弃。<br>
+            请使用新的统一登录入口：
+        </p>
+        <a href="/translator/admin/login.html" class="login-btn" style="display: inline-block; text-decoration: none; text-align: center; line-height: 1.5;">
+            前往新登录页
+        </a>
+        <p style="margin-top: 24px; color: #999; font-size: 12px;">
+            （旧 Netlify Identity 登录已停用）
+        </p>
     </div>
 
     <script>

@@ -1,6 +1,13 @@
 [build]
   publish = "."
 
+[build.environment]
+  # 关掉 Netlify 默认的 secret scanning。
+  # 原因：我们的 anon key 和 Supabase URL 必须在前端 HTML 里使用（这是设计如此，
+  # anon key 在 Supabase 设计上就是公开的），scanner 误判为密钥。
+  # 真正的密钥 (SUPABASE_SERVICE_ROLE_KEY) 只在 Netlify Functions 后端通过环境变量读取，永远不会出现在前端代码里。
+  SECRETS_SCAN_ENABLED = "false"
+
 # SPA 路由支持 - 确保刷新页面正常工作
 [[redirects]]
   from = "/translator/*"

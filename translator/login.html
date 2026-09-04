@@ -144,6 +144,7 @@
                 
                 // 保存译员信息
                 localStorage.setItem('currentTranslator', JSON.stringify({
+                    email: username,
                     username: username,
                     name: user?.user_metadata?.full_name || username,
                     id: user.id

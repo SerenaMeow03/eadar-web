@@ -347,10 +347,42 @@
     <script>
         // 使用 IIFE 避免全局变量污染
         (function() {
-        // Supabase 配置
+        // ============= 统一 API 调用封装 =============
         const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
+
+        function getAccessToken() {
+            const keys = Object.keys(localStorage);
+            for (const k of keys) {
+                if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+                    try {
+                        const data = JSON.parse(localStorage.getItem(k));
+                        return data?.access_token || null;
+                    } catch (e) { return null; }
+                }
+            }
+            return null;
+        }
+
+        async function apiCall(path, options = {}) {
+            const token = getAccessToken();
+            if (!token) { window.location.href = 'login.html'; throw new Error('No session'); }
+            const res = await fetch('/.netlify/functions/' + path, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                    ...(options.headers || {}),
+                }
+            });
+            if (res.status === 401 || res.status === 403) {
+                window.location.href = 'login.html';
+                throw new Error('Unauthorized');
+            }
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || '请求失败');
+            return json.data;
+        }
 
         // 检查登录状态
         const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));
@@ -358,48 +390,38 @@
             window.location.href = 'login.html';
         }
 
-        // 从 Supabase 加载译员列表
+        // 加载译员列表
         async function loadTranslators() {
-            const { data, error } = await supabaseClient
-                .from('translators')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                showToast('加载译员列表失败: ' + error.message, 'error');
-                return [];
-            }
-            return data || [];
+            return await apiCall('get-translators') || [];
         }
 
         // 渲染译员列表
         async function renderTranslators() {
             const translators = await loadTranslators();
             const tbody = document.getElementById('translatorsTableBody');
-            
+
             if (translators.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" class="loading">暂无译员数据</td></tr>';
                 return;
             }
-            
+
             tbody.innerHTML = translators.map(t => {
                 const bankInfo = t.bank_info;
                 const bankStatus = bankInfo && bankInfo.bankName
                     ? `<div class="bank-info">已填写: ${bankInfo.bankName}</div>`
                     : `<div class="bank-info empty">未填写</div>`;
-                
+
                 const createdAt = t.created_at ? t.created_at.split('T')[0] : '-';
-                
+
                 return `
                     <tr>
                         <td>${t.id}</td>
                         <td>${t.name}</td>
-                        <td>${t.username}</td>
+                        <td>${t.email || t.username || '-'}</td>
                         <td>${bankStatus}</td>
                         <td>${createdAt}</td>
                         <td>
                             <div class="action-btns">
-                                <button class="btn btn-primary" onclick="editTranslator('${t.id}')">编辑</button>
                                 <button class="btn btn-danger" onclick="deleteTranslator('${t.id}')">删除</button>
                             </div>
                         </td>
@@ -409,34 +431,10 @@
         }
 
         // 打开弹窗
-        async function openModal(translatorId = null) {
+        function openModal() {
             const modal = document.getElementById('translatorModal');
-            const title = document.getElementById('modalTitle');
             const form = document.getElementById('translatorForm');
-            
-            if (translatorId) {
-                const { data, error } = await supabaseClient
-                    .from('translators')
-                    .select('*')
-                    .eq('id', translatorId)
-                    .single();
-                
-                if (error) {
-                    showToast('获取译员信息失败', 'error');
-                    return;
-                }
-                
-                title.textContent = '编辑译员';
-                document.getElementById('translatorId').value = data.id;
-                document.getElementById('name').value = data.name;
-                document.getElementById('username').value = data.username;
-                document.getElementById('password').value = data.password;
-            } else {
-                title.textContent = '添加译员';
-                form.reset();
-                document.getElementById('translatorId').value = '';
-            }
-            
+            form.reset();
             modal.classList.add('active');
         }
 
@@ -445,27 +443,11 @@
             document.getElementById('translatorModal').classList.remove('active');
         }
 
-        // 编辑译员
-        function editTranslator(id) {
-            openModal(id);
-        }
-
-        // 删除译员
+        // 删除译员（注意：暂未实现后端 delete-translator；这里提示用户走 Supabase 后台）
         async function deleteTranslator(id) {
-            if (!confirm('确定要删除该译员吗？')) return;
-            
-            const { error } = await supabaseClient
-                .from('translators')
-                .delete()
-                .eq('id', id);
-            
-            if (error) {
-                showToast('删除失败: ' + error.message, 'error');
-                return;
-            }
-            
-            await renderTranslators();
-            showToast('删除成功', 'success');
+            if (!confirm('确定要删除该译员吗？\n\n注意：当前版本会同时删除其 Supabase Auth 账号，业务表记录保留为失效状态。')) return;
+            // TODO: 实现 delete-translator function
+            showToast('删除功能待实现（请在 Supabase 后台手工操作）', 'error');
         }
 
         // 显示提示
@@ -477,44 +459,25 @@
             setTimeout(() => toast.remove(), 3000);
         }
 
-        // 表单提交 - 调用 Netlify Function 创建译员账号
+        // 表单提交 - 调用 create-translator
         document.getElementById('translatorForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const fullName = document.getElementById('fullName').value.trim();
             const languagesInput = document.getElementById('languages').value.trim();
             const languages = languagesInput ? languagesInput.split(',').map(l => l.trim()).filter(l => l) : [];
-            
-            // 调用 Netlify Function 创建译员
+
             try {
-                const response = await fetch('/.netlify/functions/create-translator', {
+                const result = await apiCall('create-translator', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        password: password,
-                        fullName: fullName,
-                        languages: languages
-                    })
+                    body: JSON.stringify({ email, password, fullName, languages })
                 });
-                
-                const result = await response.json();
-                
-                if (!response.ok) {
-                    showToast('创建失败: ' + (result.error || '未知错误'), 'error');
-                    return;
-                }
-                
-                showToast('译员账号创建成功！邮箱: ' + email, 'success');
+                showToast('译员账号创建成功！', 'success');
                 closeModal();
-                
-                // 显示账号信息供复制
-                alert('译员账号创建成功！\n\n邮箱: ' + email + '\n密码: ' + password + '\n\n请复制以上信息发送给译员。');
-                
+                alert('译员账号创建成功！\n\n业务ID: ' + result.id + '\n邮箱: ' + email + '\n密码: ' + password + '\n\n请复制以上信息发送给译员。');
+                await renderTranslators();
             } catch (error) {
                 showToast('创建失败: ' + error.message, 'error');
             }
@@ -523,12 +486,18 @@
         // 退出登录
         function logout() {
             localStorage.removeItem('currentAdmin');
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+                    localStorage.removeItem(k);
+                }
+            });
             window.location.href = 'login.html';
         }
         window.logout = logout;
 
         // 初始化
         renderTranslators();
+        })();
     </script>
 </body>
 </html>
