@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>客户登录 - 谊达翻译</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 420px;
+            padding: 40px 32px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .logo h1 {
+            font-size: 24px;
+            color: #1a1a2e;
+            margin-bottom: 6px;
+        }
+        .logo p {
+            color: #999;
+            font-size: 13px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #333;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #1a1a2e;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: #1a1a2e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.3s;
+        }
+        .btn-login:hover {
+            background: #16213e;
+        }
+        .btn-login:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+        .hint {
+            margin-top: 18px;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+        }
+        .error-msg {
+            background: #fff1f0;
+            border: 1px solid #ffccc7;
+            color: #cf1322;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 14px;
+            display: none;
+        }
+        .error-msg.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo">
+            <h1>谊达翻译</h1>
+            <p>客户订单查询</p>
+        </div>
+        <div class="error-msg" id="errorMsg"></div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" id="email" required placeholder="请输入邮箱" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="password" required placeholder="请输入密码" autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn-login" id="btnLogin">登 录</button>
+        </form>
+        <div class="hint">
+            如有问题请联系您的客户经理
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script>
+    (function() {
+        const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.classList.add('show');
+        }
+        function hideError() {
+            document.getElementById('errorMsg').classList.remove('show');
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            hideError();
+            const btn = document.getElementById('btnLogin');
+            btn.disabled = true;
+            btn.textContent = '登录中...';
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) {
+                    showError('登录失败：' + (error.message === 'Invalid login credentials' ? '邮箱或密码错误' : error.message));
+                    btn.disabled = false;
+                    btn.textContent = '登 录';
+                    return;
+                }
+
+                // 校验角色：必须是 client
+                const role = data.user?.app_metadata?.role;
+                if (role !== 'client') {
+                    await supabase.auth.signOut();
+                    showError('该账号不是客户账号，请使用客户专用邮箱登录');
+                    btn.disabled = false;
+                    btn.textContent = '登 录';
+                    return;
+                }
+
+                // 登录成功 → 跳 dashboard
+                window.location.href = 'dashboard.html';
+            } catch (e) {
+                showError('登录失败：' + e.message);
+                btn.disabled = false;
+                btn.textContent = '登 录';
+            }
+        });
+    })();
+    </script>
+</body>
+</html>

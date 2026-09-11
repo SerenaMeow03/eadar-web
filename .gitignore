@@ -17,3 +17,26 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# ===== admin 部署专用规则（避免 marketing / 化工内容进 Netlify） =====
+# Marketing 站点 / 化工网站首页 / SEO 备份
+index.html.bak_seo
+index2.html
+index3.html
+# Marketing/化工 dev 和测试备份
+admin/index.html.bak1
+# 内部文档
+README-*.md
+overview.md
+netlify-env-setup.md
+CLIENT_PORTAL_DEPLOY_GUIDE.md
+# SQL 文件不部署到 Netlify（本地留存）
+supabase-schema.sql
+supabase-schema-v2.sql
+supabase-schema-v3-clients.sql
+supabase-schema-v1-backup.sql
+# package-lock 不提交
+package-lock.json
+# 部署包目录（用于手动 drop，git 推送用不到）
+eadartrans-deploy/
+eadartrans-deploy.zip

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的订单 - 谊达翻译</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif; background: #f5f7fa; min-height: 100vh; color: #333; }
+        .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 18px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header-content { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 18px; font-weight: 500; }
+        .user-info { display: flex; align-items: center; gap: 16px; font-size: 14px; }
+        .logout-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 7px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .logout-btn:hover { background: rgba(255,255,255,0.3); }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+
+        .welcome { background: white; border-radius: 8px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .welcome h2 { font-size: 18px; color: #1a1a2e; margin-bottom: 6px; }
+        .welcome p { color: #666; font-size: 14px; }
+
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .stat-card { background: white; border-radius: 8px; padding: 18px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .stat-card .label { font-size: 12px; color: #999; margin-bottom: 6px; }
+        .stat-card .value { font-size: 24px; font-weight: 600; color: #1a1a2e; }
+        .stat-card .value.pending { color: #fa8c16; }
+        .stat-card .value.progress { color: #1890ff; }
+        .stat-card .value.completed { color: #52c41a; }
+
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .section-header h3 { font-size: 16px; color: #333; }
+        .filter-tabs { display: flex; gap: 6px; }
+        .filter-tab { padding: 6px 14px; border: 1px solid #d9d9d9; border-radius: 6px; background: white; cursor: pointer; font-size: 13px; color: #666; }
+        .filter-tab.active { background: #1a1a2e; color: white; border-color: #1a1a2e; }
+
+        .table-card { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #fafbfc; }
+        th { padding: 14px 12px; text-align: left; font-weight: 500; color: #333; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
+        td { padding: 14px 12px; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
+        tbody tr { cursor: pointer; transition: background 0.2s; }
+        tbody tr:hover { background: #fafbfc; }
+        tbody tr:last-child td { border-bottom: none; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+
+        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .status-pending { background: #fff7e6; color: #d48806; }
+        .status-progress { background: #e6f7ff; color: #1890ff; }
+        .status-completed { background: #f6ffed; color: #389e0d; }
+        .status-cancelled { background: #f5f5f5; color: #999; }
+        .payment-paid { background: #f6ffed; color: #389e0d; }
+        .payment-unpaid { background: #fff7e6; color: #d48806; }
+
+        /* Modal for order detail */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 8px; width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { padding: 18px 24px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { font-size: 17px; color: #1a1a2e; }
+        .close-btn { background: none; border: none; font-size: 24px; color: #999; cursor: pointer; }
+        .modal-body { padding: 20px 24px; }
+        .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-row .label { color: #999; }
+        .detail-row .value { color: #333; font-weight: 500; }
+        .detail-row .value.amount { color: #cf1322; font-size: 16px; font-weight: 600; }
+
+        .toast { position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 6px; color: white; z-index: 9999; }
+        .toast.error { background: #ff4d4f; }
+        .toast.success { background: #52c41a; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>谊达翻译 - 我的订单</h1>
+            <div class="user-info">
+                <span id="userLabel">客户</span>
+                <button class="logout-btn" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="welcome">
+            <h2 id="welcomeTitle">欢迎</h2>
+            <p>在这里查看您所有翻译订单的实时进度</p>
+        </div>
+
+        <div class="stats" id="statsArea">
+            <div class="stat-card">
+                <div class="label">订单总数</div>
+                <div class="value" id="statTotal">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">待处理</div>
+                <div class="value pending" id="statPending">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">翻译中</div>
+                <div class="value progress" id="statProgress">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">已完成</div>
+                <div class="value completed" id="statCompleted">0</div>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <h3>订单列表</h3>
+            <div class="filter-tabs">
+                <div class="filter-tab active" data-filter="all" onclick="setFilter('all')">全部</div>
+                <div class="filter-tab" data-filter="pending" onclick="setFilter('pending')">待处理</div>
+                <div class="filter-tab" data-filter="progress" onclick="setFilter('progress')">翻译中</div>
+                <div class="filter-tab" data-filter="completed" onclick="setFilter('completed')">已完成</div>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>订单编号</th>
+                        <th>项目名称</th>
+                        <th>译员</th>
+                        <th>字数</th>
+                        <th>应付金额</th>
+                        <th>截止日期</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 订单详情 Modal -->
+    <div class="modal" id="orderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>订单详情</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="orderModalBody"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script>
+    (function() {
+        const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
+
+        function getAccessToken() {
+            const keys = Object.keys(localStorage);
+            for (const k of keys) {
+                if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+                    try {
+                        const data = JSON.parse(localStorage.getItem(k));
+                        return data?.access_token || null;
+                    } catch (e) { return null; }
+                }
+            }
+            return null;
+        }
+
+        async function apiCall(path, options = {}) {
+            const token = getAccessToken();
+            if (!token) { window.location.href = 'login.html'; throw new Error('No session'); }
+            const res = await fetch('/.netlify/functions/' + path, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(options.headers || {}),
+                    'Authorization': 'Bearer ' + token,
+                },
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+            return data.data !== undefined ? data.data : data;
+        }
+
+        let allOrders = [];
+        let currentFilter = 'all';
+
+        function setStatusText(s) {
+            return ({ pending: '待处理', progress: '翻译中', completed: '已完成', cancelled: '已取消' })[s] || s;
+        }
+        function setPaymentText(s) {
+            return ({ paid: '已付款', unpaid: '待付款' })[s] || s;
+        }
+
+        async function loadData() {
+            try {
+                const result = await apiCall('get-client-orders');
+                allOrders = result.data || [];
+                const client = result.client || {};
+                document.getElementById('welcomeTitle').textContent =
+                    `欢迎，${client.contact_name || ''}${client.company_name ? '（' + client.company_name + '）' : ''}`;
+                render();
+            } catch (e) {
+                showToast('加载订单失败：' + e.message, 'error');
+            }
+        }
+
+        function setFilter(f) {
+            currentFilter = f;
+            document.querySelectorAll('.filter-tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.filter === f);
+            });
+            render();
+        }
+        window.setFilter = setFilter;
+
+        function render() {
+            // 统计
+            const total = allOrders.length;
+            const pending = allOrders.filter(o => o.status === 'pending').length;
+            const progress = allOrders.filter(o => o.status === 'progress').length;
+            const completed = allOrders.filter(o => o.status === 'completed').length;
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statPending').textContent = pending;
+            document.getElementById('statProgress').textContent = progress;
+            document.getElementById('statCompleted').textContent = completed;
+
+            // 列表
+            const filtered = currentFilter === 'all'
+                ? allOrders
+                : allOrders.filter(o => o.status === currentFilter);
+
+            const tbody = document.getElementById('ordersTableBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <p>${total === 0 ? '您还没有订单' : '该状态下没有订单'}</p>
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(o => {
+                const deadline = o.deadline ? String(o.deadline).slice(0, 10) : '-';
+                return `
+                    <tr onclick="openOrderDetail('${o.id}')">
+                        <td><strong>${o.id}</strong></td>
+                        <td>${o.project_name}</td>
+                        <td>${o.translator_name}</td>
+                        <td>${(o.word_count || 0).toLocaleString()}</td>
+                        <td><strong>¥${o.client_amount || '-'}</strong></td>
+                        <td>${deadline}</td>
+                        <td><span class="status-badge status-${o.status}">${setStatusText(o.status)}</span></td>
+                    </tr>`;
+            }).join('');
+        }
+
+        function openOrderDetail(id) {
+            const order = allOrders.find(o => o.id === id);
+            if (!order) return;
+            const deadline = order.deadline ? String(order.deadline).slice(0, 10) : '未指定';
+            const created = order.created_at ? new Date(order.created_at).toLocaleString('zh-CN', { hour12: false }) : '-';
+            const updated = order.updated_at ? new Date(order.updated_at).toLocaleString('zh-CN', { hour12: false }) : '-';
+            document.getElementById('orderModalBody').innerHTML = `
+                <div class="detail-row"><span class="label">订单编号</span><span class="value">${order.id}</span></div>
+                <div class="detail-row"><span class="label">项目名称</span><span class="value">${order.project_name}</span></div>
+                <div class="detail-row"><span class="label">译员</span><span class="value">${order.translator_name}</span></div>
+                <div class="detail-row"><span class="label">字数</span><span class="value">${(order.word_count || 0).toLocaleString()} 字</span></div>
+                <div class="detail-row"><span class="label">客户单价</span><span class="value">¥${order.client_rate || '-'}/字</span></div>
+                <div class="detail-row"><span class="label">应付金额</span><span class="value amount">¥${order.client_amount || '-'}</span></div>
+                <div class="detail-row"><span class="label">截止日期</span><span class="value">${deadline}</span></div>
+                <div class="detail-row"><span class="label">翻译状态</span><span class="value"><span class="status-badge status-${order.status}">${setStatusText(order.status)}</span></span></div>
+                <div class="detail-row"><span class="label">付款状态</span><span class="value"><span class="status-badge payment-${order.payment_status}">${setPaymentText(order.payment_status)}</span></span></div>
+                <div class="detail-row"><span class="label">创建时间</span><span class="value">${created}</span></div>
+                <div class="detail-row"><span class="label">最后更新</span><span class="value">${updated}</span></div>
+                <p style="margin-top: 16px; padding: 12px; background: #f6f8fa; border-radius: 6px; color: #666; font-size: 12px;">
+                    如需沟通译员细节或加急处理，请联系您的客户经理。
+                </p>
+            `;
+            document.getElementById('orderModal').classList.add('active');
+        }
+        window.openOrderDetail = openOrderDetail;
+
+        function closeModal() {
+            document.getElementById('orderModal').classList.remove('active');
+        }
+        window.closeModal = closeModal;
+
+        function logout() {
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('sb-') && k.endsWith('-auth-token')) localStorage.removeItem(k);
+            });
+            window.location.href = 'login.html';
+        }
+        window.logout = logout;
+
+        function showToast(msg, type = 'error') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+
+        // 初始化
+        loadData();
+    })();
+    </script>
+</body>
+</html>

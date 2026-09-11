@@ -251,13 +251,14 @@
     <header class="header">
         <div class="header-content">
             <div class="header-logo">
-                <img src="../images/logo-white.png" alt="谊达翻译">
+                <img src="../../images/logo-white.png" alt="谊达翻译">
                 <h1>管理后台</h1>
             </div>
             <nav class="nav-menu">
                 <a href="dashboard.html" class="active">首页</a>
                 <a href="translators.html">译员管理</a>
                 <a href="orders.html">订单管理</a>
+                <a href="clients.html">客户管理</a>
             </nav>
             <div class="user-info">
                 <span class="user-name">管理员</span>
@@ -298,6 +299,11 @@
                 <div class="action-icon">📋</div>
                 <h3>订单管理</h3>
                 <p>登记和查看所有订单信息</p>
+            </div>
+            <div class="action-card" onclick="location.href='clients.html'">
+                <div class="action-icon">🤝</div>
+                <h3>客户管理</h3>
+                <p>管理客户账号与登录信息</p>
             </div>
             <div class="action-card" onclick="openPasswordModal()">
                 <div class="action-icon">🔐</div>
@@ -410,6 +416,8 @@
             window.location.href = 'login.html';
         }
         window.logout = logout;
+        window.openPasswordModal = openPasswordModal;
+        window.closePasswordModal = closePasswordModal;
 
         // 密码修改功能 - 走后端 Netlify Function
         function openPasswordModal() {

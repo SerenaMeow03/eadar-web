@@ -89,6 +89,53 @@
             font-size: 20px;
             color: #333;
         }
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .search-input {
+            padding: 9px 14px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 280px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .result-count {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 12px;
+            padding-left: 4px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .status-active {
+            background: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+        .status-suspended {
+            background: #fffbe6;
+            color: #fa8c16;
+            border: 1px solid #ffe58f;
+        }
+        .status-terminated {
+            background: #f5f5f5;
+            color: #999;
+            border: 1px solid #d9d9d9;
+        }
         .btn {
             padding: 10px 20px;
             border: none;
@@ -272,7 +319,7 @@
     <header class="header">
         <div class="header-content">
             <div class="header-logo">
-                <img src="../images/logo-white.png" alt="谊达翻译">
+                <img src="../../images/logo-white.png" alt="谊达翻译">
                 <h1>管理后台</h1>
             </div>
             <nav class="nav-menu">
@@ -290,8 +337,15 @@
     <div class="container">
         <div class="section-header">
             <h2>译员列表</h2>
-            <button class="btn btn-primary" onclick="openModal()">+ 添加译员</button>
+            <div class="header-actions">
+                <input type="text" id="searchInput" class="search-input"
+                    placeholder="🔍 搜索姓名 / 邮箱 / 语种 / 专业领域..."
+                    autocomplete="off">
+                <button class="btn btn-primary" onclick="openModal()">+ 添加译员</button>
+            </div>
         </div>
+
+        <div id="resultCount" class="result-count"></div>
 
         <div class="translators-table">
             <table>
@@ -301,12 +355,13 @@
                         <th>姓名</th>
                         <th>用户名</th>
                         <th>银行卡信息</th>
+                        <th>状态</th>
                         <th>注册时间</th>
                         <th>操作</th>
                     </tr>
                 </thead>
                 <tbody id="translatorsTableBody">
-                    <tr><td colspan="6" class="loading">加载中...</td></tr>
+                    <tr><td colspan="7" class="loading">加载中...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -336,11 +391,32 @@
                     <label>语种（用逗号分隔）</label>
                     <input type="text" id="languages" placeholder="例如：英语,日语,韩语">
                 </div>
+                <div class="form-group">
+                    <label>手机号</label>
+                    <input type="tel" id="phone" placeholder="请输入手机号码">
+                </div>
+                <div class="form-group">
+                    <label>专业领域（用逗号分隔）</label>
+                    <input type="text" id="specialties" placeholder="例如:医学,法律,商务">
+                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
                     <button type="submit" class="btn btn-primary">创建账号</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- 查看译员详情弹窗 -->
+    <div class="modal" id="viewModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>译员详细信息</h3>
+                <button class="close-btn" onclick="closeViewModal()">&times;</button>
+            </div>
+            <div id="viewBody" style="line-height: 1.8; font-size: 14px;">
+                <div class="loading">加载中...</div>
+            </div>
         </div>
     </div>
 
@@ -390,44 +466,104 @@
             window.location.href = 'login.html';
         }
 
-        // 加载译员列表
-        async function loadTranslators() {
-            return await apiCall('get-translators') || [];
+        // 加载译员列表（缓存避免重复请求）
+        let cachedTranslators = null;
+        async function loadTranslators(forceRefresh = false) {
+            if (cachedTranslators && !forceRefresh) return cachedTranslators;
+            cachedTranslators = await apiCall('get-translators') || [];
+            return cachedTranslators;
+        }
+
+        // 客户端过滤：搜索姓名 / 邮箱 / 语种 / 专业领域
+        function filterTranslators(list, term) {
+            const trimmed = term.trim().toLowerCase();
+            if (!trimmed) return list;
+            return list.filter(t => {
+                const haystack = [
+                    t.name,
+                    t.email,
+                    t.username,
+                    ...(Array.isArray(t.languages) ? t.languages : []),
+                    ...(Array.isArray(t.specialties) ? t.specialties : []),
+                ].filter(Boolean).join(' ').toLowerCase();
+                return haystack.includes(trimmed);
+            });
         }
 
         // 渲染译员列表
         async function renderTranslators() {
             const translators = await loadTranslators();
             const tbody = document.getElementById('translatorsTableBody');
+            const searchInput = document.getElementById('searchInput');
+            const searchTerm = searchInput ? searchInput.value : '';
+            const filtered = filterTranslators(translators, searchTerm);
 
-            if (translators.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="loading">暂无译员数据</td></tr>';
+            // 更新计数提示
+            const counter = document.getElementById('resultCount');
+            if (counter) {
+                counter.textContent = searchTerm
+                    ? `找到 ${filtered.length} / ${translators.length} 位译员`
+                    : `共 ${translators.length} 位译员`;
+            }
+
+            if (filtered.length === 0) {
+                const msg = searchTerm
+                    ? `<tr><td colspan="7" class="loading">未找到匹配 "${escapeHtml(searchTerm)}" 的译员</td></tr>`
+                    : '<tr><td colspan="7" class="loading">暂无译员数据</td></tr>';
+                tbody.innerHTML = msg;
                 return;
             }
 
-            tbody.innerHTML = translators.map(t => {
+            tbody.innerHTML = filtered.map(t => {
                 const bankInfo = t.bank_info;
-                const bankStatus = bankInfo && bankInfo.bankName
-                    ? `<div class="bank-info">已填写: ${bankInfo.bankName}</div>`
-                    : `<div class="bank-info empty">未填写</div>`;
+                // 银行状态：所有必填字段齐全才算"已填写"
+                const bankComplete = bankInfo && bankInfo.bankName && bankInfo.bankCard && bankInfo.bankHolder;
+                const bankStatus = bankComplete
+                    ? `<div class="bank-info">✅ ${bankInfo.bankName}</div>`
+                    : (bankInfo && bankInfo.bankName
+                        ? `<div class="bank-info empty">⚠ 信息不全</div>`
+                        : `<div class="bank-info empty">未填写</div>`);
+
+                // 译员状态徽章
+                const statusBadge = {
+                    'active':     '<span class="status-badge status-active">✅ 正常</span>',
+                    'suspended':  '<span class="status-badge status-suspended">⚠ 暂停</span>',
+                    'terminated': '<span class="status-badge status-terminated">❌ 已终止</span>',
+                }[t.status] || `<span class="status-badge">${escapeHtml(t.status || '-')}</span>`;
+
+                // terminated 行灰底、删除按钮置灰
+                const isTerminated = t.status === 'terminated';
+                const rowStyle = isTerminated ? ' style="background: #fafafa; color: #999;"' : '';
+                const deleteBtn = isTerminated
+                    ? '<button class="btn btn-danger" disabled style="opacity:0.4; cursor:not-allowed;">已终止</button>'
+                    : `<button class="btn btn-danger" onclick="deleteTranslator('${t.id}')">删除</button>`;
 
                 const createdAt = t.created_at ? t.created_at.split('T')[0] : '-';
 
                 return `
-                    <tr>
+                    <tr${rowStyle}>
                         <td>${t.id}</td>
                         <td>${t.name}</td>
                         <td>${t.email || t.username || '-'}</td>
                         <td>${bankStatus}</td>
+                        <td>${statusBadge}</td>
                         <td>${createdAt}</td>
                         <td>
                             <div class="action-btns">
-                                <button class="btn btn-danger" onclick="deleteTranslator('${t.id}')">删除</button>
+                                <button class="btn btn-secondary" onclick="viewTranslator('${t.id}')">查看</button>
+                                ${deleteBtn}
                             </div>
                         </td>
                     </tr>
                 `;
             }).join('');
+        }
+
+        // XSS 防护：搜索词回显到"未找到"提示
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[c]);
         }
 
         // 打开弹窗
@@ -443,11 +579,92 @@
             document.getElementById('translatorModal').classList.remove('active');
         }
 
-        // 删除译员（注意：暂未实现后端 delete-translator；这里提示用户走 Supabase 后台）
+
+        // 打开查看弹窗
+        async function viewTranslator(id) {
+            const modal = document.getElementById('viewModal');
+            const body = document.getElementById('viewBody');
+            body.innerHTML = '<div class="loading">加载中...</div>';
+            modal.classList.add('active');
+
+            try {
+                const translators = await apiCall('get-translators') || [];
+                const t = translators.find(x => x.id === id);
+                if (!t) {
+                    body.innerHTML = '<div class="bank-info empty">未找到该译员</div>';
+                    return;
+                }
+
+                const bankInfo = t.bank_info || {};
+                const bankComplete = bankInfo.bankName && bankInfo.bankCard && bankInfo.bankHolder;
+                const langs = Array.isArray(t.languages) ? t.languages.join('、') : (t.languages || '-');
+                const specs = Array.isArray(t.specialties) ? t.specialties.join('、') : (t.specialties || '-');
+
+                body.innerHTML = `
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-weight: 600; font-size: 16px; margin-bottom: 4px;">${t.name || '-'}</div>
+                        <div style="color: #999; font-size: 12px;">译员 ID: ${t.id}</div>
+                    </div>
+                    <div style="background: #fafafa; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                        <div style="font-weight: 600; margin-bottom: 8px; color: #333;">📞 联系方式</div>
+                        <div><span style="color:#999;">邮箱：</span>${t.email || '-'}</div>
+                        <div><span style="color:#999;">手机：</span>${t.phone || '<span style="color:#bbb;">未填写</span>'}</div>
+                    </div>
+                    <div style="background: ${bankComplete ? '#f6ffed' : '#fff7e6'}; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                        <div style="font-weight: 600; margin-bottom: 8px; color: #333;">💳 银行卡信息</div>
+                        <div><span style="color:#999;">开户银行：</span>${bankInfo.bankName || '<span style="color:#fa8c16;">未填写</span>'}</div>
+                        <div><span style="color:#999;">银行卡号：</span>${bankInfo.bankCard ? '<span style="font-family: monospace;">' + bankInfo.bankCard + '</span>' : '<span style="color:#fa8c16;">未填写</span>'}</div>
+                        <div><span style="color:#999;">开户人：</span>${bankInfo.bankHolder || '<span style="color:#fa8c16;">未填写</span>'}</div>
+                        <div><span style="color:#999;">开户支行：</span>${bankInfo.bankBranch || '<span style="color:#bbb;">未填写</span>'}</div>
+                    </div>
+                    <div style="background: #fafafa; padding: 12px; border-radius: 6px;">
+                        <div style="font-weight: 600; margin-bottom: 8px; color: #333;">🌐 业务能力</div>
+                        <div><span style="color:#999;">语种：</span>${langs}</div>
+                        <div><span style="color:#999;">专业领域：</span>${specs}</div>
+                    </div>
+                `;
+            } catch (err) {
+                body.innerHTML = '<div class="bank-info empty">加载失败：' + err.message + '</div>';
+            }
+        }
+
+        // 关闭查看弹窗
+        function closeViewModal() {
+            document.getElementById('viewModal').classList.remove('active');
+        }
+
+        // 删除译员（软删：status → terminated，历史订单保留）
         async function deleteTranslator(id) {
-            if (!confirm('确定要删除该译员吗？\n\n注意：当前版本会同时删除其 Supabase Auth 账号，业务表记录保留为失效状态。')) return;
-            // TODO: 实现 delete-translator function
-            showToast('删除功能待实现（请在 Supabase 后台手工操作）', 'error');
+            // 先查译员姓名用于确认提示
+            const translators = await apiCall('get-translators') || [];
+            const t = translators.find(x => x.id === id);
+            if (!t) {
+                showToast('译员不存在', 'error');
+                return;
+            }
+            const orderCount = (t.orders_count ?? '未知');
+
+            if (!confirm(
+                `确定要终止与【${t.name}】的合作吗？\n\n` +
+                `操作：${t.status} → terminated\n` +
+                `影响：\n` +
+                `• 该译员登录后看不到任何订单\n` +
+                `• 历史订单保留（${orderCount} 条）\n` +
+                `• 此操作可逆（在 Supabase 后台改回 status）\n\n` +
+                `确认终止？`
+            )) return;
+
+            try {
+                const result = await apiCall('delete-translator', {
+                    method: 'POST',
+                    body: JSON.stringify({ id })
+                });
+                showToast(`✅ ${result.message}`, 'success');
+                cachedTranslators = null;  // 删除后强制刷新
+                await renderTranslators();
+            } catch (err) {
+                showToast(`❌ 删除失败: ${err.message}`, 'error');
+            }
         }
 
         // 显示提示
@@ -468,15 +685,19 @@
             const fullName = document.getElementById('fullName').value.trim();
             const languagesInput = document.getElementById('languages').value.trim();
             const languages = languagesInput ? languagesInput.split(',').map(l => l.trim()).filter(l => l) : [];
+            const phone = document.getElementById('phone').value.trim();
+            const specialtiesInput = document.getElementById('specialties').value.trim();
+            const specialties = specialtiesInput ? specialtiesInput.split(',').map(s => s.trim()).filter(s => s) : [];
 
             try {
                 const result = await apiCall('create-translator', {
                     method: 'POST',
-                    body: JSON.stringify({ email, password, fullName, languages })
+                    body: JSON.stringify({ email, password, fullName, languages, specialties, phone })
                 });
                 showToast('译员账号创建成功！', 'success');
                 closeModal();
-                alert('译员账号创建成功！\n\n业务ID: ' + result.id + '\n邮箱: ' + email + '\n密码: ' + password + '\n\n请复制以上信息发送给译员。');
+                alert('译员账号创建成功！\n\n业务ID: ' + result.id + '\n邮箱: ' + email + '\n密码: ' + password + (phone ? '\n手机: ' + phone : '') + (languages.length ? '\n语种: ' + languages.join(', ') : '') + (specialties.length ? '\n专业领域: ' + specialties.join(', ') : '') + '\n\n请复制以上信息发送给译员。');
+                cachedTranslators = null;  // 创建后强制刷新
                 await renderTranslators();
             } catch (error) {
                 showToast('创建失败: ' + error.message, 'error');
@@ -494,6 +715,23 @@
             window.location.href = 'login.html';
         }
         window.logout = logout;
+
+        // 把 onclick 需要的函数挂到 window（IIFE 内函数默认不在全局）
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.deleteTranslator = deleteTranslator;
+        window.viewTranslator = viewTranslator;
+        window.closeViewModal = closeViewModal;
+
+        // 搜索框实时过滤（输入即筛，不重拉后端）
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            let debounceTimer = null;
+            searchInput.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(renderTranslators, 150);
+            });
+        }
 
         // 初始化
         renderTranslators();

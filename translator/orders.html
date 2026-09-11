@@ -189,6 +189,10 @@
             background: #f6ffed;
             color: #52c41a;
         }
+        .status-cancelled {
+            background: #f5f5f5;
+            color: #999;
+        }
         .payment-status {
             display: inline-block;
             padding: 4px 12px;
@@ -217,13 +221,133 @@
             font-size: 48px;
             margin-bottom: 16px;
         }
+        /* 操作按钮 */
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 13px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a6fd6; }
+        .btn-success { background: #52c41a; color: white; }
+        .btn-success:hover { background: #389e0d; }
+        .btn-secondary { background: #f0f0f0; color: #333; }
+        .btn-secondary:hover { background: #d9d9d9; }
+        .action-cell {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .muted {
+            color: #999;
+        }
+        /* 详情弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 560px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h3 {
+            font-size: 18px;
+            color: #333;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .detail-row {
+            display: flex;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label {
+            color: #666;
+            width: 110px;
+            flex-shrink: 0;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+        }
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+        .toast.success { background: #52c41a; }
+        .toast.error { background: #ff4d4f; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
     <header class="header">
         <div class="header-content">
             <div class="header-logo">
-                <img src="images/logo-white.png" alt="谊达翻译">
+                <img src="../images/logo-white.png" alt="谊达翻译">
                 <h1>译员工作台</h1>
             </div>
             <nav class="nav-menu">
@@ -238,7 +362,6 @@
     </header>
 
     <div class="container">
-        <!-- 统计卡片 -->
         <div class="stats-cards">
             <div class="stat-card">
                 <h3>本月订单数</h3>
@@ -258,7 +381,6 @@
             </div>
         </div>
 
-        <!-- 订单列表 -->
         <div class="orders-section">
             <div class="section-header">
                 <h2>我的订单</h2>
@@ -280,22 +402,57 @@
                         <th>截止日期</th>
                         <th>订单状态</th>
                         <th>结算状态</th>
+                        <th>操作</th>
                     </tr>
                 </thead>
-                <tbody id="ordersTableBody">
-                    <!-- 订单数据将通过JS动态插入 -->
-                </tbody>
+                <tbody id="ordersTableBody"></tbody>
             </table>
         </div>
     </div>
 
-    <script>
-        // ============= 统一 API 调用封装 =============
-        // 把 supabase 密钥从前端移除，所有数据走 Netlify Functions
-        const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
+    <!-- 订单详情弹窗 -->
+    <div class="modal" id="orderDetailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>订单详情</h3>
+                <button class="close-btn" onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div id="detailBody"></div>
+            <div class="modal-footer">
+                <button class="btn-sm btn-secondary" onclick="closeDetailModal()">关闭</button>
+            </div>
+        </div>
+    </div>
 
-        // 获取当前 session（Supabase Auth 持久化在 localStorage）
+    <!-- 完成订单弹窗（填写译员备注） -->
+    <div class="modal" id="completeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>完成订单</h3>
+                <button class="close-btn" onclick="closeCompleteModal()">&times;</button>
+            </div>
+            <form id="completeForm">
+                <input type="hidden" id="completeOrderId">
+                <div class="form-group">
+                    <label>译员备注（可选）</label>
+                    <textarea id="translatorNote" rows="4" placeholder="翻译完成情况、客户沟通要点、特殊处理等..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-sm btn-secondary" onclick="closeCompleteModal()">取消</button>
+                    <button type="submit" class="btn-sm btn-success">确认完成</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ============= 工具：当前筛选状态 =============
+        function getCurrentFilter() {
+            const t = document.querySelector('.filter-tab.active');
+            return t ? t.dataset.filter : 'all';
+        }
+
+        // ============= 统一 API 调用封装 =============
         function getAccessToken() {
             const keys = Object.keys(localStorage);
             for (const k of keys) {
@@ -309,6 +466,26 @@
             return null;
         }
 
+        async function apiCall(path, options = {}) {
+            const token = getAccessToken();
+            if (!token) { window.location.href = 'login.html'; throw new Error('No session'); }
+            const res = await fetch('/.netlify/functions/' + path, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                    ...(options.headers || {}),
+                }
+            });
+            if (res.status === 401 || res.status === 403) {
+                window.location.href = 'login.html';
+                throw new Error('Unauthorized');
+            }
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || '请求失败');
+            return json.data;
+        }
+
         // 检查登录状态
         const currentTranslator = JSON.parse(localStorage.getItem('currentTranslator'));
         if (!currentTranslator) {
@@ -318,28 +495,7 @@
         // 显示译员姓名
         document.getElementById('userName').textContent = currentTranslator.name;
 
-        // 调 Netlify Function
-        async function apiCall(path) {
-            const token = getAccessToken();
-            if (!token) {
-                window.location.href = 'login.html';
-                throw new Error('No session');
-            }
-            const res = await fetch('/.netlify/functions/' + path, {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            if (res.status === 401) {
-                window.location.href = 'login.html';
-                throw new Error('Unauthorized');
-            }
-            const json = await res.json();
-            if (!res.ok) {
-                throw new Error(json.error || '请求失败');
-            }
-            return json.data;
-        }
-
-        // 从后端获取译员的订单数据
+        // ============= 数据获取 =============
         async function getMyOrders() {
             try {
                 const data = await apiCall('get-orders');
@@ -352,94 +508,194 @@
                     deadline: order.deadline,
                     status: order.status,
                     paymentStatus: order.payment_status,
-                    remark: order.remark
+                    remark: order.remark,
+                    description: order.description,
                 }));
             } catch (err) {
                 console.error('获取订单失败:', err);
+                showToast('加载订单失败: ' + err.message, 'error');
                 return [];
             }
         }
 
-        // 当前译员的订单
         let myOrders = [];
 
-        // 渲染订单列表
+        // ============= 状态文本 =============
+        const STATUS_LABELS = {
+            pending: '待处理',
+            progress: '进行中',
+            completed: '已完成',
+            cancelled: '已取消',
+        };
+        function getStatusText(s) { return STATUS_LABELS[s] || s; }
+
+        // ============= 渲染列表 =============
         function renderOrders(filter = 'all') {
             const tbody = document.getElementById('ordersTableBody');
-            const filteredOrders = filter === 'all' 
-                ? myOrders 
-                : myOrders.filter(order => order.status === filter);
+            const filtered = filter === 'all'
+                ? myOrders
+                : myOrders.filter(o => o.status === filter);
 
-            if (filteredOrders.length === 0) {
+            if (filtered.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="8" class="empty-state">
+                        <td colspan="9" class="empty-state">
                             <div class="empty-state-icon">📋</div>
                             <p>暂无订单</p>
                         </td>
-                    </tr>
-                `;
+                    </tr>`;
                 return;
             }
 
-            tbody.innerHTML = filteredOrders.map(order => {
-                const paymentStatus = order.paymentStatus || 'unpaid';
-                const paymentText = paymentStatus === 'paid' ? '已结算' : '未结算';
+            tbody.innerHTML = filtered.map(order => {
+                const ps = order.paymentStatus || 'unpaid';
+                const pText = ps === 'paid' ? '已结算' : '未结算';
+                const deadline = order.deadline ? order.deadline.split('T')[0] : '-';
                 return `
-                <tr>
-                    <td><span class="order-id" onclick="viewOrder('${order.id}')">${order.id}</span></td>
-                    <td>${order.name}</td>
-                    <td>${order.words.toLocaleString()}</td>
-                    <td>¥${order.rate}/字</td>
-                    <td class="amount">¥${order.amount}</td>
-                    <td>${order.deadline}</td>
-                    <td><span class="status-badge status-${order.status}">${getStatusText(order.status)}</span></td>
-                    <td><span class="payment-status payment-${paymentStatus}">${paymentText}</span></td>
-                </tr>
-            `}).join('');
+                    <tr>
+                        <td><span class="order-id" onclick="viewOrder('${order.id}')">${order.id}</span></td>
+                        <td>${order.name}</td>
+                        <td>${order.words.toLocaleString()}</td>
+                        <td>¥${order.rate}/字</td>
+                        <td class="amount">¥${order.amount}</td>
+                        <td>${deadline}</td>
+                        <td><span class="status-badge status-${order.status}">${getStatusText(order.status)}</span></td>
+                        <td><span class="payment-status payment-${ps}">${pText}</span></td>
+                        <td>${renderActionButtons(order)}</td>
+                    </tr>`;
+            }).join('');
         }
 
-        // 获取状态文本
-        function getStatusText(status) {
-            const statusMap = {
-                'pending': '待处理',
-                'progress': '进行中',
-                'completed': '已完成'
-            };
-            return statusMap[status] || status;
+        // 操作按钮：按状态显示
+        function renderActionButtons(order) {
+            if (order.status === 'pending') {
+                return `<div class="action-cell">
+                    <button class="btn-sm btn-primary" onclick="acceptOrder('${order.id}')">接单</button>
+                </div>`;
+            }
+            if (order.status === 'progress') {
+                return `<div class="action-cell">
+                    <button class="btn-sm btn-success" onclick="completeOrder('${order.id}')">完成</button>
+                </div>`;
+            }
+            // completed / cancelled → 终态，无操作
+            return '<span class="muted">—</span>';
         }
 
-        // 更新统计数据
+        // ============= 统计 =============
         function updateStats() {
-            const monthOrders = myOrders.length;
-            const monthWords = myOrders.reduce((sum, order) => sum + order.words, 0);
-            const monthIncome = myOrders.reduce((sum, order) => sum + parseFloat(order.amount), 0);
-            const pendingOrders = myOrders.filter(order => order.status === 'pending').length;
-
-            document.getElementById('monthOrders').textContent = monthOrders;
-            document.getElementById('monthWords').textContent = monthWords.toLocaleString();
-            document.getElementById('monthIncome').textContent = '¥' + monthIncome.toFixed(2);
-            document.getElementById('pendingOrders').textContent = pendingOrders;
+            document.getElementById('monthOrders').textContent = myOrders.length;
+            document.getElementById('monthWords').textContent =
+                myOrders.reduce((s, o) => s + (o.words || 0), 0).toLocaleString();
+            const income = myOrders.reduce((s, o) => s + parseFloat(o.amount || 0), 0);
+            document.getElementById('monthIncome').textContent = '¥' + income.toFixed(2);
+            document.getElementById('pendingOrders').textContent =
+                myOrders.filter(o => o.status === 'pending').length;
         }
 
-        // 查看订单详情
+        // ============= 详情弹窗 =============
         function viewOrder(orderId) {
-            window.location.href = `order-detail.html?id=${orderId}`;
+            const order = myOrders.find(o => o.id === orderId);
+            if (!order) return;
+
+            const ps = order.paymentStatus || 'unpaid';
+            const pText = ps === 'paid' ? '已结算' : '未结算';
+            const deadline = order.deadline ? order.deadline.split('T')[0] : '-';
+
+            document.getElementById('detailBody').innerHTML = `
+                <div class="detail-row"><span class="detail-label">订单编号：</span><span>${order.id}</span></div>
+                <div class="detail-row"><span class="detail-label">项目名称：</span><span>${order.name}</span></div>
+                <div class="detail-row"><span class="detail-label">字数：</span><span>${order.words.toLocaleString()} 字</span></div>
+                <div class="detail-row"><span class="detail-label">费率：</span><span>¥${order.rate}/字</span></div>
+                <div class="detail-row"><span class="detail-label">金额：</span><span class="amount">¥${order.amount}</span></div>
+                <div class="detail-row"><span class="detail-label">截止日期：</span><span>${deadline}</span></div>
+                <div class="detail-row"><span class="detail-label">订单状态：</span><span class="status-badge status-${order.status}">${getStatusText(order.status)}</span></div>
+                <div class="detail-row"><span class="detail-label">结算状态：</span><span class="payment-status payment-${ps}">${pText}</span></div>
+                ${order.description ? `<div class="detail-row"><span class="detail-label">项目描述：</span><span>${order.description}</span></div>` : ''}
+                ${order.remark ? `<div class="detail-row"><span class="detail-label">译员备注：</span><span>${order.remark}</span></div>` : ''}
+            `;
+            document.getElementById('orderDetailModal').classList.add('active');
+        }
+        function closeDetailModal() {
+            document.getElementById('orderDetailModal').classList.remove('active');
+        }
+
+        // ============= 接单 =============
+        async function acceptOrder(orderId) {
+            if (!confirm('确认接单？接单后状态变为"进行中"。')) return;
+            try {
+                await apiCall('update-order-status', {
+                    method: 'POST',
+                    body: JSON.stringify({ id: orderId, status: 'progress' }),
+                });
+                await refreshOrders();
+                showToast('已接单，开始翻译吧', 'success');
+            } catch (e) {
+                showToast('接单失败: ' + e.message, 'error');
+            }
+        }
+
+        // ============= 完成 =============
+        function completeOrder(orderId) {
+            document.getElementById('completeOrderId').value = orderId;
+            document.getElementById('translatorNote').value = '';
+            document.getElementById('completeModal').classList.add('active');
+        }
+        function closeCompleteModal() {
+            document.getElementById('completeModal').classList.remove('active');
+        }
+        document.getElementById('completeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('completeOrderId').value;
+            const translatorNote = document.getElementById('translatorNote').value.trim();
+            try {
+                await apiCall('update-order-status', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        id,
+                        status: 'completed',
+                        translator_note: translatorNote || null,
+                    }),
+                });
+                closeCompleteModal();
+                await refreshOrders();
+                showToast('订单已完成', 'success');
+            } catch (e) {
+                showToast('操作失败: ' + e.message, 'error');
+            }
+        });
+
+        // ============= 通用 =============
+        function showToast(message, type = 'success') {
+            const t = document.createElement('div');
+            t.className = 'toast ' + type;
+            t.textContent = message;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        async function refreshOrders() {
+            myOrders = await getMyOrders();
+            renderOrders(getCurrentFilter());
+            updateStats();
         }
 
         // 退出登录
         function logout() {
             localStorage.removeItem('currentTranslator');
-            // 清除 supabase session
             Object.keys(localStorage).forEach(k => {
-                if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
-                    localStorage.removeItem(k);
-                }
+                if (k.startsWith('sb-') && k.endsWith('-auth-token')) localStorage.removeItem(k);
             });
             window.location.href = 'login.html';
         }
+        window.logout = logout;
+        window.viewOrder = viewOrder;
+        window.acceptOrder = acceptOrder;
+        window.completeOrder = completeOrder;
+        window.closeDetailModal = closeDetailModal;
+        window.closeCompleteModal = closeCompleteModal;
 
-        // 筛选标签切换
+        // 筛选切换
         document.querySelectorAll('.filter-tab').forEach(tab => {
             tab.addEventListener('click', function() {
                 document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
@@ -450,11 +706,8 @@
 
         // 初始化
         async function init() {
-            myOrders = await getMyOrders();
-            renderOrders();
-            updateStats();
+            await refreshOrders();
         }
-        
         init();
     </script>
 </body>

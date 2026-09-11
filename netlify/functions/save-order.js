@@ -31,6 +31,9 @@ exports.handler = async (event) => {
     payment_status = 'unpaid',
     description,
     remark,
+    client_id,           // 客户（可选）
+    client_rate,         // 客户单价（可选）
+    client_amount,       // 客户金额（可选，不填则按 client_rate * word_count / 1000 自动算）
   } = body;
 
   // 必填校验
@@ -46,8 +49,20 @@ exports.handler = async (event) => {
   if (!['unpaid', 'paid'].includes(payment_status)) {
     return corsResponse(400, { error: '非法结算状态' });
   }
+  // 客户字段校验
+  if (client_rate !== undefined && client_rate !== null && Number(client_rate) < 0) {
+    return corsResponse(400, { error: '客户单价不能为负数' });
+  }
 
   const service = getServiceClient();
+
+  if (client_id) {
+    // 验证客户存在
+    const { data: c } = await service.from('clients').select('id').eq('id', client_id).single();
+    if (!c) {
+      return corsResponse(400, { error: '客户不存在' });
+    }
+  }
 
   try {
     // 验证译员存在
@@ -71,6 +86,11 @@ exports.handler = async (event) => {
       payment_status: payment_status,
       description: description || null,
       remark: remark || null,
+      client_id: client_id || null,
+      client_rate: client_rate !== undefined && client_rate !== null ? Number(client_rate) : null,
+      client_amount: client_amount !== undefined && client_amount !== null
+        ? Number(client_amount)
+        : (client_rate ? Number((word_count * client_rate).toFixed(2)) : null),
     };
 
     let result;

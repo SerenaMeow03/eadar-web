@@ -1,5 +1,8 @@
 # Netlify 路由规则
 
+# 根路径重定向到后台登录页（admin 子域专用）
+/  /translator/admin/login.html  302
+
 # 确保 admin 目录可以访问
 /admin/*  /admin/:splat  200
 

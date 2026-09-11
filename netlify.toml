@@ -24,6 +24,13 @@
   to = "/en/:splat"
   status = 200
 
+# admin 子域名根路径直接进后台登录页（不影响 marketing 官网）
+[[redirects]]
+  from = "https://admin.eadartrans.com/"
+  to = "/translator/admin/login.html"
+  status = 302
+  force = false
+
 # 安全性响应头
 [[headers]]
   for = "/*"

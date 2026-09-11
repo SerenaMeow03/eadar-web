@@ -331,7 +331,7 @@
     <header class="header">
         <div class="header-content">
             <div class="header-logo">
-                <img src="../images/logo-white.png" alt="谊达翻译">
+                <img src="../../images/logo-white.png" alt="谊达翻译">
                 <h1>管理后台</h1>
             </div>
             <nav class="nav-menu">
@@ -366,6 +366,7 @@
                     <tr>
                         <th>订单编号</th>
                         <th>项目名称</th>
+                        <th>客户</th>
                         <th>指派译员</th>
                         <th>字数</th>
                         <th>费率</th>
@@ -416,6 +417,24 @@
                         <select id="translatorId" required>
                             <option value="">请选择译员</option>
                         </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>所属客户（可选）</label>
+                        <select id="clientId">
+                            <option value="">不关联客户</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>客户单价 (元/字)</label>
+                        <input type="number" id="clientRate" placeholder="可选，如: 0.20" min="0" step="0.01">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>客户金额 (元)</label>
+                        <input type="number" id="clientAmount" placeholder="留空则按 客户单价×字数 自动算" min="0" step="0.01">
                     </div>
                 </div>
                 <div class="form-row">
@@ -515,6 +534,49 @@
                 translators.map(t => `<option value="${t.id}">${t.name} (${t.email || t.username || ''})</option>`).join('');
         }
 
+        // 客户缓存
+        let clientsCache = null;
+
+        async function loadClients() {
+            if (clientsCache) return clientsCache;
+            try {
+                clientsCache = await apiCall('get-clients') || [];
+            } catch (e) {
+                console.warn('加载客户失败:', e);
+                clientsCache = [];
+            }
+            return clientsCache;
+        }
+
+        // 加载客户选项
+        async function loadClientOptions() {
+            const clients = await loadClients();
+            const select = document.getElementById('clientId');
+            select.innerHTML = '<option value="">不关联客户</option>' +
+                clients.map(c => {
+                    const label = c.company_name
+                        ? `${c.company_name} - ${c.contact_name}`
+                        : c.contact_name;
+                    return `<option value="${c.id}">${label}</option>`;
+                }).join('');
+        }
+
+        // 客户金额自动算：客户单价 × 字数
+        document.addEventListener('input', function(e) {
+            if (e.target.id === 'clientRate' || e.target.id === 'wordCount') {
+                const rateEl = document.getElementById('clientRate');
+                const wcEl = document.getElementById('wordCount');
+                const amtEl = document.getElementById('clientAmount');
+                if (rateEl.value && wcEl.value) {
+                    const r = parseFloat(rateEl.value);
+                    const w = parseInt(wcEl.value);
+                    if (r > 0 && w > 0) {
+                        amtEl.value = (r * w).toFixed(2);
+                    }
+                }
+            }
+        });
+
         // 渲染订单列表
         async function renderOrders(filter = 'all') {
             const orders = await loadOrders();
@@ -528,7 +590,7 @@
             if (filteredOrders.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="10" class="empty-state">
+                        <td colspan="11" class="empty-state">
                             <div class="empty-state-icon">📋</div>
                             <p>暂无订单</p>
                         </td>
@@ -537,16 +599,26 @@
                 return;
             }
 
+            // 加载客户列表用于显示
+            const clients = await loadClients();
+            const clientsMap = {};
+            clients.forEach(c => clientsMap[c.id] = c);
+
             tbody.innerHTML = filteredOrders.map(order => {
                 const translator = translators.find(t => t.id === order.translator_id);
                 const translatorName = translator ? translator.name : '未指派';
                 const paymentStatus = order.payment_status || 'unpaid';
                 const deadline = order.deadline ? order.deadline.split('T')[0] : '-';
+                const client = order.client_id ? clientsMap[order.client_id] : null;
+                const clientLabel = client
+                    ? (client.company_name ? client.company_name : client.contact_name)
+                    : '-';
 
                 return `
                     <tr>
                         <td>${order.id}</td>
                         <td>${order.project_name}</td>
+                        <td>${clientLabel}</td>
                         <td>${translatorName}</td>
                         <td>${order.word_count?.toLocaleString() || 0}</td>
                         <td>¥${order.rate}</td>
@@ -591,6 +663,7 @@
             const form = document.getElementById('orderForm');
 
             await loadTranslatorOptions();
+            await loadClientOptions();
 
             if (orderId) {
                 try {
@@ -605,6 +678,9 @@
                     document.getElementById('rate').value = order.rate;
                     document.getElementById('deadline').value = order.deadline ? order.deadline.split('T')[0] : '';
                     document.getElementById('translatorId').value = order.translator_id;
+                    document.getElementById('clientId').value = order.client_id || '';
+                    document.getElementById('clientRate').value = order.client_rate || '';
+                    document.getElementById('clientAmount').value = order.client_amount || '';
                     document.getElementById('status').value = order.status || 'pending';
                     document.getElementById('paymentStatus').value = order.payment_status || 'unpaid';
                     document.getElementById('remark').value = order.remark || '';
@@ -674,10 +750,15 @@
             const rate = parseFloat(document.getElementById('rate').value);
             const deadline = document.getElementById('deadline').value;
             const translatorId = document.getElementById('translatorId').value;
+            const clientId = document.getElementById('clientId').value || null;
+            const clientRateRaw = document.getElementById('clientRate').value;
+            const clientAmountRaw = document.getElementById('clientAmount').value;
+            const clientRate = clientRateRaw === '' ? null : parseFloat(clientRateRaw);
+            const clientAmount = clientAmountRaw === '' ? null : parseFloat(clientAmountRaw);
             const status = document.getElementById('status').value;
             const paymentStatus = document.getElementById('paymentStatus').value;
             const remark = document.getElementById('remark').value;
-            
+
             const amount = (wordCount * rate).toFixed(2);
             
             const orderData = {
@@ -689,7 +770,10 @@
                 translator_id: translatorId,
                 status: status,
                 payment_status: paymentStatus,
-                remark: remark
+                remark: remark,
+                client_id: clientId,
+                client_rate: clientRate,
+                client_amount: clientAmount
             };
             
             if (id) {
@@ -706,12 +790,37 @@
                 }
             } else {
                 // 添加
+                let result;
                 try {
-                    await apiCall('save-order', {
+                    result = await apiCall('save-order', {
                         method: 'POST',
                         body: JSON.stringify(orderData)
                     });
                     showToast('订单登记成功', 'success');
+
+                    // 异步触发邮件通知（不阻塞 UI）
+                    if (result?.id) {
+                        fetch('/.netlify/functions/send-order-email', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + getAccessToken()
+                            },
+                            body: JSON.stringify({ orderId: result.id })
+                        })
+                            .then(r => r.json().then(j => ({ status: r.status, body: j })))
+                            .then(({ status, body }) => {
+                                if (status === 200 && body.success) {
+                                    showToast(`📧 已发送邮件提醒译员（${body.to}）`, 'success');
+                                } else {
+                                    showToast('⚠️ 邮件提醒发送失败：' + (body.error || '未知错误'), 'error');
+                                }
+                            })
+                            .catch(e => {
+                                console.error('email fetch error:', e);
+                                showToast('⚠️ 邮件提醒发送失败：' + e.message, 'error');
+                            });
+                    }
                 } catch (err) {
                     showToast('登记失败: ' + err.message, 'error');
                     return;
@@ -742,6 +851,10 @@
             window.location.href = 'login.html';
         }
         window.logout = logout;
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.editOrder = editOrder;
+        window.deleteOrder = deleteOrder;
 
         // 初始化
         renderOrders();

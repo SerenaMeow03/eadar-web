@@ -20,7 +20,7 @@ exports.handler = async (event) => {
   try {
     let query = service
       .from('orders')
-      select(`
+      .select(`
         id, project_name, word_count, rate, amount, deadline,
         status, payment_status, description, remark,
         created_at, updated_at, translator_id,
