@@ -64,6 +64,12 @@
         .pwd-card .label { font-size: 12px; color: #d48806; margin-bottom: 4px; }
         .pwd-card .value { font-family: 'Courier New', monospace; font-size: 16px; color: #874d00; font-weight: 600; user-select: all; }
         .pwd-card .hint { font-size: 12px; color: #d46b08; margin-top: 8px; }
+
+        .btn-warning { background: #fa8c16; color: white; }
+        .btn-warning:hover { background: #d46b08; }
+        .modal-small { max-width: 420px; }
+        .info-line { font-size: 13px; color: #666; margin-bottom: 14px; }
+        .info-line strong { color: #333; }
     </style>
 </head>
 <body>
@@ -112,6 +118,36 @@
                 </thead>
                 <tbody id="clientsTableBody"></tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- 重置密码 Modal -->
+    <div class="modal" id="resetPwdModal">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h3>重置客户密码</h3>
+                <button class="close-btn" onclick="closeResetPwdModal()">&times;</button>
+            </div>
+            <form id="resetPwdForm">
+                <div class="info-line">
+                    目标客户：<strong id="resetPwdTarget"></strong>
+                </div>
+                <div id="resetPwdResult" class="pwd-card" style="display:none;">
+                    <div class="label">✅ 密码已重置，请将以下新密码告知客户：</div>
+                    <div class="value" id="resetPwdValue"></div>
+                    <div class="hint">建议客户首次登录后自行修改密码（客户 dashboard 右上角"修改密码"）。</div>
+                </div>
+                <input type="hidden" id="resetPwdEmail">
+                <div class="form-group">
+                    <label>新密码</label>
+                    <input type="text" id="resetPwdInput" placeholder="留空则自动生成 12 位临时密码" minlength="6" maxlength="72">
+                    <div style="font-size: 12px; color: #999; margin-top: 4px;">至少 6 位，留空将自动生成</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeResetPwdModal()">关闭</button>
+                    <button type="submit" class="btn btn-primary">重置密码</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -249,6 +285,7 @@
                         <td>
                             <div class="action-btns">
                                 <button class="btn btn-secondary" onclick="editClient('${c.id}')">编辑</button>
+                                <button class="btn btn-warning" onclick="openResetPwdModal('${c.id}', '${escapeAttr(c.email)}', '${escapeAttr(c.contact_name)}')">重置密码</button>
                                 <button class="btn ${c.status === 'active' ? 'btn-danger' : 'btn-secondary'}" onclick="toggleArchive('${c.id}', '${c.status}')">
                                     ${c.status === 'active' ? '归档' : '恢复'}
                                 </button>
@@ -341,6 +378,56 @@
             }
         });
 
+        // 重置密码相关
+        function escapeAttr(s) {
+            return String(s || '').replace(/['"\\<>]/g, c => ({
+                "'": '&#39;', '"': '&quot;', '\\': '\\\\', '<': '&lt;', '>': '&gt;'
+            })[c]);
+        }
+
+        function openResetPwdModal(id, email, name) {
+            document.getElementById('resetPwdEmail').value = email;
+            document.getElementById('resetPwdTarget').textContent = `${name}（${email}）`;
+            document.getElementById('resetPwdInput').value = '';
+            document.getElementById('resetPwdResult').style.display = 'none';
+            document.getElementById('resetPwdModal').classList.add('active');
+        }
+
+        function closeResetPwdModal() {
+            document.getElementById('resetPwdModal').classList.remove('active');
+        }
+
+        document.getElementById('resetPwdForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('resetPwdEmail').value;
+            const newPwd = document.getElementById('resetPwdInput').value.trim();
+
+            if (newPwd && newPwd.length < 6) {
+                showToast('自定义密码至少 6 位', 'error');
+                return;
+            }
+
+            if (!confirm(`确定要重置 ${email} 的登录密码吗？\n\n提示用户应立即修改密码。`)) return;
+
+            try {
+                const payload = { email, role: 'client' };
+                if (newPwd) payload.new_password = newPwd;
+
+                const result = await apiCall('admin-reset-password', {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                });
+
+                // 显示新密码
+                document.getElementById('resetPwdResult').style.display = 'block';
+                document.getElementById('resetPwdValue').textContent = result.new_password;
+                document.getElementById('resetPwdInput').value = '';
+                showToast('密码已重置', 'success');
+            } catch (err) {
+                showToast('重置失败: ' + err.message, 'error');
+            }
+        });
+
         function showToast(message, type = 'success') {
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
@@ -364,6 +451,8 @@
         window.toggleArchive = toggleArchive;
         window.logout = logout;
         window.render = render;
+        window.openResetPwdModal = openResetPwdModal;
+        window.closeResetPwdModal = closeResetPwdModal;
 
         // 初始化
         (async () => {
