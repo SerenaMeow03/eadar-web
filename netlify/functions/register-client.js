@@ -91,9 +91,11 @@ exports.handler = async (event) => {
     console.log('client created:', clientData.id, 'by admin:', auth.user.email);
 
     return corsResponse(200, {
-      data: clientData,
-      tempPassword: tempPassword, // 返回临时密码，admin 转告客户
-      message: '客户创建成功，请将临时密码告知客户',
+      data: {
+        ...clientData,
+        tempPassword: tempPassword, // 返回临时密码，admin 转告客户
+        message: '客户创建成功，请将临时密码告知客户',
+      },
     });
   } catch (e) {
     console.error('register-client unhandled:', e);
