@@ -374,11 +374,12 @@
                         <th>截止日期</th>
                         <th>订单状态</th>
                         <th>结算状态</th>
+                        <th>发票状态</th>
                         <th>操作</th>
                     </tr>
                 </thead>
                 <tbody id="ordersTableBody">
-                    <tr><td colspan="10" class="loading">加载中...</td></tr>
+                    <tr><td colspan="12" class="loading">加载中...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -460,6 +461,52 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 付款/发票编辑弹窗 -->
+    <div class="modal" id="paymentModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>更新付款/发票</h3>
+                <button class="close-btn" onclick="closePaymentModal()">&times;</button>
+            </div>
+            <form id="paymentForm">
+                <input type="hidden" id="pmtOrderId">
+                <p style="font-size: 13px; color: #999; margin-bottom: 16px;">
+                    订单：<strong id="pmtOrderLabel"></strong>
+                </p>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>客户付款状态</label>
+                        <select id="pmtClientPaymentStatus">
+                            <option value="unpaid">待付款</option>
+                            <option value="paid">已付款</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>发票状态</label>
+                        <select id="pmtInvoiceStatus">
+                            <option value="not_issued">未开票</option>
+                            <option value="issued">已开票</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>发票号</label>
+                        <input type="text" id="pmtInvoiceNumber" placeholder="如：INV-2026-001">
+                    </div>
+                    <div class="form-group">
+                        <label>开票日期</label>
+                        <input type="date" id="pmtInvoiceDate">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closePaymentModal()">取消</button>
                     <button type="submit" class="btn btn-primary">保存</button>
                 </div>
             </form>
@@ -855,6 +902,61 @@
         window.closeModal = closeModal;
         window.editOrder = editOrder;
         window.deleteOrder = deleteOrder;
+
+        // 付款/发票编辑弹窗
+        async function openPaymentModal(orderId) {
+            try {
+                const orders = await apiCall('get-orders');
+                const order = orders.find(o => o.id === orderId);
+                if (!order) { showToast('订单不存在', 'error'); return; }
+
+                document.getElementById('pmtOrderId').value = order.id;
+                document.getElementById('pmtOrderLabel').textContent =
+                    `${order.id}（${order.project_name}）`;
+                document.getElementById('pmtClientPaymentStatus').value =
+                    order.client_payment_status || 'unpaid';
+                document.getElementById('pmtInvoiceStatus').value =
+                    order.invoice_status || 'not_issued';
+                document.getElementById('pmtInvoiceNumber').value = order.invoice_number || '';
+                document.getElementById('pmtInvoiceDate').value =
+                    order.invoice_date ? String(order.invoice_date).slice(0, 10) : '';
+
+                document.getElementById('paymentModal').classList.add('active');
+            } catch (err) {
+                showToast('加载订单失败: ' + err.message, 'error');
+            }
+        }
+        window.openPaymentModal = openPaymentModal;
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('active');
+        }
+        window.closePaymentModal = closePaymentModal;
+
+        document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('pmtOrderId').value;
+            const client_payment_status = document.getElementById('pmtClientPaymentStatus').value;
+            const invoice_status = document.getElementById('pmtInvoiceStatus').value;
+            const invoice_number = document.getElementById('pmtInvoiceNumber').value.trim();
+            const invoice_date = document.getElementById('pmtInvoiceDate').value;
+
+            try {
+                await apiCall('update-order-payment', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        id, client_payment_status, invoice_status,
+                        invoice_number: invoice_number || null,
+                        invoice_date: invoice_date || null,
+                    }),
+                });
+                showToast('付款/发票信息已更新', 'success');
+                closePaymentModal();
+                await renderOrders(getCurrentFilter());
+            } catch (err) {
+                showToast('更新失败: ' + err.message, 'error');
+            }
+        });
 
         // 初始化
         renderOrders();

@@ -22,9 +22,13 @@ exports.handler = async (event) => {
       .from('orders')
       .select(`
         id, project_name, word_count, rate, amount, deadline,
-        status, payment_status, description, remark,
+        status, payment_status, client_payment_status,
+        invoice_status, invoice_number, invoice_date,
+        client_id, client_rate, client_amount,
+        description, remark,
         created_at, updated_at, translator_id,
-        translators:translator_id ( id, name, email )
+        translators:translator_id ( id, name, email ),
+        clients:client_id ( id, contact_name, company_name, email )
       `)
       .order('created_at', { ascending: false });
 

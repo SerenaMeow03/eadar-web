@@ -36,7 +36,9 @@ exports.handler = async (event) => {
       .from('orders')
       .select(`
         id, project_name, word_count, client_rate, client_amount,
-        deadline, status, payment_status, created_at, updated_at,
+        deadline, status, client_payment_status,
+        invoice_status, invoice_number, invoice_date,
+        created_at, updated_at,
         translators:translator_id ( id, name )
       `)
       .eq('client_id', client.id)
@@ -48,6 +50,7 @@ exports.handler = async (event) => {
     }
 
     // 3) 格式化：把译员名字摊平（不暴露译员邮箱/电话）
+    //    关键：client_payment_status 映射到前端用的 payment_status 字段名（前端代码不需改）
     const formatted = (orders || []).map(o => ({
       id: o.id,
       project_name: o.project_name,
@@ -56,7 +59,10 @@ exports.handler = async (event) => {
       client_amount: o.client_amount,
       deadline: o.deadline,
       status: o.status,
-      payment_status: o.payment_status,
+      payment_status: o.client_payment_status, // 兼容字段名
+      invoice_status: o.invoice_status,
+      invoice_number: o.invoice_number,
+      invoice_date: o.invoice_date,
       translator_name: o.translators?.name || '待指派',
       created_at: o.created_at,
       updated_at: o.updated_at,
