@@ -35,6 +35,8 @@ supabase-schema.sql
 supabase-schema-v2.sql
 supabase-schema-v3-clients.sql
 supabase-schema-v4-payments.sql
+supabase-schema-v5-audit.sql
+supabase-schema-v6-notifications.sql
 supabase-schema-v1-backup.sql
 # package-lock 不提交
 package-lock.json

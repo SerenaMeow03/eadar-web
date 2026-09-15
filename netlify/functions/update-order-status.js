@@ -15,6 +15,7 @@
 
 const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate, requireMethod, parseBody } = require('./_shared/auth');
+const { writeAudit } = require('./_shared/audit');
 
 // 状态机白名单
 const ALLOWED_STATUSES = ['pending', 'progress', 'completed', 'cancelled'];
@@ -106,6 +107,20 @@ exports.handler = async (event) => {
       console.error('update-order-status update error:', updateErr);
       return corsResponse(500, { error: updateErr.message });
     }
+
+    // A7: 写审计日志（失败不阻塞主流程）
+    await writeAudit(service, {
+      user_email: auth.user?.email || (auth.role === 'translator' ? 'translator:' + auth.translatorId : 'unknown'),
+      user_role: auth.role,
+      action: 'update_status',
+      target_type: 'order',
+      target_id: body.id,
+      details: {
+        from_status: order.status,
+        to_status: body.status,
+        note: body.translator_note || null,
+      },
+    });
 
     return corsResponse(200, { data: updated });
   } catch (e) {

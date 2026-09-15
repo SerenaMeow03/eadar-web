@@ -21,6 +21,7 @@ const {
   requireMethod,
   parseBody,
 } = require('./_shared/auth');
+const { writeAudit } = require('./_shared/audit');
 
 exports.handler = async (event) => {
   const pre = preflight(event);
@@ -88,6 +89,16 @@ exports.handler = async (event) => {
     }
 
     console.log('order payment/invoice updated:', id, 'by admin:', auth.user.email);
+
+    // A7: 写审计日志
+    await writeAudit(service, {
+      user_email: auth.user?.email || 'unknown',
+      user_role: auth.role,
+      action: 'update_payment',
+      target_type: 'order',
+      target_id: id,
+      details: updateData,
+    });
 
     return corsResponse(200, { data });
   } catch (e) {

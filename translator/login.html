@@ -118,39 +118,42 @@
             e.preventDefault();
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
-            
+
             try {
-                // 使用 Supabase Auth 登录
-                const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
-                    email: username,
-                    password: password
+                // 通过 netlify function 登录（统一鉴权 + 审计日志）
+                const res = await fetch('/.netlify/functions/login-translator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: username, password }),
                 });
-                
-                if (authError) {
-                    alert('登录失败：' + authError.message);
+                const payload = await res.json();
+                if (!res.ok) {
+                    alert('登录失败：' + (payload.error || '未知错误'));
                     return;
                 }
-                
-                // 从 JWT 获取用户角色
-                const { data: { user } } = await supabaseClient.auth.getUser();
-                const role = user?.app_metadata?.role;
-                
-                // 检查是否是译员角色
-                if (role !== 'translator') {
-                    alert('该账号不是译员账号，请使用译员账号登录');
-                    await supabaseClient.auth.signOut();
+
+                // 把后端签发的 session 设到 supabase 客户端（用于后续 RLS 查询）
+                const { access_token, refresh_token } = payload.data.session;
+                const { error: setErr } = await supabaseClient.auth.setSession({
+                    access_token,
+                    refresh_token,
+                });
+                if (setErr) {
+                    alert('会话初始化失败：' + setErr.message);
                     return;
                 }
-                
+
+                const user = payload.data.user;
+
                 // 保存译员信息
                 localStorage.setItem('currentTranslator', JSON.stringify({
-                    email: username,
-                    username: username,
-                    name: user?.user_metadata?.full_name || username,
-                    id: user.id
+                    email: user.email,
+                    username: user.email,
+                    name: payload.data.fullName || user.email,
+                    id: user.id,
+                    translatorId: payload.data.translatorId || null,
                 }));
-                
-                // 跳转到订单列表
+
                 window.location.href = 'orders.html';
             } catch (err) {
                 console.error('登录失败:', err);

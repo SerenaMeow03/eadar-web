@@ -16,6 +16,8 @@
         .nav-menu a:hover, .nav-menu a.active { color: white; }
         .logout-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
         .logout-btn:hover { background: rgba(255,255,255,0.3); }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .user-name { font-size: 14px; }
         .container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .section-header h2 { font-size: 20px; color: #333; }
@@ -70,22 +72,33 @@
         .modal-small { max-width: 420px; }
         .info-line { font-size: 13px; color: #666; margin-bottom: 14px; }
         .info-line strong { color: #333; }
+
+        /* Header logo */
+        .header-logo { display: flex; align-items: center; gap: 12px; }
+        .header-logo img { height: 40px; width: auto; }
     </style>
 </head>
 <body>
-    <div class="header">
+    <header class="header">
         <div class="header-content">
             <div class="header-logo">
-                <h1>谊达翻译 - 客户管理</h1>
+                <img src="../../images/logo-white.png" alt="谊达翻译">
+                <h1>管理后台</h1>
             </div>
             <nav class="nav-menu">
-                <a href="dashboard.html">仪表盘</a>
-                <a href="orders.html">订单管理</a>
+                <a href="dashboard.html">首页</a>
                 <a href="translators.html">译员管理</a>
+                <a href="orders.html">订单管理</a>
                 <a href="clients.html" class="active">客户管理</a>
+                <a href="audit.html">操作日志</a>
+                <a href="notifications.html">通知偏好</a>
             </nav>
-            <button class="logout-btn" onclick="logout()">退出登录</button>
+            <div class="user-info">
+                <span class="user-name">管理员</span>
+                <button class="logout-btn" onclick="logout()">退出登录</button>
+            </div>
         </div>
+    </header>
     </div>
 
     <div class="container">
@@ -162,7 +175,7 @@
                 <div id="newClientPwd" style="display:none;" class="pwd-card">
                     <div class="label">✅ 客户账号已创建，请将以下临时密码告知客户：</div>
                     <div class="value" id="newClientPwdValue"></div>
-                    <div class="hint">客户登录地址：<strong>https://admin.eadartrans.com/translator/client/login.html</strong><br>建议客户首次登录后自行修改密码（功能待开发，可走"忘记密码"流程）。</div>
+                    <div class="hint">客户登录地址：<strong>https://admin.eadartrans.com/translator/client/login.html</strong><br>建议客户首次登录后在"账户设置"中自行修改密码。</div>
                 </div>
                 <input type="hidden" id="clientId">
                 <div class="form-group">
@@ -176,6 +189,10 @@
                 <div class="form-group">
                     <label>邮箱 *（用于登录）</label>
                     <input type="email" id="email" required placeholder="必填，将作为登录账号">
+                </div>
+                <div class="form-group">
+                    <label>密码 *</label>
+                    <input type="text" id="password" required minlength="6" placeholder="至少 6 位，不填则自动生成临时密码">
                 </div>
                 <div class="form-group">
                     <label>电话</label>
@@ -355,6 +372,9 @@
             };
             if (id) {
                 payload.status = document.getElementById('status').value;
+            } else {
+                // 创建时附带密码（必填，由 HTML required 强制）
+                payload.password = document.getElementById('password').value;
             }
             try {
                 if (id) {

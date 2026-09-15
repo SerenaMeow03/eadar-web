@@ -27,6 +27,11 @@
             text-align: center;
             margin-bottom: 32px;
         }
+        .logo img {
+            height: 60px;
+            width: auto;
+            margin-bottom: 12px;
+        }
         .logo h1 {
             font-size: 24px;
             color: #1a1a2e;
@@ -99,6 +104,7 @@
 <body>
     <div class="login-card">
         <div class="logo">
+            <img src="../../images/logo-blue.png" alt="谊达翻译">
             <h1>谊达翻译</h1>
             <p>客户订单查询</p>
         </div>
@@ -146,19 +152,28 @@
             const password = document.getElementById('password').value;
 
             try {
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) {
-                    showError('登录失败：' + (error.message === 'Invalid login credentials' ? '邮箱或密码错误' : error.message));
+                // 通过 netlify function 登录（统一鉴权 + 审计日志）
+                const res = await fetch('/.netlify/functions/login-client', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                });
+                const payload = await res.json();
+                if (!res.ok) {
+                    showError('登录失败：' + (payload.error || '未知错误'));
                     btn.disabled = false;
                     btn.textContent = '登 录';
                     return;
                 }
 
-                // 校验角色：必须是 client
-                const role = data.user?.app_metadata?.role;
-                if (role !== 'client') {
-                    await supabase.auth.signOut();
-                    showError('该账号不是客户账号，请使用客户专用邮箱登录');
+                // 把后端签发的 session 设到 supabase 客户端
+                const { access_token, refresh_token } = payload.data.session;
+                const { error: setErr } = await supabase.auth.setSession({
+                    access_token,
+                    refresh_token,
+                });
+                if (setErr) {
+                    showError('会话初始化失败：' + setErr.message);
                     btn.disabled = false;
                     btn.textContent = '登 录';
                     return;

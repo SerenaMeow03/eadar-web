@@ -132,36 +132,38 @@
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             try {
-                // 官方接口自动校验密码哈希，不要自己查表
-                const { data, error } = await supabaseClient.auth.signInWithPassword({
-                    email: username,
-                    password: password
-                })
-                if(error){
-                    alert('登录失败：' + error.message);
+                // 通过 netlify function 登录（统一鉴权 + 审计日志）
+                const res = await fetch('/.netlify/functions/login-admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: username, password }),
+                });
+                const payload = await res.json();
+                if (!res.ok) {
+                    alert('登录失败：' + (payload.error || '未知错误'));
                     return;
                 }
-                // 从 JWT 获取用户角色
-                const { data: { user } } = await supabaseClient.auth.getUser();
-                const role = user?.app_metadata?.role;
-                
-                // 检查是否是管理员角色
-                if (role !== 'admin') {
-                    alert('该账号不是管理员账号，请使用管理员账号登录');
-                    await supabaseClient.auth.signOut();
+
+                // 把后端签发的 session 设到 supabase 客户端
+                const { access_token, refresh_token } = payload.data.session;
+                const { error: setErr } = await supabaseClient.auth.setSession({
+                    access_token,
+                    refresh_token,
+                });
+                if (setErr) {
+                    alert('会话初始化失败：' + setErr.message);
                     return;
                 }
-                
+
                 // 登录成功，保存管理员信息
                 localStorage.setItem('currentAdmin', JSON.stringify({
-                    username: username,
-                    email: username,  // Supabase Auth 用 email 作为唯一标识
-                    role: 'admin'
+                    username: payload.data.user.email,
+                    email: payload.data.user.email,
+                    role: 'admin',
                 }));
-                // 登录成功跳转后台页面
-                window.location.href = 'dashboard.html'
+                window.location.href = 'dashboard.html';
             } catch (err) {
-                alert('异常：' + err.message)
+                alert('异常：' + err.message);
             }
         })
     </script>

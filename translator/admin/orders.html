@@ -60,6 +60,9 @@
             align-items: center;
             gap: 15px;
         }
+        .user-name {
+            font-size: 14px;
+        }
         .logout-btn {
             background: rgba(255,255,255,0.2);
             border: none;
@@ -195,6 +198,21 @@
             background: #f6ffed;
             color: #52c41a;
         }
+        .invoice-issued {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+        .invoice-pending {
+            background: #fff7e6;
+            color: #fa8c16;
+        }
+        .btn-warning {
+            background: #fa8c16;
+            color: white;
+        }
+        .btn-warning:hover {
+            background: #d46b08;
+        }
         .amount {
             font-weight: 600;
             color: #f5222d;
@@ -325,6 +343,63 @@
             padding: 40px;
             color: #999;
         }
+        .finance-bar {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 14px 20px;
+            margin-bottom: 16px;
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+            font-size: 14px;
+        }
+        .finance-item {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+        .finance-item .label {
+            color: #666;
+        }
+        .finance-item .value {
+            font-weight: 600;
+            font-size: 16px;
+            color: #1890ff;
+        }
+        .finance-item.profit .value {
+            color: #52c41a;
+        }
+        .finance-item.receivable .value {
+            color: #fa8c16;
+        }
+
+        /* S4: 移动端适配（< 768px） */
+        @media (max-width: 768px) {
+            .header { padding: 12px 0; }
+            .header-content { flex-direction: column; gap: 10px; padding: 0 12px; }
+            .header h1 { font-size: 16px; }
+            .nav-menu { gap: 16px; font-size: 13px; flex-wrap: wrap; justify-content: center; }
+            .container { padding: 0 12px; margin: 16px auto; }
+            .section-header { flex-direction: column; align-items: stretch; gap: 12px; }
+            .section-header h2 { font-size: 17px; }
+            .filter-tabs { flex-wrap: wrap; }
+            .filter-tab { padding: 6px 12px; font-size: 12px; }
+            #searchInput, #dateFrom, #dateTo { width: 100%; }
+            #searchInput { max-width: none; }
+            .finance-bar { flex-direction: column; gap: 10px; padding: 12px; }
+            .finance-item .value { font-size: 14px; }
+            .finance-item[style*="margin-left"] { margin-left: 0 !important; }
+            .orders-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .orders-table table { min-width: 720px; font-size: 12px; }
+            .orders-table th, .orders-table td { padding: 8px; white-space: nowrap; }
+            .action-btns { flex-direction: column; gap: 4px; }
+            .action-btns button { padding: 5px 8px; font-size: 11px; }
+            .modal-content { width: 95%; padding: 18px; }
+            .form-row { grid-template-columns: 1fr; }
+            .user-info { font-size: 12px; }
+            .logout-btn { padding: 6px 10px; font-size: 12px; }
+        }
     </style>
 </head>
 <body>
@@ -338,9 +413,12 @@
                 <a href="dashboard.html">首页</a>
                 <a href="translators.html">译员管理</a>
                 <a href="orders.html" class="active">订单管理</a>
+                <a href="clients.html">客户管理</a>
+                <a href="audit.html">操作日志</a>
+                <a href="notifications.html">通知偏好</a>
             </nav>
             <div class="user-info">
-                <span>管理员</span>
+                <span class="user-name">管理员</span>
                 <button class="logout-btn" onclick="logout()">退出登录</button>
             </div>
         </div>
@@ -349,14 +427,42 @@
     <div class="container">
         <div class="section-header">
             <h2>订单列表</h2>
-            <div style="display: flex; gap: 12px; align-items: center;">
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                 <div class="filter-tabs">
                     <button class="filter-tab active" data-filter="all">全部</button>
                     <button class="filter-tab" data-filter="pending">待处理</button>
                     <button class="filter-tab" data-filter="progress">进行中</button>
                     <button class="filter-tab" data-filter="completed">已完成</button>
                 </div>
+                <input type="text" id="searchInput" placeholder="搜索订单号/项目/客户" style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; width: 200px;">
+                <input type="date" id="dateFrom" title="开始日期" style="padding: 5px 10px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px;">
+                <span style="color: #999;">至</span>
+                <input type="date" id="dateTo" title="结束日期" style="padding: 5px 10px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px;">
+                <button class="btn btn-danger" onclick="batchDelete()" id="batchDeleteBtn" disabled style="opacity: 0.5;">🗑 批量删除（<span id="selectedCount">0</span>）</button>
+                <button class="btn btn-secondary" onclick="exportToExcel()" id="exportBtn">📊 导出 Excel</button>
                 <button class="btn btn-primary" onclick="openModal()">+ 登记订单</button>
+            </div>
+        </div>
+
+        <div class="finance-bar">
+            <div class="finance-item">
+                <span class="label">已收金额</span>
+                <span class="value">¥<span id="sumPaid">0</span></span>
+            </div>
+            <div class="finance-item receivable">
+                <span class="label">待收金额</span>
+                <span class="value">¥<span id="sumReceivable">0</span></span>
+            </div>
+            <div class="finance-item">
+                <span class="label">应付译员</span>
+                <span class="value">¥<span id="sumPayable">0</span></span>
+            </div>
+            <div class="finance-item profit">
+                <span class="label">毛利</span>
+                <span class="value">¥<span id="sumProfit">0</span></span>
+            </div>
+            <div class="finance-item" style="margin-left: auto; color: #999; font-size: 12px;">
+                <span>（基于当前筛选，<span id="sumCount">0</span> 条订单）</span>
             </div>
         </div>
 
@@ -364,6 +470,7 @@
             <table>
                 <thead>
                     <tr>
+                        <th style="width: 40px;"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)"></th>
                         <th>订单编号</th>
                         <th>项目名称</th>
                         <th>客户</th>
@@ -379,7 +486,7 @@
                     </tr>
                 </thead>
                 <tbody id="ordersTableBody">
-                    <tr><td colspan="12" class="loading">加载中...</td></tr>
+                    <tr><td colspan="13" class="loading">加载中...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -513,6 +620,8 @@
         </div>
     </div>
 
+    <!-- SheetJS for Excel export (A8) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script>
         // 使用 IIFE 避免全局变量污染
         (function() {
@@ -625,24 +734,55 @@
         });
 
         // 渲染订单列表
+        // 全量缓存（供 deleteOrder 校验 + 筛选逻辑使用）
+        let allOrders = [];
+
         async function renderOrders(filter = 'all') {
             const orders = await loadOrders();
+            allOrders = orders; // 缓存供 G3 删除校验
             const translators = await loadTranslators();
             const tbody = document.getElementById('ordersTableBody');
 
-            const filteredOrders = filter === 'all'
-                ? orders
-                : orders.filter(o => o.status === filter);
+            // G7: 搜索 + G6: 日期范围 + 状态筛选
+            const search = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+            const dateFrom = document.getElementById('dateFrom')?.value || '';
+            const dateTo = document.getElementById('dateTo')?.value || '';
+
+            let filteredOrders = filter === 'all' ? orders : orders.filter(o => o.status === filter);
+
+            if (search) {
+                filteredOrders = filteredOrders.filter(o => {
+                    const haystack = [
+                        o.id, o.project_name, o.client_name, o.translator_name,
+                        (o.clients?.contact_name || ''), (o.clients?.company_name || ''),
+                    ].join(' ').toLowerCase();
+                    return haystack.includes(search);
+                });
+            }
+
+            if (dateFrom) {
+                filteredOrders = filteredOrders.filter(o => {
+                    const d = (o.deadline || o.created_at || '').slice(0, 10);
+                    return d >= dateFrom;
+                });
+            }
+            if (dateTo) {
+                filteredOrders = filteredOrders.filter(o => {
+                    const d = (o.deadline || o.created_at || '').slice(0, 10);
+                    return d <= dateTo;
+                });
+            }
 
             if (filteredOrders.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="11" class="empty-state">
+                        <td colspan="13" class="empty-state">
                             <div class="empty-state-icon">📋</div>
                             <p>暂无订单</p>
                         </td>
                     </tr>
                 `;
+                updateBatchBtn([]);
                 return;
             }
 
@@ -662,7 +802,8 @@
                     : '-';
 
                 return `
-                    <tr>
+                    <tr data-id="${order.id}">
+                        <td><input type="checkbox" class="rowCheck" data-id="${order.id}" onchange="updateBatchBtn()"></td>
                         <td>${order.id}</td>
                         <td>${order.project_name}</td>
                         <td>${clientLabel}</td>
@@ -673,6 +814,7 @@
                         <td>${deadline}</td>
                         <td><span class="status-badge status-${order.status}">${getStatusText(order.status)}</span></td>
                         <td><span class="status-badge payment-${paymentStatus}">${getPaymentStatusText(paymentStatus)}</span></td>
+                        <td><span class="status-badge invoice-${order.invoice_status || 'not_issued'}">${getInvoiceStatusText(order.invoice_status || 'not_issued')}</span></td>
                         <td>
                             <div class="action-btns">
                                 <button class="btn btn-primary" onclick="editOrder('${order.id}')">编辑</button>
@@ -682,6 +824,35 @@
                     </tr>
                 `;
             }).join('');
+
+            // 顶部财务汇总（基于当前筛选的订单）
+            updateFinanceBar(filteredOrders);
+            // 重置全选 checkbox
+            const selAllEl = document.getElementById('selectAllCheckbox');
+            if (selAllEl) selAllEl.checked = false;
+            updateBatchBtn();
+        }
+
+        // 财务汇总 - 纯前端聚合
+        function updateFinanceBar(orders) {
+            const sum = (key, filter) => orders
+                .filter(filter)
+                .reduce((a, o) => a + (parseFloat(o[key]) || 0), 0);
+            const fmt = n => n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+            document.getElementById('sumPaid').textContent = fmt(
+                sum('client_amount', o => o.client_payment_status === 'paid')
+            );
+            document.getElementById('sumReceivable').textContent = fmt(
+                sum('client_amount', o => o.client_payment_status !== 'paid' && o.status !== 'cancelled')
+            );
+            document.getElementById('sumPayable').textContent = fmt(
+                sum('amount', o => o.payment_status !== 'paid' && o.status === 'completed')
+            );
+            const revenue = parseFloat(document.getElementById('sumPaid').textContent.replace(/,/g, ''));
+            const payable = parseFloat(document.getElementById('sumPayable').textContent.replace(/,/g, ''));
+            document.getElementById('sumProfit').textContent = fmt(revenue - payable);
+            document.getElementById('sumCount').textContent = orders.length;
         }
 
         // 获取状态文本
@@ -702,6 +873,193 @@
             };
             return statusMap[status] || '未结算';
         }
+
+        // 获取发票状态文本
+        function getInvoiceStatusText(status) {
+            const statusMap = {
+                'not_issued': '未开票',
+                'issued': '已开票'
+            };
+            return statusMap[status] || '未开票';
+        }
+
+        // A8: 导出当前筛选结果到 Excel
+        async function exportToExcel() {
+            const btn = document.getElementById('exportBtn');
+            if (!window.XLSX) {
+                showToast('导出组件未加载，请检查网络', 'error');
+                return;
+            }
+            if (!allOrders.length) {
+                showToast('当前没有订单可导出', 'error');
+                return;
+            }
+
+            // 复用 renderOrders 的筛选逻辑
+            const search = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+            const dateFrom = document.getElementById('dateFrom')?.value || '';
+            const dateTo = document.getElementById('dateTo')?.value || '';
+            const filter = getCurrentFilter();
+
+            let list = filter === 'all' ? allOrders : allOrders.filter(o => o.status === filter);
+
+            if (search) {
+                list = list.filter(o => {
+                    const haystack = [o.id, o.project_name, o.client_name, o.translator_name,
+                        (o.clients?.contact_name || ''), (o.clients?.company_name || '')].join(' ').toLowerCase();
+                    return haystack.includes(search);
+                });
+            }
+            if (dateFrom) {
+                list = list.filter(o => (o.deadline || o.created_at || '').slice(0, 10) >= dateFrom);
+            }
+            if (dateTo) {
+                list = list.filter(o => (o.deadline || o.created_at || '').slice(0, 10) <= dateTo);
+            }
+
+            if (!list.length) {
+                showToast('当前筛选下没有订单', 'error');
+                return;
+            }
+
+            const translators = await loadTranslators();
+            const tMap = {};
+            translators.forEach(t => tMap[t.id] = t);
+            const clients = await loadClients();
+            const cMap = {};
+            clients.forEach(c => cMap[c.id] = c);
+
+            btn.disabled = true;
+            const original = btn.textContent;
+            btn.textContent = '导出中...';
+
+            try {
+                const rows = list.map(o => {
+                    const t = tMap[o.translator_id];
+                    const c = o.client_id ? cMap[o.client_id] : null;
+                    const clientLabel = c
+                        ? (c.company_name || c.contact_name)
+                        : (o.client_name || '-');
+                    return {
+                        '订单编号': o.id,
+                        '项目名称': o.project_name,
+                        '客户': clientLabel,
+                        '译员': t ? t.name : '未指派',
+                        '字数': o.word_count,
+                        '费率': o.rate,
+                        '译员金额': o.amount,
+                        '客户单价': o.client_rate,
+                        '客户金额': o.client_amount,
+                        '截止日期': o.deadline ? o.deadline.slice(0, 10) : '',
+                        '订单状态': getStatusText(o.status),
+                        '结算状态': getPaymentStatusText(o.payment_status),
+                        '客户付款': getPaymentStatusText(o.client_payment_status),
+                        '发票状态': getInvoiceStatusText(o.invoice_status),
+                        '发票号': o.invoice_number || '',
+                        '开票日期': o.invoice_date ? o.invoice_date.slice(0, 10) : '',
+                        '创建时间': o.created_at ? o.created_at.slice(0, 19).replace('T', ' ') : '',
+                        '备注': o.remark || ''
+                    };
+                });
+
+                const ws = XLSX.utils.json_to_sheet(rows);
+                // 列宽自适应（粗略）
+                ws['!cols'] = Object.keys(rows[0]).map(k => ({ wch: Math.max(8, k.length * 2 + 4) }));
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, '订单列表');
+
+                const ts = new Date();
+                const ymd = ts.toISOString().slice(0, 10);
+                const hm = String(ts.getHours()).padStart(2, '0') + String(ts.getMinutes()).padStart(2, '0');
+                XLSX.writeFile(wb, `eadartrans-orders-${ymd}-${hm}.xlsx`);
+                showToast(`已导出 ${rows.length} 条订单`, 'success');
+            } catch (e) {
+                showToast('导出失败: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = original;
+            }
+        }
+        window.exportToExcel = exportToExcel;
+
+        // 获取当前激活的 status 筛选
+        function getCurrentFilter() {
+            const active = document.querySelector('.filter-tab.active');
+            return active ? active.dataset.filter : 'all';
+        }
+        window.getCurrentFilter = getCurrentFilter;
+
+        // A6: 批量删除相关
+        function toggleSelectAll(master) {
+            document.querySelectorAll('.rowCheck').forEach(cb => {
+                cb.checked = master.checked;
+            });
+            updateBatchBtn();
+        }
+        window.toggleSelectAll = toggleSelectAll;
+
+        function getSelectedIds() {
+            return Array.from(document.querySelectorAll('.rowCheck:checked'))
+                .map(cb => cb.dataset.id);
+        }
+
+        function updateBatchBtn() {
+            const ids = getSelectedIds();
+            const btn = document.getElementById('batchDeleteBtn');
+            const counter = document.getElementById('selectedCount');
+            if (counter) counter.textContent = ids.length;
+            if (btn) {
+                btn.disabled = ids.length === 0;
+                btn.style.opacity = ids.length === 0 ? '0.5' : '1';
+            }
+            // 同步 master checkbox 状态
+            const all = document.querySelectorAll('.rowCheck');
+            const master = document.getElementById('selectAllCheckbox');
+            if (master && all.length > 0) {
+                master.checked = ids.length === all.length;
+                master.indeterminate = ids.length > 0 && ids.length < all.length;
+            }
+        }
+        window.updateBatchBtn = updateBatchBtn;
+
+        async function batchDelete() {
+            const ids = getSelectedIds();
+            if (!ids.length) return;
+
+            const confirmMsg = `确认删除选中的 ${ids.length} 条订单？\n\n注意：\n- 已结算给译员的订单会被自动跳过\n- 已开发票的订单会被自动跳过\n- 此操作不可撤销`;
+            if (!confirm(confirmMsg)) return;
+
+            const btn = document.getElementById('batchDeleteBtn');
+            const original = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '删除中...';
+
+            try {
+                const result = await apiCall('batch-delete-orders', {
+                    method: 'POST',
+                    body: JSON.stringify({ ids })
+                });
+
+                const deletedCount = result.deleted ? result.deleted.length : 0;
+                const failedCount = result.failed ? result.failed.length : 0;
+
+                if (deletedCount > 0 && failedCount === 0) {
+                    showToast(`成功删除 ${deletedCount} 条订单`, 'success');
+                } else if (deletedCount > 0 && failedCount > 0) {
+                    showToast(`删除 ${deletedCount} 条，跳过 ${failedCount} 条（已结算或已开票）`, 'success');
+                } else {
+                    showToast(`全部 ${failedCount} 条被跳过（已结算或已开票）`, 'error');
+                }
+
+                // 刷新列表
+                await renderOrders(getCurrentFilter());
+            } catch (e) {
+                showToast('批量删除失败: ' + e.message, 'error');
+                btn.disabled = false;
+                btn.textContent = original;
+            }
+        }
+        window.batchDelete = batchDelete;
 
         // 打开弹窗
         async function openModal(orderId = null) {
@@ -757,8 +1115,22 @@
             openModal(id);
         }
 
-        // 删除订单
+        // 删除订单（含前端预校验 + 后端兜底）
         async function deleteOrder(id) {
+            // 在客户端缓存里查订单状态，做友好提示（后端 delete-order 也会校验）
+            const order = allOrders.find(o => o.id === id);
+            if (!order) return;
+
+            const warnings = [];
+            if (order.payment_status === 'paid') warnings.push('已结算给译员（payment_status=paid）');
+            if (order.invoice_status === 'issued') warnings.push('已开发票（invoice_status=issued）');
+            if (order.client_payment_status === 'paid') warnings.push('客户已付款（client_payment_status=paid）');
+
+            if (warnings.length > 0) {
+                alert(`无法删除订单：\n\n${warnings.join('\n')}\n\n请先在订单详情里撤销这些状态，再删除。`);
+                return;
+            }
+
             if (!confirm('确定要删除该订单吗？')) return;
             try {
                 await apiCall('delete-order', {
@@ -885,6 +1257,15 @@
                 this.classList.add('active');
                 renderOrders(this.dataset.filter);
             });
+        });
+
+        // 搜索 + 日期筛选（G6 + G7）
+        ['searchInput', 'dateFrom', 'dateTo'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => renderOrders(getCurrentFilter()));
+                el.addEventListener('change', () => renderOrders(getCurrentFilter()));
+            }
         });
 
         // 退出登录

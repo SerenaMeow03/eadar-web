@@ -51,6 +51,20 @@
         .status-cancelled { background: #f5f5f5; color: #999; }
         .payment-paid { background: #f6ffed; color: #389e0d; }
         .payment-unpaid { background: #fff7e6; color: #d48806; }
+        .invoice-issued { background: #f6ffed; color: #389e0d; }
+        .invoice-pending { background: #fff7e6; color: #d48806; }
+        .invoice-row { margin-top: 4px; font-size: 12px; color: #666; }
+
+        /* Password modal */
+        .pwd-form-group { margin-bottom: 16px; }
+        .pwd-form-group label { display: block; margin-bottom: 6px; font-size: 13px; color: #555; }
+        .pwd-form-group input { width: 100%; padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 14px; }
+        .pwd-form-group input:focus { outline: none; border-color: #1a1a2e; }
+        .pwd-modal-body { padding: 20px 24px; }
+        .pwd-modal-footer { padding: 14px 24px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 10px; }
+        .btn-confirm { background: #1a1a2e; color: white; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        .btn-confirm:disabled { background: #999; cursor: not-allowed; }
+        .btn-confirm:hover:not(:disabled) { background: #16213e; }
 
         /* Modal for order detail */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
@@ -69,6 +83,29 @@
         .toast { position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 6px; color: white; z-index: 9999; }
         .toast.error { background: #ff4d4f; }
         .toast.success { background: #52c41a; }
+
+        /* S4: 移动端适配（< 768px） */
+        @media (max-width: 768px) {
+            .header { padding: 12px 0; }
+            .header-content { flex-direction: column; gap: 10px; padding: 0 12px; }
+            .header h1 { font-size: 16px; }
+            .container { padding: 0 12px; margin: 16px auto; }
+            .welcome { padding: 16px; }
+            .welcome h2 { font-size: 16px; }
+            .stats { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .stat-card { padding: 14px; }
+            .stat-card .value { font-size: 20px; }
+            .section-header { flex-direction: column; align-items: stretch; gap: 10px; }
+            .section-header h3 { font-size: 14px; }
+            .filter-tabs { flex-wrap: wrap; }
+            .filter-tab { padding: 6px 12px; font-size: 12px; }
+            .table-card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .table-card table { min-width: 720px; font-size: 12px; }
+            .table-card th, .table-card td { padding: 8px; white-space: nowrap; }
+            .modal-content { width: 95%; padding: 18px; }
+            .pwd-form-group input { font-size: 14px; }
+            .logout-btn { padding: 6px 10px; font-size: 12px; }
+        }
     </style>
 </head>
 <body>
@@ -105,6 +142,14 @@
             <div class="stat-card">
                 <div class="label">已完成</div>
                 <div class="value completed" id="statCompleted">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">累计消费</div>
+                <div class="value" id="statSpent">¥0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">待付款</div>
+                <div class="value pending" id="statOwed">¥0</div>
             </div>
         </div>
 
@@ -146,6 +191,33 @@
                 <button class="close-btn" onclick="closeModal()">&times;</button>
             </div>
             <div class="modal-body" id="orderModalBody"></div>
+        </div>
+    </div>
+
+    <!-- 修改密码 Modal -->
+    <div class="modal" id="pwdModal">
+        <div class="modal-content" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3>修改密码</h3>
+                <button class="close-btn" onclick="closePwdModal()">&times;</button>
+            </div>
+            <div class="pwd-modal-body">
+                <p style="font-size: 13px; color: #999; margin-bottom: 16px;">
+                    请输入新密码（至少 6 位），修改后下次请用新密码登录。
+                </p>
+                <div class="pwd-form-group">
+                    <label>新密码</label>
+                    <input type="password" id="newPwd" placeholder="至少 6 位" autocomplete="new-password">
+                </div>
+                <div class="pwd-form-group">
+                    <label>确认新密码</label>
+                    <input type="password" id="newPwd2" placeholder="再次输入" autocomplete="new-password">
+                </div>
+            </div>
+            <div class="pwd-modal-footer">
+                <button class="btn-confirm" id="pwdSubmitBtn" onclick="changePassword()">确认修改</button>
+                <button class="logout-btn" onclick="closePwdModal()">取消</button>
+            </div>
         </div>
     </div>
 
@@ -246,7 +318,7 @@
             if (filtered.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="7" class="empty-state">
+                        <td colspan="9" class="empty-state">
                             <div class="empty-state-icon">📭</div>
                             <p>${total === 0 ? '您还没有订单' : '该状态下没有订单'}</p>
                         </td>
@@ -265,6 +337,8 @@
                         <td><strong>¥${o.client_amount || '-'}</strong></td>
                         <td>${deadline}</td>
                         <td><span class="status-badge status-${o.status}">${setStatusText(o.status)}</span></td>
+                        <td><span class="status-badge payment-${o.payment_status || 'unpaid'}">${setPaymentText(o.payment_status || 'unpaid')}</span></td>
+                        <td><span class="status-badge invoice-${o.invoice_status === 'issued' ? 'issued' : 'pending'}">${o.invoice_status === 'issued' ? '已开票' : '未开票'}</span></td>
                     </tr>`;
             }).join('');
         }
@@ -284,7 +358,8 @@
                 <div class="detail-row"><span class="label">应付金额</span><span class="value amount">¥${order.client_amount || '-'}</span></div>
                 <div class="detail-row"><span class="label">截止日期</span><span class="value">${deadline}</span></div>
                 <div class="detail-row"><span class="label">翻译状态</span><span class="value"><span class="status-badge status-${order.status}">${setStatusText(order.status)}</span></span></div>
-                <div class="detail-row"><span class="label">付款状态</span><span class="value"><span class="status-badge payment-${order.payment_status}">${setPaymentText(order.payment_status)}</span></span></div>
+                <div class="detail-row"><span class="label">付款状态</span><span class="value"><span class="status-badge payment-${order.payment_status || 'unpaid'}">${setPaymentText(order.payment_status || 'unpaid')}</span></span></div>
+                <div class="detail-row"><span class="label">发票状态</span><span class="value"><span class="status-badge invoice-${order.invoice_status === 'issued' ? 'issued' : 'pending'}">${order.invoice_status === 'issued' ? '已开票' : '未开票'}</span>${order.invoice_status === 'issued' ? `<div class="invoice-row">${order.invoice_number ? '发票号：' + order.invoice_number : ''}${order.invoice_date ? ' / ' + String(order.invoice_date).slice(0, 10) : ''}</div>` : ''}</span></div>
                 <div class="detail-row"><span class="label">创建时间</span><span class="value">${created}</span></div>
                 <div class="detail-row"><span class="label">最后更新</span><span class="value">${updated}</span></div>
                 <p style="margin-top: 16px; padding: 12px; background: #f6f8fa; border-radius: 6px; color: #666; font-size: 12px;">

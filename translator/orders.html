@@ -70,8 +70,8 @@
         }
         .stats-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 16px;
             margin-bottom: 30px;
         }
         .stat-card {
@@ -341,6 +341,29 @@
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
+
+        /* S4: 移动端适配（< 768px） */
+        @media (max-width: 768px) {
+            .header { padding: 12px 0; }
+            .header-content { flex-direction: column; gap: 10px; padding: 0 12px; }
+            .header h1 { font-size: 16px; }
+            .nav-menu { gap: 16px; font-size: 13px; flex-wrap: wrap; justify-content: center; }
+            .container { padding: 0 12px; margin: 16px auto; }
+            .section-header { flex-direction: column; align-items: stretch; gap: 12px; }
+            .section-header h2 { font-size: 17px; }
+            .filter-tabs { flex-wrap: wrap; }
+            .filter-tab { padding: 6px 12px; font-size: 12px; }
+            .stats-cards { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .stat-card { padding: 14px; }
+            .stat-card .stat-value { font-size: 20px; }
+            .orders-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .orders-table table { min-width: 720px; font-size: 12px; }
+            .orders-table th, .orders-table td { padding: 8px; white-space: nowrap; }
+            .modal-content { width: 95%; padding: 18px; }
+            .form-row { grid-template-columns: 1fr; }
+            .user-info { font-size: 12px; }
+            .logout-btn { padding: 6px 10px; font-size: 12px; }
+        }
     </style>
 </head>
 <body>
@@ -364,16 +387,20 @@
     <div class="container">
         <div class="stats-cards">
             <div class="stat-card">
-                <h3>本月订单数</h3>
-                <div class="stat-value primary" id="monthOrders">0</div>
+                <h3>订单总数</h3>
+                <div class="stat-value primary" id="totalOrders">0</div>
             </div>
             <div class="stat-card">
-                <h3>本月字数</h3>
-                <div class="stat-value" id="monthWords">0</div>
+                <h3>总字数</h3>
+                <div class="stat-value" id="totalWords">0</div>
             </div>
             <div class="stat-card">
-                <h3>本月收入</h3>
-                <div class="stat-value success" id="monthIncome">¥0</div>
+                <h3>已结算金额</h3>
+                <div class="stat-value success" id="paidIncome">¥0</div>
+            </div>
+            <div class="stat-card">
+                <h3>待结算金额</h3>
+                <div class="stat-value warning" id="pendingIncome">¥0</div>
             </div>
             <div class="stat-card">
                 <h3>待处理订单</h3>
@@ -584,11 +611,17 @@
 
         // ============= 统计 =============
         function updateStats() {
-            document.getElementById('monthOrders').textContent = myOrders.length;
-            document.getElementById('monthWords').textContent =
+            document.getElementById('totalOrders').textContent = myOrders.length;
+            document.getElementById('totalWords').textContent =
                 myOrders.reduce((s, o) => s + (o.words || 0), 0).toLocaleString();
-            const income = myOrders.reduce((s, o) => s + parseFloat(o.amount || 0), 0);
-            document.getElementById('monthIncome').textContent = '¥' + income.toFixed(2);
+            const paid = myOrders
+                .filter(o => o.paymentStatus === 'paid')
+                .reduce((s, o) => s + parseFloat(o.amount || 0), 0);
+            document.getElementById('paidIncome').textContent = '¥' + paid.toFixed(2);
+            const pending = myOrders
+                .filter(o => o.status === 'completed' && o.paymentStatus !== 'paid')
+                .reduce((s, o) => s + parseFloat(o.amount || 0), 0);
+            document.getElementById('pendingIncome').textContent = '¥' + pending.toFixed(2);
             document.getElementById('pendingOrders').textContent =
                 myOrders.filter(o => o.status === 'pending').length;
         }
@@ -657,6 +690,17 @@
                         translator_note: translatorNote || null,
                     }),
                 });
+
+                // 异步触发邮件通知 admin（不阻塞 UI）
+                fetch('/.netlify/functions/send-completion-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + getAccessToken()
+                    },
+                    body: JSON.stringify({ orderId: id })
+                }).catch(err => console.warn('通知邮件失败（非阻塞）:', err));
+
                 closeCompleteModal();
                 await refreshOrders();
                 showToast('订单已完成', 'success');

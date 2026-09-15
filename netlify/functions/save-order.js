@@ -3,6 +3,7 @@
 
 const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate, requireMethod, parseBody } = require('./_shared/auth');
+const { writeAudit } = require('./_shared/audit');
 
 exports.handler = async (event) => {
   const pre = preflight(event);
@@ -122,6 +123,24 @@ exports.handler = async (event) => {
       }
       result = data;
     }
+
+    // A7: 审计日志
+    await writeAudit(service, {
+      user_email: auth.user?.email || 'unknown',
+      user_role: auth.role,
+      action: id ? 'update_order' : 'create_order',
+      target_type: 'order',
+      target_id: result.id,
+      details: {
+        project_name,
+        translator_id,
+        word_count,
+        rate,
+        amount,
+        deadline,
+        status,
+      },
+    });
 
     return corsResponse(200, { data: result, message: id ? '订单已更新' : '订单已创建' });
   } catch (e) {
