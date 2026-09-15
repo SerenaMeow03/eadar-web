@@ -66,11 +66,17 @@ async function handleLogin(event, requiredRole) {
     extra.translatorId = t.id;
     extra.fullName = t.full_name;
   } else if (role === 'client') {
-    const { data: c } = await service
+    console.log('[login-client] querying clients with user_id:', user.id, 'email:', user.email);
+    const { data: c, error: cErr } = await service
       .from('clients')
       .select('id, status, contact_name, company_name')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
+    console.log('[login-client] query result:', { c, cErr });
+    if (cErr) {
+      console.error('[login-client] clients query error:', cErr);
+      return corsResponse(500, { error: '客户业务记录查询失败：' + cErr.message });
+    }
     if (!c) {
       return corsResponse(403, { error: '客户业务记录不存在' });
     }
