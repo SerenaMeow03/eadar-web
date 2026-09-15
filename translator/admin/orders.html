@@ -172,6 +172,14 @@
             color: #333;
             white-space: nowrap;
         }
+        /* 项目名称列（第3列）：固定宽度，长内容自动省略号 */
+        .orders-table thead tr th:nth-child(3),
+        .orders-table tbody tr td:nth-child(3) {
+            width: 120px;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
         .orders-table tr:hover {
             background: #fafafa;
         }
