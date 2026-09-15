@@ -2,7 +2,7 @@
 // 共享登录逻辑：signInWithPassword + 校验 role + 写审计日志
 // 调用方：login-translator / login-admin / login-client
 
-const { getServiceClient } = require('./supabase');
+const { getServiceClient, getUserClient } = require('./supabase');
 const { corsResponse } = require('./auth');
 const { writeAudit } = require('./audit');
 
@@ -49,14 +49,21 @@ async function handleLogin(event, requiredRole) {
     });
   }
 
-  // 3) 译员额外检查业务状态
+  // 3) 译员/客户额外检查业务状态
+  //    关键：用 user-scoped client（带 user 的 JWT）查业务表，
+  //    让 auth.uid() 正确指向当前登录用户，RLS 策略才能正常评估
   let extra = {};
+  const userClient = getUserClient(session.access_token);
   if (role === 'translator') {
-    const { data: t } = await service
+    const { data: t, error: tErr } = await userClient
       .from('translators')
       .select('id, status, full_name')
       .eq('auth_user_id', user.id)
-      .single();
+      .maybeSingle();
+    if (tErr) {
+      console.error('[login-translator] query error:', tErr);
+      return corsResponse(500, { error: '译员业务记录查询失败：' + tErr.message });
+    }
     if (!t) {
       return corsResponse(403, { error: '译员业务记录不存在' });
     }
@@ -67,7 +74,7 @@ async function handleLogin(event, requiredRole) {
     extra.fullName = t.full_name;
   } else if (role === 'client') {
     console.log('[login-client] querying clients with user_id:', user.id, 'email:', user.email);
-    const { data: c, error: cErr } = await service
+    const { data: c, error: cErr } = await userClient
       .from('clients')
       .select('id, status, contact_name, company_name')
       .eq('user_id', user.id)
