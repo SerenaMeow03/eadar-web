@@ -245,10 +245,23 @@
             return null;
         }
 
-        // 检查 token 里的 user 角色，如果不是 client 则强制清掉重新登录
+        // 顶部 DEBUG 横幅：永远显示 dashboard 状态
+        function showDebugBanner(html) {
+            let banner = document.getElementById('debugBanner');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'debugBanner';
+                banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fff3cd;border:3px solid red;padding:10px;font-size:13px;z-index:99999;font-family:monospace;white-space:pre-wrap;';
+                document.body.appendChild(banner);
+            }
+            banner.innerHTML = html;
+        }
+
         async function verifyClientRole() {
+            showDebugBanner('⏳ verifyClientRole 开始执行...');
             const token = getAccessToken();
             if (!token) {
+                showDebugBanner('❌ 无 token，跳转 login');
                 window.location.href = 'login.html';
                 return false;
             }
@@ -261,8 +274,8 @@
                 const { data, error } = await sb.auth.getUser(token);
                 if (error || !data?.user) throw error || new Error('No user');
                 const role = data.user.app_metadata?.role;
+                showDebugBanner('✅ verifyClientRole 通过\nrole: ' + role + '\nemail: ' + data.user.email);
                 if (role !== 'client') {
-                    // 不是 client（残留 admin/translator token），清掉强制重新登录
                     Object.keys(localStorage).forEach(k => {
                         if (k.startsWith('sb-') && k.endsWith('-auth-token')) localStorage.removeItem(k);
                     });
@@ -271,6 +284,7 @@
                 }
                 return true;
             } catch (e) {
+                showDebugBanner('❌ verifyClientRole 异常\n' + e.message);
                 Object.keys(localStorage).forEach(k => {
                     if (k.startsWith('sb-') && k.endsWith('-auth-token')) localStorage.removeItem(k);
                 });
@@ -305,25 +319,31 @@
             return ({ paid: '已付款', unpaid: '待付款' })[s] || s;
         }
 
+        // 顶部 DEBUG 横幅：永远显示 dashboard 状态
+        function showDebugBanner(html) {
+            let banner = document.getElementById('debugBanner');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'debugBanner';
+                banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fff3cd;border:3px solid red;padding:10px;font-size:13px;z-index:99999;font-family:monospace;white-space:pre-wrap;';
+                document.body.appendChild(banner);
+            }
+            banner.innerHTML = html;
+        }
+
         async function loadData() {
+            showDebugBanner('⏳ loadData() 开始执行...');
             try {
                 const result = await apiCall('get-client-orders');
+                showDebugBanner('✅ get-client-orders 返回\n' + JSON.stringify(result, null, 2));
                 console.log('[dashboard] get-client-orders result:', result);
-                if (result._debug) {
-                    console.log('[dashboard] _debug:', result._debug);
-                    // 临时在页面上显示调试信息
-                    const debugEl = document.createElement('div');
-                    debugEl.style.cssText = 'position:fixed;top:60px;right:10px;background:#fff3cd;border:2px solid #ffc107;padding:12px;border-radius:6px;font-size:12px;z-index:9999;max-width:400px;';
-                    debugEl.innerHTML = '<strong>🔍 DEBUG:</strong><br>authUserId: ' + result._debug.authUserId + '<br>clientId: ' + result._debug.clientId + '<br>ordersCount: ' + result._debug.ordersCount + '<br>firstOrderId: ' + (result._debug.firstOrderId || 'null');
-                    document.body.appendChild(debugEl);
-                }
                 allOrders = result.data || [];
                 const client = result.client || {};
                 document.getElementById('welcomeTitle').textContent =
                     `欢迎，${client.contact_name || ''}${client.company_name ? '（' + client.company_name + '）' : ''}`;
                 render();
             } catch (e) {
-                showToast('加载订单失败：' + e.message, 'error');
+                showDebugBanner('❌ loadData 异常\n' + e.message + '\n' + e.stack);
                 console.error('[dashboard] loadData error:', e);
             }
         }
