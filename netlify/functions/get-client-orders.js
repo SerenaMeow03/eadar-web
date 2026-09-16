@@ -1,9 +1,9 @@
 // netlify/functions/get-client-orders.js
 // 客户调用：查自己的订单（应用 RLS：客户只能看 client_id = 自己的订单）
 //
-// 返回：{ data: [{ id, project_name, word_count, client_rate, client_amount, deadline, status, payment_status, translator_name, created_at, ... }] }
+// 返回：{ _client: { id, contact_name, company_name }, data: [...] }
 //
-// 关键：返回的字段是**客户视角**（不暴露译员单价/译员应收金额）
+// 关键：client 信息放顶层 _client（避免 apiCall 解包 data 时丢失）
 
 const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate } = require('./_shared/auth');
@@ -21,19 +21,17 @@ exports.handler = async (event) => {
 
   try {
     // 1) 查客户自己的 client 行
-    console.log('[get-client-orders] auth.user.id:', clientAuthUserId);
     const { data: client, error: clientErr } = await service
       .from('clients')
       .select('id, contact_name, company_name')
       .eq('user_id', clientAuthUserId)
       .single();
 
-    console.log('[get-client-orders] client result:', { client, clientErr });
     if (clientErr || !client) {
       return corsResponse(404, { error: '客户档案不存在' });
     }
 
-    // 2) 查该客户的所有订单（用 service 但加 client_id 过滤，等价 RLS）
+    // 2) 查该客户的所有订单
     const { data: orders, error: ordersErr } = await service
       .from('orders')
       .select(`
@@ -46,15 +44,12 @@ exports.handler = async (event) => {
       .eq('client_id', client.id)
       .order('created_at', { ascending: false });
 
-    console.log('[get-client-orders] orders result: count=', orders?.length, 'err=', ordersErr?.message);
-
     if (ordersErr) {
       console.error('get-client-orders error:', ordersErr);
       return corsResponse(500, { error: ordersErr.message });
     }
 
-    // 3) 格式化：把译员名字摊平（不暴露译员邮箱/电话）
-    //    关键：client_payment_status 映射到前端用的 payment_status 字段名（前端代码不需改）
+    // 3) 格式化：摊平译员名字（不暴露邮箱/电话）
     const formatted = (orders || []).map(o => ({
       id: o.id,
       project_name: o.project_name,
@@ -63,7 +58,7 @@ exports.handler = async (event) => {
       client_amount: o.client_amount,
       deadline: o.deadline,
       status: o.status,
-      payment_status: o.client_payment_status, // 兼容字段名
+      payment_status: o.client_payment_status,
       invoice_status: o.invoice_status,
       invoice_number: o.invoice_number,
       invoice_date: o.invoice_date,
@@ -73,13 +68,7 @@ exports.handler = async (event) => {
     }));
 
     return corsResponse(200, {
-      _debug: {
-        authUserId: clientAuthUserId,
-        clientId: client.id,
-        ordersCount: orders?.length || 0,
-        firstOrderId: orders?.[0]?.id,
-      },
-      // client 信息放顶层独立字段，不在 data 里，避免被 apiCall 解包丢失
+      // client 信息放顶层，避免 apiCall 解包 data 时丢失
       _client: {
         id: client.id,
         contact_name: client.contact_name,

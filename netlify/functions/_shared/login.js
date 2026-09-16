@@ -28,25 +28,11 @@ async function handleLogin(event, requiredRole) {
 
   const service = getServiceClient();
 
-  // 诊断：打印环境变量前几位 + service_role key 类型
-  const url = process.env.SUPABASE_URL || '';
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  console.log('[login-diag] SUPABASE_URL:', url);
-  console.log('[login-diag] SERVICE_KEY length:', key.length, 'first10:', key.substring(0, 10), 'last10:', key.substring(key.length - 10));
-  // service_role key 通常以 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0 开头
-  // anon key 以 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiJ9 开头
-  try {
-    const payload = JSON.parse(Buffer.from(key.split('.')[1], 'base64').toString());
-    console.log('[login-diag] SERVICE_KEY role:', payload.role, 'iss:', payload.iss);
-  } catch (e) { console.log('[login-diag] parse key failed:', e.message); }
-
   // 1) 用 service_role 模拟登录（避免泄露 anon key 时序）
   const { data, error } = await service.auth.signInWithPassword({
     email: String(email).trim(),
     password: String(password),
   });
-
-  console.log('[login-diag] signInWithPassword result:', error?.message || 'success', 'user.id:', data?.user?.id);
 
   if (error || !data?.session) {
     return corsResponse(401, { error: '邮箱或密码错误' });
@@ -86,13 +72,11 @@ async function handleLogin(event, requiredRole) {
     extra.translatorId = t.id;
     extra.fullName = t.full_name;
   } else if (role === 'client') {
-    console.log('[login-client] querying clients with user_id:', user.id, 'email:', user.email);
     const { data: c, error: cErr } = await service
       .from('clients')
       .select('id, status, contact_name, company_name')
       .eq('user_id', user.id)
       .maybeSingle();
-    console.log('[login-client] query result:', { c, cErr });
     if (cErr) {
       console.error('[login-client] clients query error:', cErr);
       return corsResponse(500, { error: '客户业务记录查询失败：' + cErr.message });
