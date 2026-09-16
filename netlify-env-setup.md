@@ -53,6 +53,6 @@ https://eadar-web.netlify.app/.netlify/functions/get-orders
 - [ ] Supabase SQL Editor 执行 `supabase-schema-v2.sql`（**生产部署前先备份数据**）
 - [ ] 在 Supabase Auth 创建管理员账号
 - [ ] 在 Supabase SQL Editor 插入 admin 行，关联 auth_user_id
-- [ ] 验证 `/translator/admin/login.html` 能登录
+- [ ] 验证 `/portal/admin/login.html` 能登录
 - [ ] 验证 `/.netlify/functions/get-orders` 返回 401
 - [ ] git push 触发自动部署

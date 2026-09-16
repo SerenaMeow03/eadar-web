@@ -10,7 +10,7 @@
 |------|------|
 | RLS 全开，任何人可读 admin/translators/orders | 重写为基于 auth.uid() + 角色 + 所有权 |
 | anon key 暴露在前端 HTML | service_role 移到 Netlify Functions 环境变量 |
-| 管理员两条登录入口（Netlify Identity + Supabase） | 废弃 `/admin/index.html`，统一到 `/translator/admin/login.html` |
+| 管理员两条登录入口（Netlify Identity + Supabase） | 废弃 `/admin/index.html`，统一到 `/portal/admin/login.html` |
 | `translators.id`（T001）和 `auth.users.id`（UUID）错配 | 加 `auth_user_id` 字段关联 |
 | 改密码走明文 `translators.password` 字段，跟 Supabase Auth 不通 | 改用 Supabase Auth `updateUser` |
 | `translator/admin/orders.html` 缺少 IIFE 闭合 bug | 修复 |

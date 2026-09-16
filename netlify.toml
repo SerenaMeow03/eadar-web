@@ -10,13 +10,18 @@
 
 # SPA 路由支持 - 确保刷新页面正常工作
 [[redirects]]
-  from = "/translator/*"
-  to = "/translator/:splat"
+  from = "/portal/*"
+  to = "/portal/:splat"
   status = 200
 
 [[redirects]]
   from = "/admin/*"
-  to = "/admin/:splat"
+  to = "/portal/admin/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/client/*"
+  to = "/portal/client/:splat"
   status = 200
 
 [[redirects]]
@@ -27,7 +32,7 @@
 # admin 子域名根路径直接进后台登录页（不影响 marketing 官网）
 [[redirects]]
   from = "https://admin.eadartrans.com/"
-  to = "/translator/admin/login.html"
+  to = "/portal/admin/login.html"
   status = 302
   force = false
 
