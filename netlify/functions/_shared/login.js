@@ -50,12 +50,11 @@ async function handleLogin(event, requiredRole) {
   }
 
   // 3) 译员/客户额外检查业务状态
-  //    关键：用 user-scoped client（带 user 的 JWT）查业务表，
-  //    让 auth.uid() 正确指向当前登录用户，RLS 策略才能正常评估
+  //    关键：用 service_role 客户端查业务表，service_role 默认 bypass RLS，
+  //    .eq('user_id', user.id) 强制按 auth user id 过滤，比依赖 RLS 更稳
   let extra = {};
-  const userClient = getUserClient(session.access_token);
   if (role === 'translator') {
-    const { data: t, error: tErr } = await userClient
+    const { data: t, error: tErr } = await service
       .from('translators')
       .select('id, status, full_name')
       .eq('auth_user_id', user.id)
@@ -74,7 +73,7 @@ async function handleLogin(event, requiredRole) {
     extra.fullName = t.full_name;
   } else if (role === 'client') {
     console.log('[login-client] querying clients with user_id:', user.id, 'email:', user.email);
-    const { data: c, error: cErr } = await userClient
+    const { data: c, error: cErr } = await service
       .from('clients')
       .select('id, status, contact_name, company_name')
       .eq('user_id', user.id)
