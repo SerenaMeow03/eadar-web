@@ -245,23 +245,10 @@
             return null;
         }
 
-        // 顶部 DEBUG 横幅：永远显示 dashboard 状态
-        function showDebugBanner(html) {
-            let banner = document.getElementById('debugBanner');
-            if (!banner) {
-                banner = document.createElement('div');
-                banner.id = 'debugBanner';
-                banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fff3cd;border:3px solid red;padding:10px;font-size:13px;z-index:99999;font-family:monospace;white-space:pre-wrap;';
-                document.body.appendChild(banner);
-            }
-            banner.innerHTML = html;
-        }
-
+        // 检查 token 里的 user 角色，如果不是 client 则强制清掉重新登录
         async function verifyClientRole() {
-            showDebugBanner('⏳ verifyClientRole 开始执行...');
             const token = getAccessToken();
             if (!token) {
-                showDebugBanner('❌ 无 token，跳转 login');
                 window.location.href = 'login.html';
                 return false;
             }
@@ -274,8 +261,8 @@
                 const { data, error } = await sb.auth.getUser(token);
                 if (error || !data?.user) throw error || new Error('No user');
                 const role = data.user.app_metadata?.role;
-                showDebugBanner('✅ verifyClientRole 通过\nrole: ' + role + '\nemail: ' + data.user.email);
                 if (role !== 'client') {
+                    // 不是 client（残留 admin/translator token），清掉强制重新登录
                     Object.keys(localStorage).forEach(k => {
                         if (k.startsWith('sb-') && k.endsWith('-auth-token')) localStorage.removeItem(k);
                     });
@@ -284,7 +271,6 @@
                 }
                 return true;
             } catch (e) {
-                showDebugBanner('❌ verifyClientRole 异常\n' + e.message);
                 Object.keys(localStorage).forEach(k => {
                     if (k.startsWith('sb-') && k.endsWith('-auth-token')) localStorage.removeItem(k);
                 });
@@ -318,9 +304,6 @@
         function setPaymentText(s) {
             return ({ paid: '已付款', unpaid: '待付款' })[s] || s;
         }
-
-        // 顶部 DEBUG 横幅（已清理，功能已稳定，代码注释保留以备未来调试）
-        function _showDebugBanner(html) { /* 已禁用 */ }
 
         async function loadData() {
             try {
