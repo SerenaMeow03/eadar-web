@@ -1,16 +1,22 @@
 # Netlify 路由规则
+# 注意：所有规则必须与 netlify.toml 的 [[redirects]] 保持同步，_redirects 优先级更高
 
 # 根路径重定向到后台登录页（admin 子域专用）
-/  /translator/admin/login.html  302
+/  /portal/admin/login.html  302
 
-# 确保 admin 目录可以访问
-/admin/*  /admin/:splat  200
+# 确保 portal/admin 目录可以访问
+/portal/admin/*  /portal/admin/:splat  200
 
-# 确保 translator 目录可以访问
-/translator/*  /translator/:splat  200
+# 确保 portal/translator 目录可以访问（译员页面）
+/portal/*  /portal/:splat  200
 
-# CMS 页面重定向（支持无 .html 后缀访问）
+# 确保 portal/client 目录可以访问（客户页面）
+/portal/client/*  /portal/client/:splat  200
+
+# CMS 页面重定向（支持无 .html 后缀访问，marketing 站点)
 /admin/cms  /admin/cms.html  200
 
-# SPA 回退（可选）
-# /*    /index.html   200
+# ===== 兼容层：旧路径 /translator/* → /portal/*（302）=====
+# 用途：Netlify Edge 缓存 / 浏览器历史 / 旧书签 即使引用旧路径也能跳到新路径
+# 长期保留：等所有用户书签/通知/邮件链接迁移完后可删除（建议保留 3 个月）
+/translator/*  /portal/:splat  302

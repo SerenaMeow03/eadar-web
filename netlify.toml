@@ -29,6 +29,14 @@
   to = "/en/:splat"
   status = 200
 
+# ===== 兼容层：旧路径 /translator/* → /portal/*（2026-09-16 重命名后保留 302）=====
+# 用途：Netlify Edge / 浏览器历史记录 / 旧书签即使引用旧路径也能跳到新路径
+# 长期保留：等所有用户书签/通知/邮件链接迁移完后可删除（建议保留 3 个月）
+[[redirects]]
+  from = "/translator/*"
+  to = "/portal/:splat"
+  status = 302
+
 # admin 子域名根路径直接进后台登录页（不影响 marketing 官网）
 [[redirects]]
   from = "https://admin.eadartrans.com/"
