@@ -245,6 +245,40 @@
             return null;
         }
 
+        // 检查 token 里的 user 角色，如果不是 client 则强制清掉重新登录
+        async function verifyClientRole() {
+            const token = getAccessToken();
+            if (!token) {
+                window.location.href = 'login.html';
+                return false;
+            }
+            try {
+                const { createClient } = supabase;
+                const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                    global: { headers: { Authorization: 'Bearer ' + token } },
+                    auth: { persistSession: false, autoRefreshToken: false },
+                });
+                const { data, error } = await sb.auth.getUser(token);
+                if (error || !data?.user) throw error || new Error('No user');
+                const role = data.user.app_metadata?.role;
+                if (role !== 'client') {
+                    // 不是 client（残留 admin/translator token），清掉强制重新登录
+                    Object.keys(localStorage).forEach(k => {
+                        if (k.startsWith('sb-') && k.endsWith('-auth-token')) localStorage.removeItem(k);
+                    });
+                    window.location.href = 'login.html';
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                Object.keys(localStorage).forEach(k => {
+                    if (k.startsWith('sb-') && k.endsWith('-auth-token')) localStorage.removeItem(k);
+                });
+                window.location.href = 'login.html';
+                return false;
+            }
+        }
+
         async function apiCall(path, options = {}) {
             const token = getAccessToken();
             if (!token) { window.location.href = 'login.html'; throw new Error('No session'); }
@@ -451,8 +485,8 @@
             setTimeout(() => toast.remove(), 3500);
         }
 
-        // 初始化
-        loadData();
+        // 初始化：先校验角色（防止 localStorage 残留 admin/译员 token）
+        verifyClientRole().then(ok => { if (ok) loadData(); });
     })();
     </script>
 </body>
