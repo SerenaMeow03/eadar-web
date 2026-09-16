@@ -79,12 +79,13 @@ exports.handler = async (event) => {
         ordersCount: orders?.length || 0,
         firstOrderId: orders?.[0]?.id,
       },
-      data: formatted,
-      client: {
+      // client 信息放顶层独立字段，不在 data 里，避免被 apiCall 解包丢失
+      _client: {
         id: client.id,
         contact_name: client.contact_name,
         company_name: client.company_name,
       },
+      data: formatted,
     });
   } catch (e) {
     console.error('get-client-orders unhandled:', e);
