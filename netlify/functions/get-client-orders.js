@@ -73,6 +73,12 @@ exports.handler = async (event) => {
     }));
 
     return corsResponse(200, {
+      _debug: {
+        authUserId: clientAuthUserId,
+        clientId: client.id,
+        ordersCount: orders?.length || 0,
+        firstOrderId: orders?.[0]?.id,
+      },
       data: formatted,
       client: {
         id: client.id,
