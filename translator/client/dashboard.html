@@ -335,10 +335,11 @@
             showDebugBanner('⏳ loadData() 开始执行...');
             try {
                 const result = await apiCall('get-client-orders');
-                showDebugBanner('✅ get-client-orders 返回\n' + JSON.stringify(result, null, 2));
+                showDebugBanner('✅ get-client-orders 返回\ntype=' + (Array.isArray(result) ? 'array' : typeof result) + '\nlength=' + (Array.isArray(result) ? result.length : 'n/a'));
                 console.log('[dashboard] get-client-orders result:', result);
-                allOrders = result.data || [];
-                const client = result.client || {};
+                // 兼容两种返回：数组（apiCall 已解包 data）或对象 {data, client, _debug}
+                allOrders = Array.isArray(result) ? result : (result.data || []);
+                const client = (result && result.client) || {};
                 document.getElementById('welcomeTitle').textContent =
                     `欢迎，${client.contact_name || ''}${client.company_name ? '（' + client.company_name + '）' : ''}`;
                 render();
