@@ -308,6 +308,15 @@
         async function loadData() {
             try {
                 const result = await apiCall('get-client-orders');
+                console.log('[dashboard] get-client-orders result:', result);
+                if (result._debug) {
+                    console.log('[dashboard] _debug:', result._debug);
+                    // 临时在页面上显示调试信息
+                    const debugEl = document.createElement('div');
+                    debugEl.style.cssText = 'position:fixed;top:60px;right:10px;background:#fff3cd;border:2px solid #ffc107;padding:12px;border-radius:6px;font-size:12px;z-index:9999;max-width:400px;';
+                    debugEl.innerHTML = '<strong>🔍 DEBUG:</strong><br>authUserId: ' + result._debug.authUserId + '<br>clientId: ' + result._debug.clientId + '<br>ordersCount: ' + result._debug.ordersCount + '<br>firstOrderId: ' + (result._debug.firstOrderId || 'null');
+                    document.body.appendChild(debugEl);
+                }
                 allOrders = result.data || [];
                 const client = result.client || {};
                 document.getElementById('welcomeTitle').textContent =
@@ -315,6 +324,7 @@
                 render();
             } catch (e) {
                 showToast('加载订单失败：' + e.message, 'error');
+                console.error('[dashboard] loadData error:', e);
             }
         }
 
