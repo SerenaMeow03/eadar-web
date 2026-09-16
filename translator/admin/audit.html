@@ -11,13 +11,13 @@
         .header-content { max-width: 1400px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
         .header h1 { font-size: 20px; font-weight: 500; }
         .header-logo { display: flex; align-items: center; gap: 12px; }
-        .header-logo img { height: 40px; }
+        .header-logo img { height: 40px; width: auto; }
         .nav-menu { display: flex; gap: 30px; }
         .nav-menu a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 14px; }
         .nav-menu a:hover, .nav-menu a.active { color: white; }
-        .user-info { display: flex; align-items: center; gap: 15px; font-size: 14px; }
+        .user-info { display: flex; align-items: center; gap: 15px; }
         .user-name { font-size: 14px; }
-        .logout-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .logout-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: background 0.3s; }
         .logout-btn:hover { background: rgba(255,255,255,0.3); }
         .container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
 
@@ -182,7 +182,7 @@
             }
             const json = await res.json();
             if (!res.ok) throw new Error(json.error || '请求失败');
-            return json;
+            return json;  // 不解包
         }
 
         // 检查登录状态
@@ -193,6 +193,10 @@
 
         function logout() {
             localStorage.removeItem('currentAdmin');
+            // 清理 supabase auth token（避免残留导致下一用户拿到错身份）
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('sb-') && k.endsWith('-auth-token')) localStorage.removeItem(k);
+            });
             window.location.href = 'login.html';
         }
 
@@ -223,15 +227,16 @@
 
             try {
                 const result = await apiCall('get-audit-logs?' + params.toString());
+                const payload = result?.data || {};
 
-                totalCount = result.total || 0;
+                totalCount = payload.total || 0;
                 document.getElementById('totalCount').textContent = totalCount;
                 document.getElementById('pageNum').textContent = page;
                 document.getElementById('totalPages').textContent = Math.max(1, Math.ceil(totalCount / pageSize));
                 document.getElementById('prevBtn').disabled = page <= 1;
                 document.getElementById('nextBtn').disabled = page * pageSize >= totalCount;
 
-                const logs = result.logs || [];
+                const logs = payload.logs || [];
                 if (!logs.length) {
                     tbody.innerHTML = '<tr><td colspan="6" class="empty-state">📋 暂无日志</td></tr>';
                     return;

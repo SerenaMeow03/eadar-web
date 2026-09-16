@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>个人信息 - 谊达翻译</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="verify-role.js"></script>
     <style>
         * {
             margin: 0;
@@ -427,14 +427,15 @@
             }
             const json = await res.json();
             if (!res.ok) throw new Error(json.error || '请求失败');
-            return json.data;
+            return json;  // 不解包
         }
 
-        // 检查登录状态
+        // 检查登录状态 + 角色校验（防止 admin/client token 残留）
         const currentTranslator = JSON.parse(localStorage.getItem('currentTranslator'));
         if (!currentTranslator) {
             window.location.href = 'login.html';
         }
+        window.verifyRole('translator', 'login.html', 'currentTranslator');
 
         // 显示用户信息
         document.getElementById('userName').textContent = currentTranslator.name;
@@ -460,7 +461,8 @@
         // 从后端加载译员数据
         async function loadTranslatorData() {
             try {
-                const data = await apiCall('get-translator-me');
+                const result = await apiCall('get-translator-me');
+                const data = result?.data || result;
                 if (data) {
                     translatorData.phone = data.phone || '';
                     translatorData.email = data.email || '';

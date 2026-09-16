@@ -59,7 +59,7 @@ exports.handler = async (event) => {
       }
     }
 
-    return corsResponse(200, { success: true, updated: body.preferences.length });
+    return corsResponse(200, { data: { success: true, updated: body.preferences.length } });
   } catch (e) {
     console.error('update-notification-preferences unhandled:', e);
     return corsResponse(500, { error: e.message });

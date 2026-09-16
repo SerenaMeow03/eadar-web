@@ -227,11 +227,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="../verify-role.js"></script>
     <script>
     (function() {
-        const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
-
         function getAccessToken() {
             const keys = Object.keys(localStorage);
             for (const k of keys) {
@@ -243,40 +241,6 @@
                 }
             }
             return null;
-        }
-
-        // 检查 token 里的 user 角色，如果不是 client 则强制清掉重新登录
-        async function verifyClientRole() {
-            const token = getAccessToken();
-            if (!token) {
-                window.location.href = 'login.html';
-                return false;
-            }
-            try {
-                const { createClient } = supabase;
-                const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-                    global: { headers: { Authorization: 'Bearer ' + token } },
-                    auth: { persistSession: false, autoRefreshToken: false },
-                });
-                const { data, error } = await sb.auth.getUser(token);
-                if (error || !data?.user) throw error || new Error('No user');
-                const role = data.user.app_metadata?.role;
-                if (role !== 'client') {
-                    // 不是 client（残留 admin/translator token），清掉强制重新登录
-                    Object.keys(localStorage).forEach(k => {
-                        if (k.startsWith('sb-') && k.endsWith('-auth-token')) localStorage.removeItem(k);
-                    });
-                    window.location.href = 'login.html';
-                    return false;
-                }
-                return true;
-            } catch (e) {
-                Object.keys(localStorage).forEach(k => {
-                    if (k.startsWith('sb-') && k.endsWith('-auth-token')) localStorage.removeItem(k);
-                });
-                window.location.href = 'login.html';
-                return false;
-            }
         }
 
         async function apiCall(path, options = {}) {
@@ -292,7 +256,7 @@
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-            return data.data !== undefined ? data.data : data;
+            return data;  // 不解包
         }
 
         let allOrders = [];
@@ -308,8 +272,9 @@
         async function loadData() {
             try {
                 const result = await apiCall('get-client-orders');
-                allOrders = Array.isArray(result) ? result : (result.data || []);
-                const client = (result && result._client) || {};
+                // 后端返回 {data: [...], _client: {...}}，apiCall 不解包
+                allOrders = result?.data || [];
+                const client = result?._client || {};
                 document.getElementById('welcomeTitle').textContent =
                     `欢迎，${client.contact_name || ''}${client.company_name ? '（' + client.company_name + '）' : ''}`;
                 const userLabel = document.getElementById('userLabel');
@@ -419,12 +384,7 @@
         }
         window.closeModal = closeModal;
 
-        function logout() {
-            Object.keys(localStorage).forEach(k => {
-                if (k.startsWith('sb-') && k.endsWith('-auth-token')) localStorage.removeItem(k);
-            });
-            window.location.href = 'login.html';
-        }
+        function logout() { window.logoutClean('login.html'); }
         window.logout = logout;
 
         // 修改密码
@@ -491,7 +451,7 @@
         }
 
         // 初始化：先校验角色（防止 localStorage 残留 admin/译员 token）
-        verifyClientRole().then(ok => { if (ok) loadData(); });
+        window.verifyRole('client', 'login.html').then(ok => { if (ok) loadData(); });
     })();
     </script>
 </body>

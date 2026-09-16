@@ -14,7 +14,7 @@
         .nav-menu { display: flex; gap: 30px; }
         .nav-menu a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 14px; transition: color 0.3s; }
         .nav-menu a:hover, .nav-menu a.active { color: white; }
-        .logout-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .logout-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: background 0.3s; }
         .logout-btn:hover { background: rgba(255,255,255,0.3); }
         .user-info { display: flex; align-items: center; gap: 15px; }
         .user-name { font-size: 14px; }
@@ -99,7 +99,6 @@
             </div>
         </div>
     </header>
-    </div>
 
     <div class="container">
         <div class="section-header">
@@ -248,7 +247,7 @@
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-            return data.data !== undefined ? data.data : data;
+            return data;  // 不解包，统一前端按后端结构访问 result.data
         }
 
         // 检查登录
@@ -260,7 +259,8 @@
         let clientsCache = [];
 
         async function loadClients() {
-            clientsCache = await apiCall('get-clients') || [];
+            const result = await apiCall('get-clients');
+            clientsCache = result?.data || [];
             return clientsCache;
         }
 

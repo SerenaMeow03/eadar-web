@@ -59,10 +59,12 @@ exports.handler = async (event) => {
     }
 
     return corsResponse(200, {
-      logs: data || [],
-      total: count || 0,
-      page,
-      pageSize,
+      data: {
+        logs: data || [],
+        total: count || 0,
+        page,
+        pageSize,
+      },
     });
   } catch (e) {
     console.error('get-audit-logs unhandled:', e);

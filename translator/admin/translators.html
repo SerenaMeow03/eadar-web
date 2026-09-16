@@ -535,7 +535,7 @@
             }
             const json = await res.json();
             if (!res.ok) throw new Error(json.error || '请求失败');
-            return json.data;
+            return json;  // 不解包
         }
 
         // 检查登录状态
@@ -548,7 +548,8 @@
         let cachedTranslators = null;
         async function loadTranslators(forceRefresh = false) {
             if (cachedTranslators && !forceRefresh) return cachedTranslators;
-            cachedTranslators = await apiCall('get-translators') || [];
+            const result = await apiCall('get-translators');
+            cachedTranslators = result?.data || [];
             return cachedTranslators;
         }
 
@@ -718,7 +719,8 @@
             modal.classList.add('active');
 
             try {
-                const translators = await apiCall('get-translators') || [];
+                const result = await apiCall('get-translators');
+                const translators = result?.data || [];
                 const t = translators.find(x => x.id === id);
                 if (!t) {
                     body.innerHTML = '<div class="bank-info empty">未找到该译员</div>';
@@ -766,7 +768,8 @@
         // 删除译员（软删：status → terminated，历史订单保留）
         async function deleteTranslator(id) {
             // 先查译员姓名用于确认提示
-            const translators = await apiCall('get-translators') || [];
+            const tRes = await apiCall('get-translators');
+            const translators = tRes?.data || [];
             const t = translators.find(x => x.id === id);
             if (!t) {
                 showToast('译员不存在', 'error');

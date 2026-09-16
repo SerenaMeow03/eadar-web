@@ -58,8 +58,10 @@ exports.handler = async (event) => {
     }));
 
     return corsResponse(200, {
-      email: userEmail,
-      preferences,
+      data: {
+        email: userEmail,
+        preferences,
+      },
     });
   } catch (e) {
     console.error('get-notification-preferences unhandled:', e);

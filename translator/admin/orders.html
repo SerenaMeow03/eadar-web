@@ -671,7 +671,7 @@
             }
             const json = await res.json();
             if (!res.ok) throw new Error(json.error || '请求失败');
-            return json.data;
+            return json;  // 不解包，统一前端按后端结构访问 result.data
         }
 
         // 检查登录状态
@@ -685,13 +685,15 @@
 
         async function loadTranslators() {
             if (translatorsCache) return translatorsCache;
-            translatorsCache = await apiCall('get-translators');
-            return translatorsCache || [];
+            const result = await apiCall('get-translators');
+            translatorsCache = result?.data || [];
+            return translatorsCache;
         }
 
         // 加载订单列表
         async function loadOrders() {
-            return await apiCall('get-orders') || [];
+            const result = await apiCall('get-orders');
+            return result?.data || [];
         }
 
         // 加载译员选项
@@ -708,7 +710,8 @@
         async function loadClients() {
             if (clientsCache) return clientsCache;
             try {
-                clientsCache = await apiCall('get-clients') || [];
+                const result = await apiCall('get-clients');
+                clientsCache = result?.data || [];
             } catch (e) {
                 console.warn('加载客户失败:', e);
                 clientsCache = [];
@@ -830,6 +833,7 @@
                         <td>
                             <div class="action-btns">
                                 <button class="btn btn-primary" onclick="editOrder('${order.id}')">编辑</button>
+                                <button class="btn btn-secondary" onclick="openPaymentModal('${order.id}')">付款/发票</button>
                                 <button class="btn btn-danger" onclick="deleteOrder('${order.id}')">删除</button>
                             </div>
                         </td>
@@ -1051,9 +1055,10 @@
                     method: 'POST',
                     body: JSON.stringify({ ids })
                 });
-
-                const deletedCount = result.deleted ? result.deleted.length : 0;
-                const failedCount = result.failed ? result.failed.length : 0;
+                // 后端返回 {data: {deleted, failed, summary}} 或直接 {deleted, failed, summary}
+                const data = result?.data || result || {};
+                const deletedCount = data.deleted ? data.deleted.length : 0;
+                const failedCount = data.failed ? data.failed.length : 0;
 
                 if (deletedCount > 0 && failedCount === 0) {
                     showToast(`成功删除 ${deletedCount} 条订单`, 'success');
@@ -1084,7 +1089,8 @@
 
             if (orderId) {
                 try {
-                    const orders = await apiCall('get-orders');
+                    const result = await apiCall('get-orders');
+                    const orders = result?.data || [];
                     const order = orders.find(o => o.id === orderId);
                     if (!order) { showToast('订单不存在', 'error'); return; }
 
@@ -1299,7 +1305,8 @@
         // 付款/发票编辑弹窗
         async function openPaymentModal(orderId) {
             try {
-                const orders = await apiCall('get-orders');
+                const result = await apiCall('get-orders');
+                const orders = result?.data || [];
                 const order = orders.find(o => o.id === orderId);
                 if (!order) { showToast('订单不存在', 'error'); return; }
 
