@@ -438,11 +438,15 @@
                     body: JSON.stringify(payload),
                 });
 
-                // 显示新密码
+                // 显示新密码 + 复制按钮
                 document.getElementById('resetPwdResult').style.display = 'block';
                 document.getElementById('resetPwdValue').textContent = result.new_password;
                 document.getElementById('resetPwdInput').value = '';
                 showToast('密码已重置', 'success');
+                // 自动复制到剪贴板（方便 admin 直接发给客户）
+                try {
+                    await navigator.clipboard.writeText(result.new_password || '');
+                } catch (e) { /* 剪贴板权限失败不影响主流程 */ }
             } catch (err) {
                 showToast('重置失败: ' + err.message, 'error');
             }
