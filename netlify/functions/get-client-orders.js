@@ -21,12 +21,14 @@ exports.handler = async (event) => {
 
   try {
     // 1) 查客户自己的 client 行
+    console.log('[get-client-orders] auth.user.id:', clientAuthUserId);
     const { data: client, error: clientErr } = await service
       .from('clients')
       .select('id, contact_name, company_name')
       .eq('user_id', clientAuthUserId)
       .single();
 
+    console.log('[get-client-orders] client result:', { client, clientErr });
     if (clientErr || !client) {
       return corsResponse(404, { error: '客户档案不存在' });
     }
@@ -43,6 +45,8 @@ exports.handler = async (event) => {
       `)
       .eq('client_id', client.id)
       .order('created_at', { ascending: false });
+
+    console.log('[get-client-orders] orders result: count=', orders?.length, 'err=', ordersErr?.message);
 
     if (ordersErr) {
       console.error('get-client-orders error:', ordersErr);
