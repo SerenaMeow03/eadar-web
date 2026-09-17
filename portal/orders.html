@@ -376,7 +376,7 @@
             <nav class="nav-menu">
                 <a href="orders.html" class="active">我的订单</a>
                 <a href="profile.html">个人信息</a>
-                <a href="notifications.html">通知偏好</a>
+                <a href="translator/notifications.html">通知偏好</a>
             </nav>
             <div class="user-info">
                 <span class="user-name" id="userName">译员姓名</span>
@@ -563,21 +563,22 @@
 
         // ============= 渲染列表 =============
         function renderOrders(filter = 'all') {
-            const tbody = document.getElementById('ordersTableBody');
-            const filtered = filter === 'all'
-                ? myOrders
-                : myOrders.filter(o => o.status === filter);
+            try {
+                const tbody = document.getElementById('ordersTableBody');
+                const filtered = filter === 'all'
+                    ? myOrders
+                    : myOrders.filter(o => o.status === filter);
 
-            if (filtered.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="9" class="empty-state">
-                            <div class="empty-state-icon">📋</div>
-                            <p>${myOrders.length === 0 ? '您还没有被指派订单' : '该状态下没有订单'}</p>
-                        </td>
-                    </tr>`;
-                return;
-            }
+                if (filtered.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="9" class="empty-state">
+                                <div class="empty-state-icon">📋</div>
+                                <p>${myOrders.length === 0 ? '您还没有被指派订单' : '该状态下没有订单'}</p>
+                            </td>
+                        </tr>`;
+                    return;
+                }
 
             tbody.innerHTML = filtered.map(order => {
                 const ps = order.paymentStatus || 'unpaid';
@@ -596,6 +597,11 @@
                         <td>${renderActionButtons(order)}</td>
                     </tr>`;
             }).join('');
+            } catch (e) {
+                console.error('renderOrders 异常:', e);
+                const tbody = document.getElementById('ordersTableBody');
+                if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="empty-state" style="color:#ff4d4f;">渲染异常: ${e.message}</td></tr>`;
+            }
         }
 
         // 操作按钮：按状态显示

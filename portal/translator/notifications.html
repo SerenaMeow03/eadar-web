@@ -73,8 +73,8 @@
                 <h1>译员工作台</h1>
             </div>
             <nav class="nav-menu">
-                <a href="orders.html">我的订单</a>
-                <a href="profile.html">个人信息</a>
+                <a href="../orders.html">我的订单</a>
+                <a href="../profile.html">个人信息</a>
                 <a href="notifications.html" class="active">通知偏好</a>
             </nav>
             <div class="user-info">
@@ -97,6 +97,7 @@
         </div>
     </div>
 
+    <script src="../verify-role.js"></script>
     <script>
         const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
@@ -116,7 +117,7 @@
 
         async function apiCall(path, options = {}) {
             const token = getAccessToken();
-            if (!token) { window.location.href = 'login.html'; throw new Error('No session'); }
+            if (!token) { window.location.href = '../login.html'; throw new Error('No session'); }
             const res = await fetch('/.netlify/functions/' + path, {
                 ...options,
                 headers: {
@@ -126,7 +127,7 @@
                 }
             });
             if (res.status === 401 || res.status === 403) {
-                window.location.href = 'login.html';
+                window.location.href = '../login.html';
                 throw new Error('Unauthorized');
             }
             const json = await res.json();
@@ -134,21 +135,22 @@
             return json;
         }
 
-        // 检查登录状态（译员角色）
-        const currentTranslator = JSON.parse(localStorage.getItem('currentTranslator') || localStorage.getItem('currentAdmin'));
-        if (!currentTranslator || currentTranslator.role !== 'translator') {
-            window.location.href = 'login.html';
-        } else if (currentTranslator.name) {
+        // 校验角色：通过 Supabase auth.getUser 校验 token，且 role=translator
+        // 与 orders.html/profile.html 共用 verifyRole() 模式
+        window.verifyRole('translator', '../login.html', 'currentTranslator');
+
+        // 显示译员姓名（仅当 currentTranslator 存在时）
+        const currentTranslator = JSON.parse(localStorage.getItem('currentTranslator') || '{}');
+        if (currentTranslator.name) {
             document.getElementById('userName').textContent = currentTranslator.name;
         }
 
         function logout() {
             localStorage.removeItem('currentTranslator');
-            localStorage.removeItem('currentAdmin');
             Object.keys(localStorage).forEach(k => {
                 if (k.startsWith('sb-') && k.endsWith('-auth-token')) localStorage.removeItem(k);
             });
-            window.location.href = 'login.html';
+            window.location.href = '../login.html';
         }
 
         function showToast(msg, type = 'success') {
