@@ -69,8 +69,8 @@ exports.handler = async (event) => {
       return corsResponse(400, { error: '该订单指派的译员没有邮箱' });
     }
 
-    // A9: 检查译员是否启用了该类通知
-    const enabled = await checkPreference(service, tpl.to, 'order_assigned');
+    // A9: 检查译员是否启用了该类通知（role=translator 是收件人固定角色）
+    const enabled = await checkPreference(service, tpl.to, 'translator', 'order_assigned');
     if (!enabled) {
       console.log('send-order-email skipped: translator disabled order_assigned notification:', tpl.to);
       return corsResponse(200, {

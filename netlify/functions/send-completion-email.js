@@ -72,8 +72,8 @@ exports.handler = async (event) => {
       smtpUser,
     });
 
-    // A9: 检查管理员是否启用了该类通知
-    const enabled = await checkPreference(service, tpl.to, 'order_completed');
+    // A9: 检查管理员是否启用了该类通知（role=admin 是 tpl.to 固定角色）
+    const enabled = await checkPreference(service, tpl.to, 'admin', 'order_completed');
     if (!enabled) {
       console.log('send-completion-email skipped: admin disabled order_completed notification:', tpl.to);
       return corsResponse(200, {

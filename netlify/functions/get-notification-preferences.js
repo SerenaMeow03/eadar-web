@@ -1,21 +1,14 @@
 // netlify/functions/get-notification-preferences.js
 // 当前用户查询自己的通知偏好（A9）
-// 返回 4 项默认偏好 + 用户实际设置
+// 2026-09-17 升级：按 role 过滤，仅返回该角色适用的项
 //
-// 入参：无（从 token 推导 email）
+// 入参：无（从 token 推导 email + role）
 // 返回：
-//   { email, preferences: [{ key, label, enabled }] }
+//   { data: { email, role, preferences: [{ key, label, desc, enabled }] } }
 
 const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate } = require('./_shared/auth');
-
-// 4 类通知及其展示标签
-const ALL_PREFERENCES = [
-  { key: 'order_assigned', label: '订单分配通知', desc: '当有订单指派给您时发送邮件' },
-  { key: 'order_completed', label: '订单完成通知', desc: '当您完成的订单被标记完成时发送邮件' },
-  { key: 'payment_received', label: '付款到账通知', desc: '当您收到译费付款时发送邮件' },
-  { key: 'invoice_issued', label: '发票开具通知', desc: '当您相关的订单开具发票时发送邮件' },
-];
+const { ROLE_PREFERENCES, getUserRole } = require('./_shared/notifications');
 
 exports.handler = async (event) => {
   const pre = preflight(event);
@@ -32,6 +25,9 @@ exports.handler = async (event) => {
   if (!userEmail) {
     return corsResponse(400, { error: '无法获取用户邮箱' });
   }
+
+  const userRole = getUserRole(auth.user);
+  const rolePrefs = ROLE_PREFERENCES[userRole] || [];
 
   const service = getServiceClient();
 
@@ -50,7 +46,7 @@ exports.handler = async (event) => {
     const setMap = {};
     (data || []).forEach(r => { setMap[r.preference_key] = r.enabled; });
 
-    const preferences = ALL_PREFERENCES.map(p => ({
+    const preferences = rolePrefs.map(p => ({
       key: p.key,
       label: p.label,
       desc: p.desc,
@@ -60,6 +56,7 @@ exports.handler = async (event) => {
     return corsResponse(200, {
       data: {
         email: userEmail,
+        role: userRole,
         preferences,
       },
     });
