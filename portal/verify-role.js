@@ -1,4 +1,3 @@
-<script>
 // 共享角色校验工具（admin/translator/client 页面通用）
 // 用法：<script src="../verify-role.js"></script><script>verifyRole('client', 'login.html')</script>
 // 注意：每个页面要在 <script> 中立即调用 verifyRole()，避免被 bypass
@@ -75,4 +74,3 @@
     window.verifyRole = verifyRole;
     window.logoutClean = logout;
 })();
-</script>
