@@ -34,6 +34,18 @@
   status = 200
   force = true
 
+# ===== 调试规则：测试 Netlify 是否识别具体 200 rewrite =====
+[[redirects]]
+  from = "/portal/test-debug"
+  to = "/portal/translator/login.html"
+  status = 302
+
+[[redirects]]
+  from = "/portal/test-debug.html"
+  to = "/portal/translator/login.html"
+  status = 200
+  force = true
+
 # SPA 路由支持 - 三个子目录各自通配（不再用 /portal/* 兜底）
 # 访问 /portal/admin/* /portal/translator/* /portal/client/* 时走 identity rewrite（splat 直接传）
 [[redirects]]
