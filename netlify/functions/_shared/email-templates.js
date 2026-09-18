@@ -144,15 +144,88 @@ ${order.remark ? '\n译员备注：' + order.remark : ''}
 }
 
 // ============================================================
+// 模板 3：订单响应通知（译员接单 → 通知管理员，C4）
+// ============================================================
+// action: 'accepted'（接单）/ 'rejected'（拒单）
+function buildOrderResponseEmail({ order, translator, client, smtpUser, action }) {
+  const translatorName = translator?.name || '未指派';
+  const clientLabel = client
+    ? (client.company_name || client.contact_name)
+    : '未关联客户';
+  const deadlineStr = fmtDate(order.deadline);
+  const respondedAt = fmtDateTime(order.updated_at);
+
+  const isAccepted = action === 'accepted';
+  const actionLabel = isAccepted ? '接单' : '拒单';
+  const actionColor = isAccepted ? '#52c41a' : '#cf1322';
+  const actionVerb = isAccepted ? '接受了' : '拒绝了';
+
+  const subject = `【订单已被${actionLabel}】${order.project_name}（订单号 ${order.id}）—— ${translatorName}`;
+
+  const html = `
+    ${WRAPPER_OPEN}
+    <h2 style="color: #1a1a2e;">订单响应通知</h2>
+    <p>译员 <strong>${escapeHtml(translatorName)}</strong> ${actionVerb}您刚指派的翻译订单：</p>
+    <table ${TABLE_STYLE}>
+      <tr><td ${TD_LABEL}>订单号</td><td ${TD_VALUE_BOLD}>${escapeHtml(order.id)}</td></tr>
+      <tr><td ${TD_LABEL}>项目名称</td><td ${TD_VALUE_BOLD}>${escapeHtml(order.project_name)}</td></tr>
+      <tr><td ${TD_LABEL}>客户</td><td ${TD_VALUE}>${escapeHtml(clientLabel)}</td></tr>
+      <tr><td ${TD_LABEL}>译员</td><td ${TD_VALUE}>${escapeHtml(translatorName)}</td></tr>
+      <tr><td ${TD_LABEL}>响应动作</td><td style="padding: 10px; font-weight: 600; color: ${actionColor};">${actionLabel}</td></tr>
+      <tr><td ${TD_LABEL}>字数</td><td ${TD_VALUE}>${(order.word_count || 0).toLocaleString()} 字</td></tr>
+      <tr><td ${TD_LABEL}>单价</td><td ${TD_VALUE}>¥${escapeHtml(order.rate)} / 千字</td></tr>
+      <tr><td ${TD_LABEL}>订单总金额</td><td style="padding: 10px; font-weight: 600; color: #cf1322;">¥${escapeHtml(order.amount)}</td></tr>
+      <tr><td ${TD_LABEL}>截止日期</td><td ${TD_VALUE}>${deadlineStr}</td></tr>
+      <tr><td ${TD_LABEL}>响应时间</td><td style="padding: 10px; font-weight: 600;">${respondedAt}</td></tr>
+      ${order.remark && !isAccepted ? `<tr><td ${TD_LABEL}>拒单理由</td><td ${TD_VALUE}>${escapeHtml(order.remark)}</td></tr>` : ''}
+    </table>
+    ${isAccepted
+      ? FOOTER('译员已开始翻译，请关注交付进度。')
+      : FOOTER('该订单被拒，请考虑指派其他译员或跟进客户。')}
+    ${WRAPPER_CLOSE}
+  `;
+
+  const text = `订单响应通知
+
+译员 ${translatorName} ${actionVerb}您刚指派的翻译订单：
+
+订单号：${order.id}
+项目名称：${order.project_name}
+客户：${clientLabel}
+译员：${translatorName}
+响应动作：${actionLabel}
+字数：${order.word_count}
+单价：¥${order.rate}/千字
+订单金额：¥${order.amount}
+截止日期：${deadlineStr}
+响应时间：${respondedAt}
+${(order.remark && !isAccepted) ? '\n拒单理由：' + order.remark : ''}
+
+${isAccepted ? '译员已开始翻译，请关注交付进度。' : '该订单被拒，请考虑指派其他译员或跟进客户。'}
+
+谊达翻译系统`;
+
+  return {
+    subject,
+    html,
+    text,
+    to: smtpUser, // 发给管理员本人
+    fromName: '谊达翻译系统',
+  };
+}
+
+// ============================================================
 // 模板列表（便于未来扩展）
 // ============================================================
 const TEMPLATES = {
   ORDER_ASSIGNED: buildOrderAssignedEmail,
   ORDER_COMPLETED: buildOrderCompletedEmail,
+  ORDER_RESPONSE: buildOrderResponseEmail,
 };
 
 module.exports = {
   TEMPLATES,
   buildOrderAssignedEmail,
   buildOrderCompletedEmail,
+  buildOrderResponseEmail,
 };

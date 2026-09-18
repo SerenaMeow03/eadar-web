@@ -122,6 +122,22 @@ exports.handler = async (event) => {
       },
     });
 
+    // C4: 接单通知 admin（pending → progress）
+    // 后端 fire-and-forget：失败不阻塞主流程
+    if (order.status === 'pending' && body.status === 'progress') {
+      const protocol = event.headers['x-forwarded-proto'] || 'https';
+      const host = event.headers.host;
+      const authHeader = event.headers.authorization || event.headers.Authorization || '';
+      fetch(`${protocol}://${host}/.netlify/functions/send-order-response-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader,
+        },
+        body: JSON.stringify({ orderId: body.id, action: 'accepted' }),
+      }).catch(err => console.warn('send-order-response-email trigger failed (non-blocking):', err.message));
+    }
+
     return corsResponse(200, { data: updated });
   } catch (e) {
     console.error('update-order-status unhandled:', e);
