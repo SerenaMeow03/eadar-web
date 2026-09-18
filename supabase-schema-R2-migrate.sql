@@ -1,8 +1,8 @@
 -- ============================================================
--- 谊达翻译 一键迁移脚本（R2 客户系统 + 审计/通知）
--- 2026-09-15
+-- 谊达翻译 一键迁移脚本（R2 客户系统 + 审计/通知 + 业务表 DISABLE RLS）
+-- 2026-09-15（v7 块 2026-09-18 补加）
 -- ============================================================
--- 合并 v3 (clients) + v4 (payments) + v5 (audit) + v6 (notifications)
+-- 合并 v3 (clients) + v4 (payments) + v5 (audit) + v6 (notifications) + v7 (DISABLE RLS + auth GRANT)
 -- 全部 DDL 都是 idempotent（IF NOT EXISTS / drop if exists），可重复执行
 --
 -- 用法：
@@ -15,6 +15,12 @@
 --    WHERE table_schema='public'
 --      AND table_name IN ('clients','audit_logs','notification_preferences');
 --   应返回 3 行
+--
+-- v7 块另需单独验证 RLS 状态：
+--   SELECT relname, relrowsecurity FROM pg_class
+--    WHERE relname IN ('clients','translators')
+--      AND relnamespace = 'public'::regnamespace;
+--   应返回 2 行 rls_enabled 都是 false
 -- ============================================================
 
 
@@ -189,6 +195,32 @@ CROSS JOIN (
 ) AS pref(preference_key)
 WHERE u.email IS NOT NULL
 ON CONFLICT (user_email, preference_key) DO NOTHING;
+
+
+-- ============================================================
+-- v7: 业务表 DISABLE RLS + auth schema GRANT（2026-09-18 补加）
+-- ============================================================
+-- 背景：
+--   客户登录 / 译员登录报 "permission denied for table users"，根因是
+--   clients/translators 表 RLS ENABLE 时，策略里 EXISTS (SELECT 1 FROM auth.users ...)
+--   子查询在 service_role 上下文下触发 auth.users 的 SELECT 权限不足。
+-- 修法（两步必须都做）：
+--   (1) 业务表 DISABLE RLS —— service_role 直接查全部行，策略不触发
+--   (2) GRANT auth schema 给 service_role —— 防御性，未来 RLS 策略再引用 auth.users 也不会爆
+--
+-- 注：策略保留在表上（v3 块）作为文档，DISABLE 后策略不生效但定义可见，
+--     方便日后需要时改策略 + ENABLE RLS。
+
+-- (1) DISABLE 业务表 RLS
+ALTER TABLE clients DISABLE ROW LEVEL SECURITY;
+ALTER TABLE translators DISABLE ROW LEVEL SECURITY;
+
+-- (2) GRANT auth schema 给 service_role
+GRANT USAGE ON SCHEMA auth TO service_role;
+GRANT SELECT ON ALL TABLES IN SCHEMA auth TO service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA auth TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA auth GRANT SELECT ON TABLES TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA auth GRANT SELECT ON SEQUENCES TO service_role;
 
 
 -- ============================================================
