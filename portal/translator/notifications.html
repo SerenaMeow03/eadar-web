@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="/portal/translator/">
     <title>通知偏好 - 谊达翻译</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -118,7 +119,7 @@
 
         async function apiCall(path, options = {}) {
             const token = getAccessToken();
-            if (!token) { window.location.href = '../login.html'; throw new Error('No session'); }
+            if (!token) { window.location.href = 'login.html'; throw new Error('No session'); }
             const res = await fetch('/.netlify/functions/' + path, {
                 ...options,
                 headers: {
@@ -128,7 +129,7 @@
                 }
             });
             if (res.status === 401 || res.status === 403) {
-                window.location.href = '../login.html';
+                window.location.href = 'login.html';
                 throw new Error('Unauthorized');
             }
             const json = await res.json();
@@ -138,7 +139,7 @@
 
         // 校验角色：通过 Supabase auth.getUser 校验 token，且 role=translator
         // 与 orders.html/profile.html 共用 verifyRole() 模式
-        window.verifyRole('translator', '../login.html', 'currentTranslator');
+        window.verifyRole('translator', 'login.html', 'currentTranslator');
 
         // 显示译员姓名（仅当 currentTranslator 存在时）
         const currentTranslator = JSON.parse(localStorage.getItem('currentTranslator') || '{}');
@@ -151,7 +152,7 @@
             Object.keys(localStorage).forEach(k => {
                 if (k.startsWith('sb-') && k.endsWith('-auth-token')) localStorage.removeItem(k);
             });
-            window.location.href = '../login.html';
+            window.location.href = 'login.html';
         }
 
         function showToast(msg, type = 'success') {
