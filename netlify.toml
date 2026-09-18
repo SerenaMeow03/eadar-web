@@ -20,16 +20,19 @@
   from = "/portal/orders.html"
   to = "/portal/translator/orders.html"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/portal/profile.html"
   to = "/portal/translator/profile.html"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/portal/login.html"
   to = "/portal/translator/login.html"
   status = 200
+  force = true
 
 # SPA 路由支持 - 三个子目录各自通配（不再用 /portal/* 兜底）
 # 访问 /portal/admin/* /portal/translator/* /portal/client/* 时走 identity rewrite（splat 直接传）
