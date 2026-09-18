@@ -12,10 +12,8 @@
 # 原因：commit 3ecc8bf0 把 portal/{login,orders,profile}.html git mv 到 portal/translator/
 # 但浏览器历史/书签/旧邮件链接可能引用旧短路径
 # 用 200 rewrite 保留短 URL 风格（地址栏不变），服务端实际返回新位置
-# 注意：这 3 条必须放在任何 /portal/* 通配规则前面（Netlify 先匹配先赢）
-# 坑：Netlify 不会用 splat 通配优先级最高的规则覆盖具体规则 ——
-#     当 /portal/* 通配规则放在具体规则后时，它仍会胜出（Netlify 实际按 specificity 而非声明顺序）
-#     所以 /portal/* 必须删掉，改成只匹配三个子目录的通配
+# 关键：必须 force=true，否则 Netlify Edge 会因 from 路径"理论上有文件"而直接 404
+# 关键：_redirects 文件不能存在（即使内容空），否则其规则会 shadow toml 的具体规则
 [[redirects]]
   from = "/portal/orders.html"
   to = "/portal/translator/orders.html"
@@ -30,18 +28,6 @@
 
 [[redirects]]
   from = "/portal/login.html"
-  to = "/portal/translator/login.html"
-  status = 200
-  force = true
-
-# ===== 调试规则：测试 Netlify 是否识别具体 200 rewrite =====
-[[redirects]]
-  from = "/portal/test-debug"
-  to = "/portal/translator/login.html"
-  status = 302
-
-[[redirects]]
-  from = "/portal/test-debug.html"
   to = "/portal/translator/login.html"
   status = 200
   force = true
