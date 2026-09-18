@@ -8,6 +8,26 @@
   # 真正的密钥 (SUPABASE_SERVICE_ROLE_KEY) 只在 Netlify Functions 后端通过环境变量读取，永远不会出现在前端代码里。
   SECRETS_SCAN_ENABLED = "false"
 
+# ===== 译员短路径兼容层（2026-09-18 整理结构后保留）=====
+# 原因：commit 3ecc8bf0 把 portal/{login,orders,profile}.html git mv 到 portal/translator/
+# 但浏览器历史/书签/旧邮件链接可能引用旧短路径
+# 用 200 rewrite 保留短 URL 风格（地址栏不变），服务端实际返回新位置
+# 注意：这 3 条必须放在 /portal/* 通配规则前面（Netlify 先匹配先赢）
+[[redirects]]
+  from = "/portal/orders.html"
+  to = "/portal/translator/orders.html"
+  status = 200
+
+[[redirects]]
+  from = "/portal/profile.html"
+  to = "/portal/translator/profile.html"
+  status = 200
+
+[[redirects]]
+  from = "/portal/login.html"
+  to = "/portal/translator/login.html"
+  status = 200
+
 # SPA 路由支持 - 确保刷新页面正常工作
 [[redirects]]
   from = "/portal/*"
