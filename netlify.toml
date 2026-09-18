@@ -12,7 +12,10 @@
 # 原因：commit 3ecc8bf0 把 portal/{login,orders,profile}.html git mv 到 portal/translator/
 # 但浏览器历史/书签/旧邮件链接可能引用旧短路径
 # 用 200 rewrite 保留短 URL 风格（地址栏不变），服务端实际返回新位置
-# 注意：这 3 条必须放在 /portal/* 通配规则前面（Netlify 先匹配先赢）
+# 注意：这 3 条必须放在任何 /portal/* 通配规则前面（Netlify 先匹配先赢）
+# 坑：Netlify 不会用 splat 通配优先级最高的规则覆盖具体规则 ——
+#     当 /portal/* 通配规则放在具体规则后时，它仍会胜出（Netlify 实际按 specificity 而非声明顺序）
+#     所以 /portal/* 必须删掉，改成只匹配三个子目录的通配
 [[redirects]]
   from = "/portal/orders.html"
   to = "/portal/translator/orders.html"
@@ -28,10 +31,21 @@
   to = "/portal/translator/login.html"
   status = 200
 
-# SPA 路由支持 - 确保刷新页面正常工作
+# SPA 路由支持 - 三个子目录各自通配（不再用 /portal/* 兜底）
+# 访问 /portal/admin/* /portal/translator/* /portal/client/* 时走 identity rewrite（splat 直接传）
 [[redirects]]
-  from = "/portal/*"
-  to = "/portal/:splat"
+  from = "/portal/admin/*"
+  to = "/portal/admin/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/portal/translator/*"
+  to = "/portal/translator/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/portal/client/*"
+  to = "/portal/client/:splat"
   status = 200
 
 [[redirects]]
