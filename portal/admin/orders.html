@@ -1247,30 +1247,6 @@
                         body: JSON.stringify(orderData)
                     });
                     showToast('订单登记成功', 'success');
-
-                    // 异步触发邮件通知（不阻塞 UI）
-                    if (result?.data?.id) {
-                        fetch('/.netlify/functions/send-order-email', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': 'Bearer ' + getAccessToken()
-                            },
-                            body: JSON.stringify({ orderId: result.data.id })
-                        })
-                            .then(r => r.json().then(j => ({ status: r.status, body: j })))
-                            .then(({ status, body }) => {
-                                if (status === 200 && body.success) {
-                                    showToast(`📧 已发送邮件提醒译员（${body.to}）`, 'success');
-                                } else {
-                                    showToast('⚠️ 邮件提醒发送失败：' + (body.error || '未知错误'), 'error');
-                                }
-                            })
-                            .catch(e => {
-                                console.error('email fetch error:', e);
-                                showToast('⚠️ 邮件提醒发送失败：' + e.message, 'error');
-                            });
-                    }
                 } catch (err) {
                     showToast('登记失败: ' + err.message, 'error');
                     return;
