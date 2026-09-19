@@ -30,6 +30,7 @@ exports.handler = async (event) => {
     translator_id,
     status = 'pending',
     payment_status = 'unpaid',
+    client_payment_status = 'unpaid',
     description,
     remark,
     client_id,           // 客户（可选）
@@ -49,6 +50,9 @@ exports.handler = async (event) => {
   }
   if (!['unpaid', 'paid'].includes(payment_status)) {
     return corsResponse(400, { error: '非法结算状态' });
+  }
+  if (!['unpaid', 'paid'].includes(client_payment_status)) {
+    return corsResponse(400, { error: '非法客户付款状态' });
   }
   // 客户字段校验
   if (client_rate !== undefined && client_rate !== null && Number(client_rate) < 0) {
@@ -85,6 +89,7 @@ exports.handler = async (event) => {
       translator_id: translator_id,
       status: status,
       payment_status: payment_status,
+      client_payment_status: client_payment_status,
       description: description || null,
       remark: remark || null,
       client_id: client_id || null,

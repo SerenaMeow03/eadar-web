@@ -560,6 +560,15 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
+                        <label>客户付款状态</label>
+                        <select id="clientPaymentStatus">
+                            <option value="unpaid">待付款</option>
+                            <option value="paid">已付款</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
                         <label>订单状态</label>
                         <select id="status">
                             <option value="pending">待处理</option>
@@ -1107,6 +1116,7 @@
                     document.getElementById('clientAmount').value = order.client_amount || '';
                     document.getElementById('status').value = order.status || 'pending';
                     document.getElementById('paymentStatus').value = order.payment_status || 'unpaid';
+                    document.getElementById('clientPaymentStatus').value = order.client_payment_status || 'unpaid';
                     document.getElementById('remark').value = order.remark || '';
                 } catch (err) {
                     showToast('获取订单信息失败: ' + err.message, 'error');
@@ -1195,6 +1205,7 @@
             const clientAmount = clientAmountRaw === '' ? null : parseFloat(clientAmountRaw);
             const status = document.getElementById('status').value;
             const paymentStatus = document.getElementById('paymentStatus').value;
+            const clientPaymentStatus = document.getElementById('clientPaymentStatus').value;
             const remark = document.getElementById('remark').value;
 
             const amount = (wordCount * rate).toFixed(2);
@@ -1208,6 +1219,7 @@
                 translator_id: translatorId,
                 status: status,
                 payment_status: paymentStatus,
+                client_payment_status: clientPaymentStatus,
                 remark: remark,
                 client_id: clientId,
                 client_rate: clientRate,
