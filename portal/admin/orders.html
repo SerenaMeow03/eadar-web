@@ -1237,14 +1237,14 @@
                     showToast('订单登记成功', 'success');
 
                     // 异步触发邮件通知（不阻塞 UI）
-                    if (result?.id) {
+                    if (result?.data?.id) {
                         fetch('/.netlify/functions/send-order-email', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'Authorization': 'Bearer ' + getAccessToken()
                             },
-                            body: JSON.stringify({ orderId: result.id })
+                            body: JSON.stringify({ orderId: result.data.id })
                         })
                             .then(r => r.json().then(j => ({ status: r.status, body: j })))
                             .then(({ status, body }) => {
