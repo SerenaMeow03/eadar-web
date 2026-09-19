@@ -27,7 +27,7 @@ const TRANSLATOR_TRANSITIONS = {
   // completed / cancelled → 终态，译员不能再动
 };
 
-exports.handler = async (event, context) => {
+exports.handler = async (event) => {
   const pre = preflight(event);
   if (pre) return pre;
 
@@ -123,65 +123,35 @@ exports.handler = async (event, context) => {
     });
 
     // C4: 接单通知 admin（pending → progress）
-    // 后端 fire-and-forget：用 context.waitUntil() 保证 handler return 后继续执行
+    // 后端 fire-and-forget：失败不阻塞主流程
     if (order.status === 'pending' && body.status === 'progress') {
       const protocol = event.headers['x-forwarded-proto'] || 'https';
       const host = event.headers.host;
       const authHeader = event.headers.authorization || event.headers.Authorization || '';
-      const triggerUrl = `${protocol}://${host}/.netlify/functions/send-order-response-email`;
-      console.log('[update-order-status] C4 trigger firing, url:', triggerUrl);
-      if (context && typeof context.waitUntil === 'function') {
-        context.waitUntil(
-          fetch(triggerUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': authHeader,
-            },
-            body: JSON.stringify({ orderId: body.id, action: 'accepted' }),
-          })
-            .then(r => console.log('[update-order-status] C4 trigger response:', r.status))
-            .catch(err => console.warn('send-order-response-email trigger failed (non-blocking):', err.message))
-        );
-      } else {
-        // 兜底：不用 waitUntil（旧版 Netlify Functions）
-        fetch(triggerUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
-          body: JSON.stringify({ orderId: body.id, action: 'accepted' }),
-        }).catch(err => console.warn('send-order-response-email trigger failed (non-blocking):', err.message));
-      }
+      fetch(`${protocol}://${host}/.netlify/functions/send-order-response-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader,
+        },
+        body: JSON.stringify({ orderId: body.id, action: 'accepted' }),
+      }).catch(err => console.warn('send-order-response-email trigger failed (non-blocking):', err.message));
     }
 
     // C3: 完成通知 admin（progress → completed）
-    // 后端 fire-and-forget：用 context.waitUntil() 保证 handler return 后继续执行
+    // 后端 fire-and-forget：失败不阻塞主流程
     if (order.status === 'progress' && body.status === 'completed') {
       const protocol = event.headers['x-forwarded-proto'] || 'https';
       const host = event.headers.host;
       const authHeader = event.headers.authorization || event.headers.Authorization || '';
-      const triggerUrl = `${protocol}://${host}/.netlify/functions/send-completion-email`;
-      console.log('[update-order-status] C3 trigger firing, url:', triggerUrl);
-      if (context && typeof context.waitUntil === 'function') {
-        context.waitUntil(
-          fetch(triggerUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': authHeader,
-            },
-            body: JSON.stringify({ orderId: body.id }),
-          })
-            .then(r => console.log('[update-order-status] C3 trigger response:', r.status))
-            .catch(err => console.warn('send-completion-email trigger failed (non-blocking):', err.message))
-        );
-      } else {
-        // 兜底：不用 waitUntil（旧版 Netlify Functions）
-        fetch(triggerUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
-          body: JSON.stringify({ orderId: body.id }),
-        }).catch(err => console.warn('send-completion-email trigger failed (non-blocking):', err.message));
-      }
+      fetch(`${protocol}://${host}/.netlify/functions/send-completion-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader,
+        },
+        body: JSON.stringify({ orderId: body.id }),
+      }).catch(err => console.warn('send-completion-email trigger failed (non-blocking):', err.message));
     }
 
     return corsResponse(200, { data: updated });
