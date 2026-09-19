@@ -703,16 +703,8 @@
                     }),
                 });
 
-                // 异步触发邮件通知 admin（不阻塞 UI）
-                fetch('/.netlify/functions/send-completion-email', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + getAccessToken()
-                    },
-                    body: JSON.stringify({ orderId: id })
-                }).catch(err => console.warn('通知邮件失败（非阻塞）:', err));
-
+                // 通知 admin 由 update-order-status.js 后端 trigger 完成（commit 35a4df9a）
+                // 不再前端 fire-and-forget：避免双发 + 网络/CORS/401 等吞掉请求
                 closeCompleteModal();
                 await refreshOrders();
                 showToast('订单已完成', 'success');

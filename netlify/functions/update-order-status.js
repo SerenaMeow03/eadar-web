@@ -138,6 +138,22 @@ exports.handler = async (event) => {
       }).catch(err => console.warn('send-order-response-email trigger failed (non-blocking):', err.message));
     }
 
+    // C3: 完成通知 admin（progress → completed）
+    // 后端 fire-and-forget：失败不阻塞主流程
+    if (order.status === 'progress' && body.status === 'completed') {
+      const protocol = event.headers['x-forwarded-proto'] || 'https';
+      const host = event.headers.host;
+      const authHeader = event.headers.authorization || event.headers.Authorization || '';
+      fetch(`${protocol}://${host}/.netlify/functions/send-completion-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader,
+        },
+        body: JSON.stringify({ orderId: body.id }),
+      }).catch(err => console.warn('send-completion-email trigger failed (non-blocking):', err.message));
+    }
+
     return corsResponse(200, { data: updated });
   } catch (e) {
     console.error('update-order-status unhandled:', e);
