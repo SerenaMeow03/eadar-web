@@ -150,6 +150,7 @@ exports.handler = async (event) => {
     // C2: 派单通知译员（仅创建时触发，编辑不重发）
     // 后端 fire-and-forget：失败不阻塞主流程
     if (!id) {
+      console.log('[save-order] C2 trigger firing, orderId=' + result.id);
       const protocol = event.headers['x-forwarded-proto'] || 'https';
       const host = event.headers.host;
       const authHeader = event.headers.authorization || event.headers.Authorization || '';
@@ -160,7 +161,9 @@ exports.handler = async (event) => {
           'Authorization': authHeader,
         },
         body: JSON.stringify({ orderId: result.id }),
-      }).catch(err => console.warn('send-order-email trigger failed (non-blocking):', err.message));
+      })
+        .then(r => console.log('[save-order] C2 trigger response:', r.status))
+        .catch(err => console.warn('[save-order] C2 trigger failed:', err.message));
     }
 
     return corsResponse(200, { data: result, message: id ? '订单已更新' : '订单已创建' });
