@@ -13,6 +13,7 @@ const { checkPreference } = require('./_shared/notifications');
 const nodemailer = require('nodemailer');
 
 exports.handler = async (event) => {
+  console.log('[send-completion-email] handler called, body:', event.body, 'authHeader present:', !!event.headers.authorization);
   const pre = preflight(event);
   if (pre) return pre;
 
@@ -99,7 +100,7 @@ exports.handler = async (event) => {
       html: tpl.html,
     });
 
-    console.log('send-completion-email sent:', info.messageId);
+    console.log('[send-completion-email] sent:', info.messageId, 'to:', tpl.to);
 
     return corsResponse(200, {
       success: true,
