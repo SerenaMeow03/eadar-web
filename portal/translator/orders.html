@@ -560,6 +560,23 @@
         // 显示译员姓名
         document.getElementById('userName').textContent = currentTranslator.name;
 
+        // 主动刷新真实姓名（修复 localStorage 缓存显示邮箱的 bug）
+        (async () => {
+            try {
+                const r = await apiCall('get-translator-me');
+                const fresh = r?.data;
+                if (fresh?.name && fresh.name !== currentTranslator.name) {
+                    currentTranslator.name = fresh.name;
+                    currentTranslator.id = fresh.id;
+                    localStorage.setItem('currentTranslator', JSON.stringify(currentTranslator));
+                    document.getElementById('userName').textContent = fresh.name;
+                    console.log('[orders] refreshed name from API:', fresh.name);
+                }
+            } catch (e) {
+                console.warn('[orders] get-translator-me failed (non-blocking):', e.message);
+            }
+        })();
+
         // ============= 数据获取 =============
         async function getMyOrders() {
             try {

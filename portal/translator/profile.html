@@ -437,10 +437,25 @@
         }
         window.verifyRole('translator', 'login.html', 'currentTranslator');
 
-        // 显示用户信息
-        document.getElementById('userName').textContent = currentTranslator.name;
-        document.getElementById('profileName').textContent = currentTranslator.name;
-        document.getElementById('profileId').textContent = currentTranslator.id;
+        // 主动刷新真实姓名（修复 localStorage 缓存显示邮箱的 bug）
+        (async () => {
+            try {
+                const r = await apiCall('get-translator-me');
+                const fresh = r?.data;
+                if (fresh?.name && fresh.name !== currentTranslator.name) {
+                    currentTranslator.name = fresh.name;
+                    currentTranslator.id = fresh.id;
+                    localStorage.setItem('currentTranslator', JSON.stringify(currentTranslator));
+                    console.log('[profile] refreshed name from API:', fresh.name);
+                }
+            } catch (e) {
+                console.warn('[profile] get-translator-me failed (non-blocking):', e.message);
+            }
+            // 显示用户信息
+            document.getElementById('userName').textContent = currentTranslator.name;
+            document.getElementById('profileName').textContent = currentTranslator.name;
+            document.getElementById('profileId').textContent = currentTranslator.id;
+        })();
 
         // 译员数据（默认从 localStorage + 后端补全）
         let translatorData = {
