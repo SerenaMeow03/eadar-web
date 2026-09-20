@@ -27,7 +27,7 @@ const TRANSLATOR_TRANSITIONS = {
   // completed / cancelled → 终态，译员不能再动
 };
 
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
   const pre = preflight(event);
   if (pre) return pre;
 
@@ -123,41 +123,43 @@ exports.handler = async (event) => {
     });
 
     // C4: 接单通知 admin（pending → progress）
-    // 后端 fire-and-forget：失败不阻塞主流程
+    // 后端 fire-and-forget（用 context.waitUntil 确保 background task 在 main 函数返回后继续执行）
     if (order.status === 'pending' && body.status === 'progress') {
-      console.log('[update-order-status] C4 trigger firing, orderId=' + body.id);
       const protocol = event.headers['x-forwarded-proto'] || 'https';
       const host = event.headers.host;
       const authHeader = event.headers.authorization || event.headers.Authorization || '';
-      fetch(`${protocol}://${host}/.netlify/functions/send-order-response-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': authHeader,
-        },
-        body: JSON.stringify({ orderId: body.id, action: 'accepted' }),
-      })
-        .then(r => console.log('[update-order-status] C4 trigger response:', r.status))
-        .catch(err => console.warn('[update-order-status] C4 trigger failed:', err.message));
+      context.waitUntil(
+        fetch(`${protocol}://${host}/.netlify/functions/send-order-response-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader,
+          },
+          body: JSON.stringify({ orderId: body.id, action: 'accepted' }),
+        })
+          .then(r => console.log('[update-order-status] C4 trigger response:', r.status))
+          .catch(err => console.warn('[update-order-status] C4 trigger failed:', err.message))
+      );
     }
 
     // C3: 完成通知 admin（progress → completed）
-    // 后端 fire-and-forget：失败不阻塞主流程
+    // 后端 fire-and-forget（用 context.waitUntil 确保 background task 在 main 函数返回后继续执行）
     if (order.status === 'progress' && body.status === 'completed') {
-      console.log('[update-order-status] C3 trigger firing, orderId=' + body.id);
       const protocol = event.headers['x-forwarded-proto'] || 'https';
       const host = event.headers.host;
       const authHeader = event.headers.authorization || event.headers.Authorization || '';
-      fetch(`${protocol}://${host}/.netlify/functions/send-completion-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': authHeader,
-        },
-        body: JSON.stringify({ orderId: body.id }),
-      })
-        .then(r => console.log('[update-order-status] C3 trigger response:', r.status))
-        .catch(err => console.warn('[update-order-status] C3 trigger failed:', err.message));
+      context.waitUntil(
+        fetch(`${protocol}://${host}/.netlify/functions/send-completion-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader,
+          },
+          body: JSON.stringify({ orderId: body.id }),
+        })
+          .then(r => console.log('[update-order-status] C3 trigger response:', r.status))
+          .catch(err => console.warn('[update-order-status] C3 trigger failed:', err.message))
+      );
     }
 
     return corsResponse(200, { data: updated });

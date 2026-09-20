@@ -5,7 +5,7 @@ const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate, requireMethod, parseBody } = require('./_shared/auth');
 const { writeAudit } = require('./_shared/audit');
 
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
   const pre = preflight(event);
   if (pre) return pre;
 
@@ -148,22 +148,23 @@ exports.handler = async (event) => {
     });
 
     // C2: 派单通知译员（仅创建时触发，编辑不重发）
-    // 后端 fire-and-forget：失败不阻塞主流程
+    // 后端 fire-and-forget（用 context.waitUntil 确保 background task 在 main 函数返回后继续执行）
     if (!id) {
-      console.log('[save-order] C2 trigger firing, orderId=' + result.id);
       const protocol = event.headers['x-forwarded-proto'] || 'https';
       const host = event.headers.host;
       const authHeader = event.headers.authorization || event.headers.Authorization || '';
-      fetch(`${protocol}://${host}/.netlify/functions/send-order-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': authHeader,
-        },
-        body: JSON.stringify({ orderId: result.id }),
-      })
-        .then(r => console.log('[save-order] C2 trigger response:', r.status))
-        .catch(err => console.warn('[save-order] C2 trigger failed:', err.message));
+      context.waitUntil(
+        fetch(`${protocol}://${host}/.netlify/functions/send-order-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader,
+          },
+          body: JSON.stringify({ orderId: result.id }),
+        })
+          .then(r => console.log('[save-order] C2 trigger response:', r.status))
+          .catch(err => console.warn('[save-order] C2 trigger failed:', err.message))
+      );
     }
 
     return corsResponse(200, { data: result, message: id ? '订单已更新' : '订单已创建' });
