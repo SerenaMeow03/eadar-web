@@ -306,9 +306,9 @@
             color: #f5222d;
         }
         /* 利润率三色梯度 */
-        .profit-high { color: #52c41a; font-weight: 600; }   /* ≥30% 绿 */
-        .profit-mid { color: #faad14; font-weight: 600; }    /* 10-30% 橙 */
-        .profit-low { color: #ff4d4f; font-weight: 600; }    /* <10% 红 */
+        .profit-high { color: #52c41a; font-weight: 600; }   /* ≥50% 绿 */
+        .profit-mid { color: #faad14; font-weight: 600; }    /* 30-50% 橙 */
+        .profit-low { color: #ff4d4f; font-weight: 600; }    /* <30% 红 */
         .action-btns {
             display: flex;
             gap: 8px;
@@ -647,7 +647,7 @@
                         <input type="number" id="clientWordCount" placeholder="客户实际计费字数" min="0" step="1">
                     </div>
                     <div class="form-group">
-                        <label>客户单价 (元/千字)</label>
+                        <label>客户单价 (元/字)</label>
                         <input type="number" id="clientRate" placeholder="可选，如: 200" min="0" step="0.01">
                     </div>
                 </div>
@@ -1006,18 +1006,18 @@
             const clientsMap = {};
             clients.forEach(c => clientsMap[c.id] = c);
 
-            // 翻译语言对显示文案（紧凑：2 字符 + 连字符，不带箭头节省列宽）
+            // 翻译语言对显示文案（紧凑 2 字符，无连字符 / 箭头节省列宽）
             const LANGS = {
-                'zh-en': '中-英', 'en-zh': '英-中',
-                'zh-ja': '中-日', 'en-ja': '英-日',
-                'zh-ko': '中-韩', 'en-ko': '英-韩',
-                'zh-ar': '中-阿', 'zh-ru': '中-俄',
+                'zh-en': '中英', 'en-zh': '英中',
+                'zh-ja': '中日', 'en-ja': '英日',
+                'zh-ko': '中韩', 'en-ko': '英韩',
+                'zh-ar': '中阿', 'zh-ru': '中俄',
             };
-            // 利润率颜色梯度计算
+            // 利润率颜色梯度：≥50% 绿 / 30-50% 橙 / <30% 红
             const profitClass = (rate) => {
                 if (rate == null || isNaN(rate)) return '';
-                if (rate >= 30) return 'profit-high';
-                if (rate >= 10) return 'profit-mid';
+                if (rate >= 50) return 'profit-high';
+                if (rate >= 30) return 'profit-mid';
                 return 'profit-low';
             };
 
@@ -1027,6 +1027,17 @@
                 const clientPaymentStatus = order.client_payment_status || 'unpaid';
                 const translatorPaymentStatus = order.payment_status || 'unpaid';
                 const deadline = order.deadline ? order.deadline.split('T')[0] : '-';
+                // 截止日期颜色梯度：<24h 红 / <48h 橙 / 其他灰
+                let deadlineColor = '';
+                let deadlineText = deadline;
+                if (order.deadline) {
+                    const now = new Date();
+                    const dl = new Date(order.deadline);
+                    const hoursLeft = (dl - now) / (1000 * 60 * 60);
+                    if (hoursLeft < 0) deadlineColor = '#999'; // 已过期灰
+                    else if (hoursLeft < 24) deadlineColor = '#ff4d4f'; // 红
+                    else if (hoursLeft < 48) deadlineColor = '#faad14'; // 橙
+                }
                 const client = order.client_id ? clientsMap[order.client_id] : null;
                 // 客户 join 失败但 client_id 还在 → 显示 client_id + 红 tag「客户已删除」，保留线索
                 const clientLost = order.client_id && !client;
@@ -1043,7 +1054,7 @@
                 const clientRate = showClientSide ? order.client_rate : null;
                 const clientAmount = showClientSide ? order.client_amount : null;
                 const cw = clientWordCount != null ? clientWordCount.toLocaleString() : '—';
-                const cr = clientRate != null ? `¥${clientRate}/千字` : '—';
+                const cr = clientRate != null ? `¥${Number(clientRate).toFixed(2)}/字` : '—';
                 const ca = clientAmount != null ? `¥${clientAmount.toLocaleString()}` : '—';
 
                 // 利润率：客户金额 - 译员金额 / 客户金额 × 100%
@@ -1059,7 +1070,7 @@
                 return `
                 <tr class="main-row" data-id="${order.id}" onclick="toggleSubRow('${order.id}')">
                     <td onclick="event.stopPropagation()"><input type="checkbox" class="rowCheck" data-id="${order.id}" onchange="updateBatchBtn()"></td>
-                    <td>${order.id}</td>
+                    <td title="${escapeAttr(order.id)}" style="cursor:help;">${order.id}</td>
                     <td title="${escapeAttr(order.project_name)}">
                         <span class="expand-icon">▸</span>${escapeHtml(order.project_name)}
                     </td>
@@ -1068,7 +1079,7 @@
                     <td>${cw}</td>
                     <td>${cr}</td>
                     <td class="amount">${ca}</td>
-                    <td>${deadline}</td>
+                    <td style="color: ${deadlineColor};" title="${escapeAttr(order.deadline || '')}">${deadlineText}</td>
                     <td>${escapeHtml(translatorName)}</td>
                     <td><span class="status-badge status-${order.status}">${getStatusText(order.status)}</span></td>
                     <td><span class="status-badge payment-${clientPaymentStatus}">${getClientPaymentStatusText(clientPaymentStatus)}</span></td>
