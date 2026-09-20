@@ -106,9 +106,9 @@
             <h2>客户列表</h2>
             <div class="header-actions">
                 <select id="statusFilter" onchange="render()" style="padding: 9px 12px; border: 1px solid #d9d9d9; border-radius: 6px;">
+                    <option value="">全部状态（含归档）</option>
                     <option value="active">活跃客户</option>
                     <option value="archived">已归档</option>
-                    <option value="">全部</option>
                 </select>
                 <input type="text" class="search-input" id="searchInput" placeholder="搜索 公司/联系人/邮箱" oninput="render()">
                 <button class="btn btn-primary" onclick="openModal()">+ 添加客户</button>
