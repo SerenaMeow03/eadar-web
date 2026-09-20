@@ -570,7 +570,6 @@
                     currentTranslator.id = fresh.id;
                     localStorage.setItem('currentTranslator', JSON.stringify(currentTranslator));
                     document.getElementById('userName').textContent = fresh.name;
-                    console.log('[orders] refreshed name from API:', fresh.name);
                 }
             } catch (e) {
                 console.warn('[orders] get-translator-me failed (non-blocking):', e.message);

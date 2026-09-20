@@ -259,11 +259,9 @@
 
         let clientsCache = [];
 
-        // 客户管理页面顶部 — 加载诊断条
-async function loadClients() {
+        async function loadClients() {
             const result = await apiCall('get-clients');
             clientsCache = result?.data || [];
-            console.log('[loadClients] returned', clientsCache.length, 'clients', clientsCache);
             return clientsCache;
         }
 
@@ -279,9 +277,6 @@ async function loadClients() {
                 (c.contact_name || '').toLowerCase().includes(q) ||
                 (c.email || '').toLowerCase().includes(q)
             );
-            // 诊断：打印渲染前的状态
-            console.log('[render] statusFilter=', JSON.stringify(status), 'search=', JSON.stringify(q), 'cache=', clientsCache.length, 'afterFilter=', list.length, 'firstClient=', list[0]);
-
             if (list.length === 0) {
                 tbody.innerHTML = `
                     <tr>

@@ -446,7 +446,6 @@
                     currentTranslator.name = fresh.name;
                     currentTranslator.id = fresh.id;
                     localStorage.setItem('currentTranslator', JSON.stringify(currentTranslator));
-                    console.log('[profile] refreshed name from API:', fresh.name);
                 }
             } catch (e) {
                 console.warn('[profile] get-translator-me failed (non-blocking):', e.message);
