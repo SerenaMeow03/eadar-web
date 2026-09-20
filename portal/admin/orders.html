@@ -1028,15 +1028,20 @@
                 const translatorPaymentStatus = order.payment_status || 'unpaid';
                 const deadline = order.deadline ? order.deadline.split('T')[0] : '-';
                 const client = order.client_id ? clientsMap[order.client_id] : null;
+                // 客户 join 失败但 client_id 还在 → 显示 client_id + 红 tag「客户已删除」，保留线索
+                const clientLost = order.client_id && !client;
                 const clientLabel = client
-                    ? (client.company_name ? client.company_name : client.contact_name)
-                    : '—';
+                    ? (escapeHtml(client.company_name ? client.company_name : client.contact_name))
+                    : (clientLost
+                        ? `<span style="color:#cf1322;font-size:11px;">客户已删除</span><br><span style="color:#999;font-size:10px;font-family:monospace;">${String(order.client_id).slice(0, 8)}…</span>`
+                        : '—');
 
-                // v8：客户三件套（未关联客户时全显示 —）
+                // v8：客户三件套 —— join 失败但数字还在，依然显示数字（保留用户填的数据）
                 const langLabel = LANGS[order.language_pair] || '—';
-                const clientWordCount = client ? (order.client_word_count ?? order.word_count) : null;
-                const clientRate = client ? order.client_rate : null;
-                const clientAmount = client ? order.client_amount : null;
+                const showClientSide = client || (clientLost && (order.client_word_count != null || order.client_rate != null || order.client_amount != null));
+                const clientWordCount = showClientSide ? (order.client_word_count ?? order.word_count) : null;
+                const clientRate = showClientSide ? order.client_rate : null;
+                const clientAmount = showClientSide ? order.client_amount : null;
                 const cw = clientWordCount != null ? clientWordCount.toLocaleString() : '—';
                 const cr = clientRate != null ? `¥${clientRate}/千字` : '—';
                 const ca = clientAmount != null ? `¥${clientAmount.toLocaleString()}` : '—';
@@ -1058,7 +1063,7 @@
                     <td title="${escapeAttr(order.project_name)}">
                         <span class="expand-icon">▸</span>${escapeHtml(order.project_name)}
                     </td>
-                    <td>${escapeHtml(clientLabel)}</td>
+                    <td>${clientLabel}</td>
                     <td>${escapeHtml(langLabel)}</td>
                     <td>${cw}</td>
                     <td>${cr}</td>
