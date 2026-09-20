@@ -147,11 +147,14 @@ exports.handler = async (event) => {
       },
     });
 
-    // C2: 派单通知译员（仅创建时触发，编辑不重发）
+    // C2: 派单通知译员（仅创建时 + 仅待处理状态触发）
+    // 用户诉求：只有"待处理"才通知译员，进行中/已完成/取消不通知
+    // - 编辑路径永远不重发
+    // - 创建但 status ≠ pending（极端场景：admin 补登历史已完成的单子）也不发
     // 后端 await 同步调用：100% 可靠，前端 UI 已 closeModal 不阻塞感官
     // 改前：context.waitUntil() — Netlify 不支持，throw error
     // 改前：裸 fetch() — 实测丢失（38s 延迟 + 第二次完全没发出）
-    if (!id) {
+    if (!id && status === 'pending') {
       try {
         const protocol = event.headers['x-forwarded-proto'] || 'https';
         const host = event.headers.host;
@@ -164,10 +167,12 @@ exports.handler = async (event) => {
           },
           body: JSON.stringify({ orderId: result.id }),
         });
-        console.log('[save-order] C2 trigger response:', resp.status);
+        console.log('[save-order] C2 trigger response:', resp.status, 'status=pending');
       } catch (err) {
         console.warn('[save-order] C2 trigger failed (non-blocking):', err.message);
       }
+    } else if (!id) {
+      console.log('[save-order] C2 trigger skipped: status=', status, 'orderId=', result.id);
     }
 
     return corsResponse(200, { data: result, message: id ? '订单已更新' : '订单已创建' });
