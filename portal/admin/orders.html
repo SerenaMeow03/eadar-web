@@ -249,6 +249,16 @@
             transform: rotate(90deg);
             color: #667eea;
         }
+        /* 副行操作按钮区（push 到右侧） */
+        .sub-row-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+        }
+        .sub-row-actions .btn {
+            padding: 6px 14px;
+            font-size: 13px;
+        }
         .status-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -882,6 +892,11 @@
             const deliverDate = order.status === 'completed' ? order.updated_at : null;
             items.push(`<div class="sub-row-item"><span class="label">提交日期</span><span class="value">${deliverDate ? new Date(deliverDate).toLocaleString('zh-CN', { hour12: false }) : '—'}</span></div>`);
 
+            // 付款/发票按钮（移到副行，操作列不再堆叠）
+            items.push(`<div class="sub-row-actions" onclick="event.stopPropagation()">
+                <button class="btn btn-secondary" onclick="openPaymentModal('${order.id}')">付款 / 发票</button>
+            </div>`);
+
             return `<div class="sub-row-content">${items.join('')}</div>`;
         }
 
@@ -1016,7 +1031,6 @@
                     <td onclick="event.stopPropagation()">
                         <div class="action-btns">
                             <button class="btn btn-primary" onclick="editOrder('${order.id}')">编辑</button>
-                            <button class="btn btn-secondary" onclick="openPaymentModal('${order.id}')">付款/发票</button>
                             <button class="btn btn-danger" onclick="deleteOrder('${order.id}')">删除</button>
                         </div>
                     </td>
