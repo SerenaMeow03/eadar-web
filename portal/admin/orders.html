@@ -489,7 +489,8 @@
                         <th>项目名称</th>
                         <th>客户</th>
                         <th>指派译员</th>
-                        <th>字数</th>
+                        <th>译员字数</th>
+                        <th>客户字数</th>
                         <th>费率</th>
                         <th>金额</th>
                         <th>截止日期</th>
@@ -500,7 +501,7 @@
                     </tr>
                 </thead>
                 <tbody id="ordersTableBody">
-                    <tr><td colspan="13" class="loading">加载中...</td></tr>
+                    <tr><td colspan="14" class="loading">加载中...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -549,15 +550,21 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>客户单价 (元/字)</label>
-                        <input type="number" id="clientRate" placeholder="可选，如: 0.20" min="0" step="0.01">
+                        <label>客户单价 (元/千字)</label>
+                        <input type="number" id="clientRate" placeholder="可选，如: 200" min="0" step="0.01">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>客户金额 (元)</label>
-                        <input type="number" id="clientAmount" placeholder="留空则按 客户单价×字数 自动算" min="0" step="0.01">
+                        <label>客户字数（可选，留空 = 译员字数）</label>
+                        <input type="number" id="clientWordCount" placeholder="客户实际计费字数" min="0" step="1">
                     </div>
+                    <div class="form-group">
+                        <label>客户金额 (元)</label>
+                        <input type="number" id="clientAmount" placeholder="留空则按 客户单价×客户字数 自动算" min="0" step="0.01">
+                    </div>
+                </div>
+                <div class="form-row">
                     <div class="form-group">
                         <label>客户付款状态</label>
                         <select id="clientPaymentStatus">
@@ -830,29 +837,30 @@
                     ? (client.company_name ? client.company_name : client.contact_name)
                     : '-';
 
-                return `
-                    <tr data-id="${order.id}">
-                        <td><input type="checkbox" class="rowCheck" data-id="${order.id}" onchange="updateBatchBtn()"></td>
-                        <td>${order.id}</td>
-                        <td title="${escapeAttr(order.project_name)}">${order.project_name}</td>
-                        <td>${clientLabel}</td>
-                        <td>${translatorName}</td>
-                        <td>${order.word_count?.toLocaleString() || 0}</td>
-                        <td>¥${order.rate}</td>
-                        <td class="amount">¥${order.amount}</td>
-                        <td>${deadline}</td>
-                        <td><span class="status-badge status-${order.status}">${getStatusText(order.status)}</span></td>
-                        <td><span class="status-badge payment-${paymentStatus}">${getPaymentStatusText(paymentStatus)}</span></td>
-                        <td><span class="status-badge invoice-${order.invoice_status || 'not_issued'}">${getInvoiceStatusText(order.invoice_status || 'not_issued')}</span></td>
-                        <td>
-                            <div class="action-btns">
-                                <button class="btn btn-primary" onclick="editOrder('${order.id}')">编辑</button>
-                                <button class="btn btn-secondary" onclick="openPaymentModal('${order.id}')">付款/发票</button>
-                                <button class="btn btn-danger" onclick="deleteOrder('${order.id}')">删除</button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+return `
+                <tr data-id="${order.id}">
+                    <td><input type="checkbox" class="rowCheck" data-id="${order.id}" onchange="updateBatchBtn()"></td>
+                    <td>${order.id}</td>
+                    <td title="${escapeAttr(order.project_name)}">${order.project_name}</td>
+                    <td>${clientLabel}</td>
+                    <td>${translatorName}</td>
+                    <td>${order.word_count?.toLocaleString() || 0}</td>
+                    <td>${(order.client_word_count ?? order.word_count)?.toLocaleString() || 0}</td>
+                    <td>¥${order.rate}</td>
+                    <td class="amount">¥${order.amount}</td>
+                    <td>${deadline}</td>
+                    <td><span class="status-badge status-${order.status}">${getStatusText(order.status)}</span></td>
+                    <td><span class="status-badge payment-${paymentStatus}">${getPaymentStatusText(paymentStatus)}</span></td>
+                    <td><span class="status-badge invoice-${order.invoice_status || 'not_issued'}">${getInvoiceStatusText(order.invoice_status || 'not_issued')}</span></td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="btn btn-primary" onclick="editOrder('${order.id}')">编辑</button>
+                            <button class="btn btn-secondary" onclick="openPaymentModal('${order.id}')">付款/发票</button>
+                            <button class="btn btn-danger" onclick="deleteOrder('${order.id}')">删除</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
             }).join('');
 
             // 顶部财务汇总（基于当前筛选的订单）
@@ -975,7 +983,8 @@
                         '项目名称': o.project_name,
                         '客户': clientLabel,
                         '译员': t ? t.name : '未指派',
-                        '字数': o.word_count,
+                        '译员字数': o.word_count,
+                        '客户字数': o.client_word_count ?? o.word_count,
                         '费率': o.rate,
                         '译员金额': o.amount,
                         '客户单价': o.client_rate,
@@ -1117,6 +1126,8 @@
                     document.getElementById('translatorId').value = order.translator_id;
                     document.getElementById('clientId').value = order.client_id || '';
                     document.getElementById('clientRate').value = order.client_rate || '';
+                    // v7：客户字数独立字段；NULL fallback 到 word_count 兼容历史数据
+                    document.getElementById('clientWordCount').value = order.client_word_count ?? order.word_count ?? '';
                     document.getElementById('clientAmount').value = order.client_amount || '';
                     document.getElementById('status').value = order.status || 'pending';
                     document.getElementById('paymentStatus').value = order.payment_status || 'unpaid';
@@ -1204,8 +1215,11 @@
             const translatorId = document.getElementById('translatorId').value;
             const clientId = document.getElementById('clientId').value || null;
             const clientRateRaw = document.getElementById('clientRate').value;
+            const clientWordCountRaw = document.getElementById('clientWordCount').value;
             const clientAmountRaw = document.getElementById('clientAmount').value;
             const clientRate = clientRateRaw === '' ? null : parseFloat(clientRateRaw);
+            // v7：客户字数独立字段；NULL 走 word_count（后端 fallback 处理）
+            const clientWordCount = clientWordCountRaw === '' ? null : parseInt(clientWordCountRaw, 10);
             const clientAmount = clientAmountRaw === '' ? null : parseFloat(clientAmountRaw);
             const status = document.getElementById('status').value;
             const paymentStatus = document.getElementById('paymentStatus').value;
@@ -1213,7 +1227,11 @@
             const remark = document.getElementById('remark').value;
 
             const amount = (wordCount * rate).toFixed(2);
-            
+            // v7：客户金额缺省时按 客户单价×客户字数 算；客户字数也缺省则用 word_count
+            const computedClientAmount = (clientRate !== null)
+              ? ((clientWordCount ?? wordCount) * clientRate).toFixed(2)
+              : null;
+
             const orderData = {
                 project_name: projectName,
                 word_count: wordCount,
@@ -1227,7 +1245,8 @@
                 remark: remark,
                 client_id: clientId,
                 client_rate: clientRate,
-                client_amount: clientAmount
+                client_word_count: clientWordCount,   // v7 新增
+                client_amount: clientAmount ?? (computedClientAmount ? parseFloat(computedClientAmount) : null)
             };
             
             if (id) {

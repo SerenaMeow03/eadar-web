@@ -91,6 +91,10 @@ function buildOrderCompletedEmail({ order, translator, client, smtpUser }) {
     : '未关联客户';
   const deadlineStr = fmtDate(order.deadline);
   const completedAt = fmtDateTime(order.updated_at);
+  // v7：客户字数与译员字数分开；客户未填时 fallback 到 word_count
+  const clientWordCount = order.client_word_count ?? order.word_count ?? 0;
+  const clientRate = order.client_rate;
+  const clientAmount = order.client_amount;
 
   const subject = `【订单已完成】${order.project_name}（订单号 ${order.id}）`;
 
@@ -103,9 +107,14 @@ function buildOrderCompletedEmail({ order, translator, client, smtpUser }) {
       <tr><td ${TD_LABEL}>项目名称</td><td ${TD_VALUE_BOLD}>${escapeHtml(order.project_name)}</td></tr>
       <tr><td ${TD_LABEL}>客户</td><td ${TD_VALUE}>${escapeHtml(clientLabel)}</td></tr>
       <tr><td ${TD_LABEL}>译员</td><td ${TD_VALUE}>${escapeHtml(translatorName)}</td></tr>
-      <tr><td ${TD_LABEL}>字数</td><td ${TD_VALUE}>${(order.word_count || 0).toLocaleString()} 字</td></tr>
+      <tr><td ${TD_LABEL}>字数（译员）</td><td ${TD_VALUE}>${(order.word_count || 0).toLocaleString()} 字</td></tr>
       <tr><td ${TD_LABEL}>单价</td><td ${TD_VALUE}>¥${escapeHtml(order.rate)} / 千字</td></tr>
-      <tr><td ${TD_LABEL}>订单总金额</td><td style="padding: 10px; font-weight: 600; color: #cf1322;">¥${escapeHtml(order.amount)}</td></tr>
+      <tr><td ${TD_LABEL}>译员金额</td><td style="padding: 10px; font-weight: 600; color: #cf1322;">¥${escapeHtml(order.amount)}</td></tr>
+      ${client && clientRate ? `
+        <tr><td ${TD_LABEL}>字数（客户）</td><td ${TD_VALUE}>${clientWordCount.toLocaleString()} 字</td></tr>
+        <tr><td ${TD_LABEL}>客户单价</td><td ${TD_VALUE}>¥${escapeHtml(clientRate)} / 千字</td></tr>
+        <tr><td ${TD_LABEL}>客户金额</td><td style="padding: 10px; font-weight: 600; color: #cf1322;">¥${escapeHtml(clientAmount)}</td></tr>
+      ` : ''}
       <tr><td ${TD_LABEL}>截止日期</td><td ${TD_VALUE}>${deadlineStr}</td></tr>
       <tr><td ${TD_LABEL}>完成时间</td><td style="padding: 10px; font-weight: 600; color: #52c41a;">${completedAt}</td></tr>
       ${order.remark ? `<tr><td ${TD_LABEL}>译员备注</td><td ${TD_VALUE}>${escapeHtml(order.remark)}</td></tr>` : ''}
@@ -123,9 +132,10 @@ function buildOrderCompletedEmail({ order, translator, client, smtpUser }) {
 项目名称：${order.project_name}
 客户：${clientLabel}
 译员：${translatorName}
-字数：${order.word_count}
+字数（译员）：${order.word_count}
 单价：¥${order.rate}/千字
-订单金额：¥${order.amount}
+译员金额：¥${order.amount}
+${client && clientRate ? `\n字数（客户）：${clientWordCount}\n客户单价：¥${clientRate}/千字\n客户金额：¥${clientAmount}` : ''}
 截止日期：${deadlineStr}
 完成时间：${completedAt}
 ${order.remark ? '\n译员备注：' + order.remark : ''}
@@ -154,6 +164,10 @@ function buildOrderResponseEmail({ order, translator, client, smtpUser, action }
     : '未关联客户';
   const deadlineStr = fmtDate(order.deadline);
   const respondedAt = fmtDateTime(order.updated_at);
+  // v7：客户字数与译员字数分开
+  const clientWordCount = order.client_word_count ?? order.word_count ?? 0;
+  const clientRate = order.client_rate;
+  const clientAmount = order.client_amount;
 
   const isAccepted = action === 'accepted';
   const actionLabel = isAccepted ? '接单' : '拒单';
@@ -172,9 +186,14 @@ function buildOrderResponseEmail({ order, translator, client, smtpUser, action }
       <tr><td ${TD_LABEL}>客户</td><td ${TD_VALUE}>${escapeHtml(clientLabel)}</td></tr>
       <tr><td ${TD_LABEL}>译员</td><td ${TD_VALUE}>${escapeHtml(translatorName)}</td></tr>
       <tr><td ${TD_LABEL}>响应动作</td><td style="padding: 10px; font-weight: 600; color: ${actionColor};">${actionLabel}</td></tr>
-      <tr><td ${TD_LABEL}>字数</td><td ${TD_VALUE}>${(order.word_count || 0).toLocaleString()} 字</td></tr>
+      <tr><td ${TD_LABEL}>字数（译员）</td><td ${TD_VALUE}>${(order.word_count || 0).toLocaleString()} 字</td></tr>
       <tr><td ${TD_LABEL}>单价</td><td ${TD_VALUE}>¥${escapeHtml(order.rate)} / 千字</td></tr>
-      <tr><td ${TD_LABEL}>订单总金额</td><td style="padding: 10px; font-weight: 600; color: #cf1322;">¥${escapeHtml(order.amount)}</td></tr>
+      <tr><td ${TD_LABEL}>译员金额</td><td style="padding: 10px; font-weight: 600; color: #cf1322;">¥${escapeHtml(order.amount)}</td></tr>
+      ${client && clientRate ? `
+        <tr><td ${TD_LABEL}>字数（客户）</td><td ${TD_VALUE}>${clientWordCount.toLocaleString()} 字</td></tr>
+        <tr><td ${TD_LABEL}>客户单价</td><td ${TD_VALUE}>¥${escapeHtml(clientRate)} / 千字</td></tr>
+        <tr><td ${TD_LABEL}>客户金额</td><td style="padding: 10px; font-weight: 600; color: #cf1322;">¥${escapeHtml(clientAmount)}</td></tr>
+      ` : ''}
       <tr><td ${TD_LABEL}>截止日期</td><td ${TD_VALUE}>${deadlineStr}</td></tr>
       <tr><td ${TD_LABEL}>响应时间</td><td style="padding: 10px; font-weight: 600;">${respondedAt}</td></tr>
       ${order.remark && !isAccepted ? `<tr><td ${TD_LABEL}>拒单理由</td><td ${TD_VALUE}>${escapeHtml(order.remark)}</td></tr>` : ''}
@@ -194,9 +213,10 @@ function buildOrderResponseEmail({ order, translator, client, smtpUser, action }
 客户：${clientLabel}
 译员：${translatorName}
 响应动作：${actionLabel}
-字数：${order.word_count}
+字数（译员）：${order.word_count}
 单价：¥${order.rate}/千字
-订单金额：¥${order.amount}
+译员金额：¥${order.amount}
+${client && clientRate ? `\n字数（客户）：${clientWordCount}\n客户单价：¥${clientRate}/千字\n客户金额：¥${clientAmount}` : ''}
 截止日期：${deadlineStr}
 响应时间：${respondedAt}
 ${(order.remark && !isAccepted) ? '\n拒单理由：' + order.remark : ''}

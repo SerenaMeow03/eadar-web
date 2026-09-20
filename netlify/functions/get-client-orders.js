@@ -35,7 +35,7 @@ exports.handler = async (event) => {
     const { data: orders, error: ordersErr } = await service
       .from('orders')
       .select(`
-        id, project_name, word_count, client_rate, client_amount,
+        id, project_name, word_count, client_word_count, client_rate, client_amount,
         deadline, status, client_payment_status,
         invoice_status, invoice_number, invoice_date,
         created_at, updated_at,
@@ -54,6 +54,8 @@ exports.handler = async (event) => {
       id: o.id,
       project_name: o.project_name,
       word_count: o.word_count,
+      // v7：客户侧返回客户字数；fallback 到 word_count 兼容历史数据
+      client_word_count: o.client_word_count ?? o.word_count,
       client_rate: o.client_rate,
       client_amount: o.client_amount,
       deadline: o.deadline,

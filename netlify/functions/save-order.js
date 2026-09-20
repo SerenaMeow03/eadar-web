@@ -35,7 +35,8 @@ exports.handler = async (event) => {
     remark,
     client_id,           // 客户（可选）
     client_rate,         // 客户单价（可选）
-    client_amount,       // 客户金额（可选，不填则按 client_rate * word_count / 1000 自动算）
+    client_word_count,   // 客户字数（可选，NULL 时 fallback 到 word_count）
+    client_amount,       // 客户金额（可选，不填则按 client_rate * client_word_count / 1000 自动算）
   } = body;
 
   // 必填校验
@@ -57,6 +58,9 @@ exports.handler = async (event) => {
   // 客户字段校验
   if (client_rate !== undefined && client_rate !== null && Number(client_rate) < 0) {
     return corsResponse(400, { error: '客户单价不能为负数' });
+  }
+  if (client_word_count !== undefined && client_word_count !== null && Number(client_word_count) < 0) {
+    return corsResponse(400, { error: '客户字数不能为负数' });
   }
 
   const service = getServiceClient();
@@ -94,9 +98,20 @@ exports.handler = async (event) => {
       remark: remark || null,
       client_id: client_id || null,
       client_rate: client_rate !== undefined && client_rate !== null ? Number(client_rate) : null,
+      // v7：客户字数与译员字数分开；NULL 时写入 word_count 保持等价（不存 NULL 避免前端 fallback 逻辑复杂化）
+      client_word_count: Number(
+        client_word_count !== undefined && client_word_count !== null
+          ? client_word_count
+          : word_count
+      ),
+      // v7：客户金额用客户字数算
       client_amount: client_amount !== undefined && client_amount !== null
         ? Number(client_amount)
-        : (client_rate ? Number((word_count * client_rate).toFixed(2)) : null),
+        : (client_rate
+            ? Number(((client_word_count !== undefined && client_word_count !== null
+                ? Number(client_word_count)
+                : Number(word_count)) * client_rate).toFixed(2))
+            : null),
     };
 
     let result;

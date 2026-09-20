@@ -54,6 +54,7 @@ exports.handler = async (event) => {
       .select(`
         id, project_name, word_count, rate, amount, deadline, status, remark,
         updated_at, description,
+        client_id, client_word_count, client_rate, client_amount, client_payment_status,
         translators:translator_id ( id, name, email ),
         clients:client_id ( contact_name, company_name )
       `)

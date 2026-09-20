@@ -349,12 +349,14 @@
 
             tbody.innerHTML = filtered.map(o => {
                 const deadline = o.deadline ? String(o.deadline).slice(0, 10) : '-';
+                // v7：客户侧显示客户字数（独立字段，fallback 到 word_count 兼容历史）
+                const billableWords = o.client_word_count ?? o.word_count ?? 0;
                 return `
                     <tr onclick="openOrderDetail('${o.id}')">
                         <td><strong>${o.id}</strong></td>
                         <td title="${escapeAttr(o.project_name)}">${o.project_name}</td>
                         <td>${o.translator_name}</td>
-                        <td>${(o.word_count || 0).toLocaleString()}</td>
+                        <td>${billableWords.toLocaleString()}</td>
                         <td><strong>¥${o.client_amount || '-'}</strong></td>
                         <td>${deadline}</td>
                         <td><span class="status-badge status-${o.status}">${setStatusText(o.status)}</span></td>
@@ -374,8 +376,8 @@
                 <div class="detail-row"><span class="label">订单编号</span><span class="value">${order.id}</span></div>
                 <div class="detail-row"><span class="label">项目名称</span><span class="value">${order.project_name}</span></div>
                 <div class="detail-row"><span class="label">译员</span><span class="value">${order.translator_name}</span></div>
-                <div class="detail-row"><span class="label">字数</span><span class="value">${(order.word_count || 0).toLocaleString()} 字</span></div>
-                <div class="detail-row"><span class="label">客户单价</span><span class="value">¥${order.client_rate || '-'}/字</span></div>
+                <div class="detail-row"><span class="label">字数</span><span class="value">${(order.client_word_count ?? order.word_count ?? 0).toLocaleString()} 字</span></div>
+                <div class="detail-row"><span class="label">客户单价</span><span class="value">¥${order.client_rate || '-'}/千字</span></div>
                 <div class="detail-row"><span class="label">应付金额</span><span class="value amount">¥${order.client_amount || '-'}</span></div>
                 <div class="detail-row"><span class="label">截止日期</span><span class="value">${deadline}</span></div>
                 <div class="detail-row"><span class="label">翻译状态</span><span class="value"><span class="status-badge status-${order.status}">${setStatusText(order.status)}</span></span></div>
