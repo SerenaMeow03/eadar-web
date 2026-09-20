@@ -615,6 +615,7 @@
             <div class="toolbar-group">
                 <button class="btn btn-danger btn-sm" onclick="batchDelete()" id="batchDeleteBtn" disabled>🗑 删除（<span id="selectedCount">0</span>）</button>
                 <button class="btn btn-primary btn-sm" onclick="openBatchAssignModal()" id="batchAssignBtn" disabled>📤 派单</button>
+                <button class="btn btn-ghost btn-sm" onclick="openBatchPaymentModal()" id="batchPaymentBtn" disabled>💰 付款/发票</button>
                 <button class="btn btn-ghost btn-sm" onclick="exportToExcel()" id="exportBtn">📊 导出 Excel</button>
                 <button class="btn btn-secondary btn-sm" onclick="openImportModal()">📥 批量导入</button>
                 <button class="btn btn-primary btn-highlight btn-sm" onclick="openModal()">+ 登记订单</button>
@@ -857,6 +858,62 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeBatchAssignModal()">取消</button>
                     <button type="submit" class="btn btn-primary" id="batchAssignSubmitBtn">确认派单</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 批量付款/发票弹窗 -->
+    <div class="modal" id="batchPaymentModal">
+        <div class="modal-content" style="max-width: 560px;">
+            <div class="modal-header">
+                <h3>批量付款/发票</h3>
+                <button class="close-btn" onclick="closeBatchPaymentModal()">&times;</button>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <p style="font-size: 13px; color: #999;">
+                    已选中 <strong id="batchPaymentCount" style="color: #1a1a2e;">0</strong> 个订单。
+                    留空的字段不修改原值。
+                </p>
+            </div>
+            <form id="batchPaymentForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>客户付款</label>
+                        <select id="batchClientPaymentStatus">
+                            <option value="">-- 不修改 --</option>
+                            <option value="unpaid">未付款</option>
+                            <option value="paid">已付款</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>开票状态</label>
+                        <select id="batchInvoiceStatus">
+                            <option value="">-- 不修改 --</option>
+                            <option value="not_issued">未开票</option>
+                            <option value="issued">已开票</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>发票号（清空留空）</label>
+                        <input type="text" id="batchInvoiceNumber" placeholder="留空 = 不修改">
+                    </div>
+                    <div class="form-group">
+                        <label>开票日期（YYYY-MM-DD）</label>
+                        <input type="date" id="batchInvoiceDate">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>订单预览</label>
+                    <div id="batchPaymentPreview" style="max-height: 200px; overflow-y: auto; padding: 12px; background: #fafafa; border-radius: 6px; font-size: 13px;">
+                        <span style="color: #999;">加载中...</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeBatchPaymentModal()">取消</button>
+                    <button type="submit" class="btn btn-primary" id="batchPaymentSubmitBtn">确认更新</button>
                 </div>
             </form>
         </div>
@@ -1475,16 +1532,13 @@
             const ids = getSelectedIds();
             const btn = document.getElementById('batchDeleteBtn');
             const assignBtn = document.getElementById('batchAssignBtn');
+            const payBtn = document.getElementById('batchPaymentBtn');
             const counter = document.getElementById('selectedCount');
             if (counter) counter.textContent = ids.length;
-            if (btn) {
-                btn.disabled = ids.length === 0;
-                btn.style.opacity = ids.length === 0 ? '0.5' : '1';
-            }
-            if (assignBtn) {
-                assignBtn.disabled = ids.length === 0;
-                assignBtn.style.opacity = ids.length === 0 ? '0.5' : '1';
-            }
+            const disabledStyle = ids.length === 0 ? '0.5' : '1';
+            if (btn) { btn.disabled = ids.length === 0; btn.style.opacity = disabledStyle; }
+            if (assignBtn) { assignBtn.disabled = ids.length === 0; assignBtn.style.opacity = disabledStyle; }
+            if (payBtn) { payBtn.disabled = ids.length === 0; payBtn.style.opacity = disabledStyle; }
             // 同步 master checkbox 状态
             const all = document.querySelectorAll('.rowCheck');
             const master = document.getElementById('selectAllCheckbox');
@@ -1640,8 +1694,111 @@
         }
         window.batchAssign = batchAssign;
 
+        // ===== 批量付款/发票 =====
+        async function openBatchPaymentModal() {
+            const ids = getSelectedIds();
+            if (ids.length === 0) {
+                showToast('请先勾选订单', 'error');
+                return;
+            }
+            document.getElementById('batchPaymentCount').textContent = ids.length;
+
+            // 重置表单
+            document.getElementById('batchClientPaymentStatus').value = '';
+            document.getElementById('batchInvoiceStatus').value = '';
+            document.getElementById('batchInvoiceNumber').value = '';
+            document.getElementById('batchInvoiceDate').value = '';
+
+            // 预览订单
+            const preview = (allOrders || [])
+                .filter(o => ids.includes(o.id))
+                .slice(0, 50)
+                .map(o => {
+                    const cps = o.client_payment_status === 'paid' ? '已付款' : '未付款';
+                    const inv = o.invoice_status === 'issued' ? '已开票' : '未开票';
+                    return `<div style="padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
+                        <span style="color: #1a1a2e;">${o.id}</span>
+                        <span style="color: #666; margin-left: 8px;">${escapeHtml(o.project_name || '')}</span>
+                        <span style="color: #999; font-size: 11px; margin-left: 8px;">客户${cps}·${inv}</span>
+                    </div>`;
+                }).join('');
+            document.getElementById('batchPaymentPreview').innerHTML = preview || '<span style="color: #999;">未找到订单</span>';
+
+            document.getElementById('batchPaymentModal').classList.add('active');
+        }
+        window.openBatchPaymentModal = openBatchPaymentModal;
+
+        function closeBatchPaymentModal() {
+            document.getElementById('batchPaymentModal').classList.remove('active');
+        }
+        window.closeBatchPaymentModal = closeBatchPaymentModal;
+
+        async function batchUpdatePayment(e) {
+            if (e) e.preventDefault();
+            const ids = getSelectedIds();
+            if (ids.length === 0) {
+                showToast('请先勾选订单', 'error');
+                return;
+            }
+
+            const body = { orderIds: ids };
+
+            const cps = document.getElementById('batchClientPaymentStatus').value;
+            const inv = document.getElementById('batchInvoiceStatus').value;
+            const invNum = document.getElementById('batchInvoiceNumber').value;
+            const invDate = document.getElementById('batchInvoiceDate').value;
+
+            if (cps) body.client_payment_status = cps;
+            if (inv) body.invoice_status = inv;
+            // 发票号：空字符串 = 清空（用户主动改）；不传 = 不修改（用 undefined）
+            // 通过判断 input 是否被 focus 过实现区分太复杂，简单方案：用户填了空 = 清空，没填 = 不传
+            // 这里采用：input.value 始终是字符串，区分"用户没填"靠一个隐藏 sentinel
+            // 简化：发票号字段为空时视为不修改（用户想要清空则改成特殊按钮 "清空"）
+            // ——为简洁，本期不实现"清空"语义，留空=不修改
+            if (invNum.trim()) body.invoice_number = invNum.trim();
+            if (invDate) body.invoice_date = invDate;
+
+            if (Object.keys(body).length === 1) {
+                showToast('请至少选择一个要更新的字段', 'error');
+                return;
+            }
+
+            const submitBtn = document.getElementById('batchPaymentSubmitBtn');
+            const original = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '更新中...';
+
+            try {
+                const result = await apiCall('batch-update-payment', {
+                    method: 'POST',
+                    body: JSON.stringify(body),
+                });
+                const data = result?.data || result || {};
+                const summary = data.summary || {};
+
+                if (summary.failed && summary.failed.length > 0) {
+                    const reasons = summary.failed.map(f => `${f.id}: ${f.reason}`).slice(0, 3).join('；');
+                    showToast(`更新 ${summary.updated || 0} 条，失败 ${summary.failed || 0} 条：${reasons}`, 'error', 6000);
+                } else {
+                    showToast(`成功更新 ${summary.updated || 0} 条订单`, 'success');
+                }
+                await renderOrders(getCurrentFilter());
+                closeBatchPaymentModal();
+                // 清空 checkbox
+                document.querySelectorAll('.rowCheck').forEach(cb => cb.checked = false);
+                updateBatchBtn();
+            } catch (err) {
+                showToast(`更新失败：${err.message}`, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = original;
+            }
+        }
+        window.batchUpdatePayment = batchUpdatePayment;
+
         // 绑定表单提交
         document.getElementById('batchAssignForm').addEventListener('submit', batchAssign);
+        document.getElementById('batchPaymentForm').addEventListener('submit', batchUpdatePayment);
 
         // C2: 批量导入订单（前端 SheetJS 实现，0 后端改动）
         // 流程：下载模板 → 用户填好上传 → 前端解析 → 按名字查 ID → 重复检测 → 循环调 save-order
