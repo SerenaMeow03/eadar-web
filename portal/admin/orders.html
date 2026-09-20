@@ -940,6 +940,15 @@
             const tbody = document.getElementById('ordersTableBody');
             try {
                 const orders = await loadOrders();
+                // 诊断：每条订单的客户 join 状态
+                const joinDiag = (orders || []).map(o => ({
+                    id: o.id,
+                    client_id: o.client_id,
+                    clients_obj: o.clients,
+                    client_amount: o.client_amount,
+                    client_word_count: o.client_word_count,
+                })).filter(o => o.client_id != null || (o.clients == null && o.client_amount != null));
+                console.log('[orders] 客户关联诊断（有 client_id 或客户三件套非空但 clients 为 null）:', joinDiag.length, '条', joinDiag);
                 allOrders = orders; // 缓存供 G3 删除校验
                 const translators = await loadTranslators();
 
