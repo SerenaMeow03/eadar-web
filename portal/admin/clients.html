@@ -259,9 +259,11 @@
 
         let clientsCache = [];
 
-        async function loadClients() {
+        // 客户管理页面顶部 — 加载诊断条
+async function loadClients() {
             const result = await apiCall('get-clients');
             clientsCache = result?.data || [];
+            console.log('[loadClients] returned', clientsCache.length, 'clients', clientsCache);
             return clientsCache;
         }
 
@@ -484,6 +486,10 @@
             try {
                 await loadClients();
                 render();
+                // 诊断：如果列表为空且无客户，显示在 UI 上
+                if (clientsCache.length === 0) {
+                    showToast('⚠️ get-clients 返回 0 条，但 Supabase 里有 2 条。Netlify Functions 日志看错误。', 'error');
+                }
             } catch (e) {
                 showToast('加载客户失败: ' + e.message, 'error');
             }
