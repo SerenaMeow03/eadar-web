@@ -542,6 +542,7 @@
                 <button class="btn btn-primary" onclick="openBatchAssignModal()" id="batchAssignBtn" disabled style="opacity: 0.5;">📤 批量派单</button>
                 <button class="btn btn-secondary" onclick="exportToExcel()" id="exportBtn">📊 导出 Excel</button>
                 <button class="btn btn-primary" onclick="openModal()">+ 登记订单</button>
+                <button class="btn btn-secondary" onclick="openImportModal()">📥 批量导入</button>
             </div>
         </div>
 
@@ -782,6 +783,37 @@
                     <button type="submit" class="btn btn-primary" id="batchAssignSubmitBtn">确认派单</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- 批量导入订单弹窗 -->
+    <div class="modal" id="importModal">
+        <div class="modal-content" style="max-width: 720px;">
+            <div class="modal-header">
+                <h3>批量导入订单</h3>
+                <button class="close-btn" onclick="closeImportModal()">&times;</button>
+            </div>
+            <div style="margin-bottom: 16px; padding: 12px; background: #f0f7ff; border-radius: 6px; font-size: 13px; color: #666;">
+                📌 流程：① 下载模板 → ② Excel 填好（译员/客户填<strong>名字</strong>，与系统里一致）→ ③ 上传文件 → ④ 预览校验 → ⑤ 确认导入
+            </div>
+            <div class="form-row" style="margin-bottom: 16px;">
+                <button type="button" class="btn btn-secondary" onclick="downloadImportTemplate()">📥 下载 Excel 模板</button>
+                <div>
+                    <input type="file" id="importFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleImportFile(event)">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('importFileInput').click()">📂 选择 Excel 文件</button>
+                    <span id="importFileName" style="margin-left: 12px; font-size: 13px; color: #666;"></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>解析预览</label>
+                <div id="importPreview" style="max-height: 320px; overflow-y: auto; padding: 12px; background: #fafafa; border-radius: 6px; font-size: 13px;">
+                    <span style="color: #999;">尚未选择文件</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeImportModal()">取消</button>
+                <button type="button" class="btn btn-primary" id="importSubmitBtn" onclick="confirmImport()" disabled style="opacity: 0.5;">确认导入（<span id="importRowCount">0</span> 条）</button>
+            </div>
         </div>
     </div>
 
@@ -1512,6 +1544,198 @@
 
         // 绑定表单提交
         document.getElementById('batchAssignForm').addEventListener('submit', batchAssign);
+
+        // C2: 批量导入订单（前端 SheetJS 实现，0 后端改动）
+        // 流程：下载模板 → 用户填好上传 → 前端解析 → 按名字查 ID → 循环调 save-order
+        const IMPORT_TEMPLATE_COLS = [
+            '项目名称*', '字数*', '单价*（元/千字）', '截止日期*（YYYY-MM-DD）',
+            '译员*（填名字）', '客户（填名字，可选）',
+            '客户字数（可选）', '客户单价（元/千字，可选）',
+            '状态（pending/progress/completed）', '客户付款状态（unpaid/paid）', '译员付款状态（unpaid/paid）',
+            '备注',
+        ];
+        let importParsedRows = []; // 解析后的预览行
+
+        function openImportModal() {
+            document.getElementById('importFileName').textContent = '';
+            document.getElementById('importPreview').innerHTML = '<span style="color: #999;">尚未选择文件</span>';
+            importParsedRows = [];
+            const submitBtn = document.getElementById('importSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+            document.getElementById('importRowCount').textContent = '0';
+            // 懒加载译员/客户缓存（导入时要按名字查 ID）
+            Promise.all([loadTranslators(), loadClients()]).catch(e => console.warn(e));
+            document.getElementById('importModal').classList.add('active');
+        }
+        window.openImportModal = openImportModal;
+
+        function closeImportModal() {
+            document.getElementById('importModal').classList.remove('active');
+        }
+        window.closeImportModal = closeImportModal;
+
+        function downloadImportTemplate() {
+            // 用 SheetJS 生成模板（含列头 + 一行示例 + 译员/客户名字提示列）
+            const headers = IMPORT_TEMPLATE_COLS;
+            // 写入示例行（用真实译员名字提示，让 admin 知道填啥）
+            const sampleRow = ['2026 Q3 高校医学论文', '5000', '200', '2026-12-31',
+                (translatorsCache && translatorsCache[0]?.name) || '译员A',
+                (clientsCache && clientsCache[0]?.company_name) || '客户A',
+                '5000', '500', 'pending', 'unpaid', 'unpaid', '示例：补登历史订单'];
+            const aoa = [headers, sampleRow];
+
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '订单导入模板');
+
+            // 设置列宽（视觉舒服）
+            ws['!cols'] = headers.map(h => ({ wch: 16 }));
+
+            XLSX.writeFile(wb, `订单导入模板_${new Date().toISOString().slice(0,10)}.xlsx`);
+            showToast('模板已下载', 'success');
+        }
+        window.downloadImportTemplate = downloadImportTemplate;
+
+        async function handleImportFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('importFileName').textContent = file.name;
+
+            // 确保译员/客户缓存已就绪（懒加载，可能 openImportModal 时还没好）
+            await Promise.all([loadTranslators(), loadClients()]);
+
+            try {
+                const data = await file.arrayBuffer();
+                const wb = XLSX.read(data, { type: 'array' });
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+                // 第一行是表头，跳过
+                const dataRows = rows.slice(1).filter(r => r.some(c => String(c).trim() !== ''));
+                if (dataRows.length === 0) {
+                    document.getElementById('importPreview').innerHTML = '<span style="color: #cf1322;">Excel 中没有数据行</span>';
+                    return;
+                }
+
+                // 解析 + 校验 + 按名字查 ID
+                const previewLines = [];
+                importParsedRows = [];
+
+                for (let i = 0; i < dataRows.length; i++) {
+                    const r = dataRows[i];
+                    const [projectName, wordCount, rate, deadline,
+                        translatorName, customerName,
+                        clientWordCount, clientRate,
+                        status, clientPaymentStatus, paymentStatus, remark] = r;
+
+                    const errors = [];
+                    if (!projectName) errors.push('项目名称空');
+                    if (!wordCount || isNaN(Number(wordCount))) errors.push('字数无效');
+                    if (!rate || isNaN(Number(rate))) errors.push('单价无效');
+                    if (!deadline) errors.push('截止日期空');
+
+                    // 按名字查译员 ID
+                    let translatorId = null;
+                    if (translatorName) {
+                        const t = translatorsCache.find(x => x.name === String(translatorName).trim());
+                        if (!t) errors.push(`找不到译员"${translatorName}"`);
+                        else translatorId = t.id;
+                    } else {
+                        errors.push('译员空');
+                    }
+
+                    // 按名字查客户 ID
+                    let clientId = null;
+                    if (customerName) {
+                        const c = clientsCache.find(x =>
+                            x.company_name === String(customerName).trim() ||
+                            x.contact_name === String(customerName).trim()
+                        );
+                        if (!c) errors.push(`找不到客户"${customerName}"`);
+                        else clientId = c.id;
+                    }
+
+                    const valid = errors.length === 0;
+                    const bg = valid ? '#f6ffed' : '#fff1f0';
+                    const statusIcon = valid ? '✅' : '❌';
+                    const statusText = valid ? '可导入' : errors.join(' / ');
+
+                    previewLines.push(`<div style="background: ${bg}; padding: 6px 8px; margin-bottom: 4px; border-radius: 4px;">
+                        <strong>${statusIcon} 第${i + 2}行：</strong>${escapeHtml(String(projectName || '(空)'))}
+                        <span style="color: #999; font-size: 12px; margin-left: 8px;">${statusText}</span>
+                    </div>`);
+
+                    if (valid) {
+                        importParsedRows.push({
+                            project_name: String(projectName).trim(),
+                            word_count: Number(wordCount),
+                            rate: Number(rate),
+                            deadline: String(deadline).trim(),
+                            translator_id: translatorId,
+                            client_id: clientId,
+                            client_word_count: clientWordCount ? Number(clientWordCount) : null,
+                            client_rate: clientRate ? Number(clientRate) : null,
+                            status: ['pending','progress','completed','cancelled'].includes(status) ? status : 'pending',
+                            client_payment_status: clientPaymentStatus === 'paid' ? 'paid' : 'unpaid',
+                            payment_status: paymentStatus === 'paid' ? 'paid' : 'unpaid',
+                            remark: remark ? String(remark) : null,
+                        });
+                    }
+                }
+
+                document.getElementById('importPreview').innerHTML = previewLines.join('');
+                document.getElementById('importRowCount').textContent = importParsedRows.length;
+
+                const submitBtn = document.getElementById('importSubmitBtn');
+                submitBtn.disabled = importParsedRows.length === 0;
+                submitBtn.style.opacity = importParsedRows.length === 0 ? '0.5' : '1';
+            } catch (err) {
+                document.getElementById('importPreview').innerHTML = `<span style="color: #cf1322;">解析出错：${err.message}</span>`;
+            }
+        }
+        window.handleImportFile = handleImportFile;
+
+        async function confirmImport() {
+            if (importParsedRows.length === 0) return;
+            const submitBtn = document.getElementById('importSubmitBtn');
+            const original = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '导入中...';
+
+            let success = 0;
+            let failed = 0;
+            const failedReasons = [];
+
+            for (let i = 0; i < importParsedRows.length; i++) {
+                const row = importParsedRows[i];
+                try {
+                    await apiCall('save-order', {
+                        method: 'POST',
+                        body: JSON.stringify(row),
+                    });
+                    success++;
+                } catch (e) {
+                    failed++;
+                    failedReasons.push(`第${i + 1}条（${row.project_name}）：${e.message}`);
+                }
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = original;
+
+            if (failed === 0) {
+                showToast(`成功导入 ${success} 条订单`, 'success');
+                closeImportModal();
+                await renderOrders(getCurrentFilter());
+            } else {
+                showToast(`导入 ${success} 条，失败 ${failed} 条`, 'error');
+                console.warn('导入失败明细：', failedReasons);
+                // 不关闭 modal，让用户看到错误
+            }
+        }
+        window.confirmImport = confirmImport;
 
         // 打开弹窗
         async function openModal(orderId = null) {
