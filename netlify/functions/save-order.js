@@ -5,7 +5,7 @@ const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate, requireMethod, parseBody } = require('./_shared/auth');
 const { writeAudit } = require('./_shared/audit');
 
-exports.handler = async (event, context) => {
+exports.handler = async (event) => {
   const pre = preflight(event);
   if (pre) return pre;
 
@@ -148,23 +148,26 @@ exports.handler = async (event, context) => {
     });
 
     // C2: 派单通知译员（仅创建时触发，编辑不重发）
-    // 后端 fire-and-forget（用 context.waitUntil 确保 background task 在 main 函数返回后继续执行）
+    // 后端 await 同步调用：100% 可靠，前端 UI 已 closeModal 不阻塞感官
+    // 改前：context.waitUntil() — Netlify 不支持，throw error
+    // 改前：裸 fetch() — 实测丢失（38s 延迟 + 第二次完全没发出）
     if (!id) {
-      const protocol = event.headers['x-forwarded-proto'] || 'https';
-      const host = event.headers.host;
-      const authHeader = event.headers.authorization || event.headers.Authorization || '';
-      context.waitUntil(
-        fetch(`${protocol}://${host}/.netlify/functions/send-order-email`, {
+      try {
+        const protocol = event.headers['x-forwarded-proto'] || 'https';
+        const host = event.headers.host;
+        const authHeader = event.headers.authorization || event.headers.Authorization || '';
+        const resp = await fetch(`${protocol}://${host}/.netlify/functions/send-order-email`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': authHeader,
           },
           body: JSON.stringify({ orderId: result.id }),
-        })
-          .then(r => console.log('[save-order] C2 trigger response:', r.status))
-          .catch(err => console.warn('[save-order] C2 trigger failed:', err.message))
-      );
+        });
+        console.log('[save-order] C2 trigger response:', resp.status);
+      } catch (err) {
+        console.warn('[save-order] C2 trigger failed (non-blocking):', err.message);
+      }
     }
 
     return corsResponse(200, { data: result, message: id ? '订单已更新' : '订单已创建' });

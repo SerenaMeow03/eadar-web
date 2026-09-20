@@ -27,7 +27,7 @@ const TRANSLATOR_TRANSITIONS = {
   // completed / cancelled → 终态，译员不能再动
 };
 
-exports.handler = async (event, context) => {
+exports.handler = async (event) => {
   const pre = preflight(event);
   if (pre) return pre;
 
@@ -123,43 +123,46 @@ exports.handler = async (event, context) => {
     });
 
     // C4: 接单通知 admin（pending → progress）
-    // 后端 fire-and-forget（用 context.waitUntil 确保 background task 在 main 函数返回后继续执行）
+    // 后端 await 同步调用：100% 可靠，前端 UI 已 closeModal 不阻塞感官
+    // 改前：context.waitUntil() — Netlify 不支持，throw error
+    // 改前：裸 fetch() — 实测丢失（38s 延迟 + 第二次完全没发出）
     if (order.status === 'pending' && body.status === 'progress') {
-      const protocol = event.headers['x-forwarded-proto'] || 'https';
-      const host = event.headers.host;
-      const authHeader = event.headers.authorization || event.headers.Authorization || '';
-      context.waitUntil(
-        fetch(`${protocol}://${host}/.netlify/functions/send-order-response-email`, {
+      try {
+        const protocol = event.headers['x-forwarded-proto'] || 'https';
+        const host = event.headers.host;
+        const authHeader = event.headers.authorization || event.headers.Authorization || '';
+        const resp = await fetch(`${protocol}://${host}/.netlify/functions/send-order-response-email`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': authHeader,
           },
           body: JSON.stringify({ orderId: body.id, action: 'accepted' }),
-        })
-          .then(r => console.log('[update-order-status] C4 trigger response:', r.status))
-          .catch(err => console.warn('[update-order-status] C4 trigger failed:', err.message))
-      );
+        });
+        console.log('[update-order-status] C4 trigger response:', resp.status);
+      } catch (err) {
+        console.warn('[update-order-status] C4 trigger failed (non-blocking):', err.message);
+      }
     }
 
     // C3: 完成通知 admin（progress → completed）
-    // 后端 fire-and-forget（用 context.waitUntil 确保 background task 在 main 函数返回后继续执行）
     if (order.status === 'progress' && body.status === 'completed') {
-      const protocol = event.headers['x-forwarded-proto'] || 'https';
-      const host = event.headers.host;
-      const authHeader = event.headers.authorization || event.headers.Authorization || '';
-      context.waitUntil(
-        fetch(`${protocol}://${host}/.netlify/functions/send-completion-email`, {
+      try {
+        const protocol = event.headers['x-forwarded-proto'] || 'https';
+        const host = event.headers.host;
+        const authHeader = event.headers.authorization || event.headers.Authorization || '';
+        const resp = await fetch(`${protocol}://${host}/.netlify/functions/send-completion-email`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': authHeader,
           },
           body: JSON.stringify({ orderId: body.id }),
-        })
-          .then(r => console.log('[update-order-status] C3 trigger response:', r.status))
-          .catch(err => console.warn('[update-order-status] C3 trigger failed:', err.message))
-      );
+        });
+        console.log('[update-order-status] C3 trigger response:', resp.status);
+      } catch (err) {
+        console.warn('[update-order-status] C3 trigger failed (non-blocking):', err.message);
+      }
     }
 
     return corsResponse(200, { data: updated });
