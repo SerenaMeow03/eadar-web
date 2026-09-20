@@ -177,20 +177,20 @@
             text-overflow: ellipsis;
         }
         /* 13 列固定宽度分配（删了指派译员，放到副行）
-         * 总宽 ~1320px · 列宽顺序：32/110/230/140/50/70/80/100/130/80/80/80/70/150 */
+         * 总宽 ~1450px · 列宽顺序：32/150/220/130/50/80/90/100/105/80/80/80/85/150 */
         .orders-table th:nth-child(1), .orders-table td:nth-child(1) { width: 32px; }   /* checkbox */
-        .orders-table th:nth-child(2), .orders-table td:nth-child(2) { width: 120px; }  /* 订单编号 */
+        .orders-table th:nth-child(2), .orders-table td:nth-child(2) { width: 150px; }  /* 订单编号：完整显示 YD2026092001 */
         .orders-table th:nth-child(3), .orders-table td:nth-child(3) { width: 220px; }  /* 项目名称 */
-        .orders-table th:nth-child(4), .orders-table td:nth-child(4) { width: 180px; }  /* 客户 */
+        .orders-table th:nth-child(4), .orders-table td:nth-child(4) { width: 130px; }  /* 客户（缩小）*/
         .orders-table th:nth-child(5), .orders-table td:nth-child(5) { width: 60px; }   /* 语言对 */
         .orders-table th:nth-child(6), .orders-table td:nth-child(6) { width: 80px; }   /* 客户字数 */
         .orders-table th:nth-child(7), .orders-table td:nth-child(7) { width: 90px; }   /* 客户单价 */
         .orders-table th:nth-child(8), .orders-table td:nth-child(8) { width: 100px; }  /* 客户金额 */
-        .orders-table th:nth-child(9), .orders-table td:nth-child(9) { width: 120px; }  /* 截止日期 */
+        .orders-table th:nth-child(9), .orders-table td:nth-child(9) { width: 105px; }  /* 截止日期（缩小）*/
         .orders-table th:nth-child(10), .orders-table td:nth-child(10) { width: 80px; } /* 订单状态 */
         .orders-table th:nth-child(11), .orders-table td:nth-child(11) { width: 80px; } /* 付款状态 */
         .orders-table th:nth-child(12), .orders-table td:nth-child(12) { width: 80px; } /* 发票状态 */
-        .orders-table th:nth-child(13), .orders-table td:nth-child(13) { width: 70px; } /* 利润率 */
+        .orders-table th:nth-child(13), .orders-table td:nth-child(13) { width: 85px; }  /* 利润率（加宽，badge 完整显示）*/
         .orders-table th:nth-child(14), .orders-table td:nth-child(14) { width: 150px; } /* 操作 */
 
         /* 项目名称（第3列）：允许换行 + 悬停 tooltip 显示全称 */
@@ -304,10 +304,19 @@
             font-weight: 600;
             color: #f5222d;
         }
-        /* 利润率三色梯度 */
-        .profit-high { color: #52c41a; font-weight: 600; }   /* ≥50% 绿 */
-        .profit-mid { color: #faad14; font-weight: 600; }    /* 30-50% 橙 */
-        .profit-low { color: #ff4d4f; font-weight: 600; }    /* <30% 红 */
+        /* 利润率三色梯度：badge 风格（背景+文字双信号，颜色一目了然） */
+        .profit-high, .profit-mid, .profit-low {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 56px;
+            text-align: center;
+        }
+        .profit-high { background: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }   /* ≥50% 绿 */
+        .profit-mid  { background: #fff7e6; color: #d46b08; border: 1px solid #ffd591; }   /* 30-50% 橙 */
+        .profit-low  { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; }   /* <30% 红 */
         .action-btns {
             display: flex;
             gap: 8px;
@@ -616,7 +625,7 @@
                         <label>语言对</label>
                         <select id="languagePair" onchange="toggleLanguagePairOther()">
                             <option value="">未指定</option>
-                            <option value="zh-en">中-英</option>
+                            <option value="zh-en" selected>中-英</option>
                             <option value="en-zh">英-中</option>
                             <option value="zh-ar">中-阿</option>
                             <option value="zh-ru">中-俄</option>
@@ -1390,7 +1399,7 @@
                     document.getElementById('projectName').value = order.project_name;
                     document.getElementById('wordCount').value = order.word_count;
                     document.getElementById('rate').value = order.rate;
-                    document.getElementById('languagePair').value = order.language_pair || '';
+                    document.getElementById('languagePair').value = order.language_pair || 'zh-en';
                     document.getElementById('deadline').value = order.deadline ? order.deadline.split('T')[0] : '';
                     document.getElementById('translatorId').value = order.translator_id;
                     document.getElementById('clientId').value = order.client_id || '';
