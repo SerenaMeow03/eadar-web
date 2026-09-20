@@ -41,6 +41,13 @@
         thead { background: #fafbfc; }
         th { padding: 14px 12px; text-align: left; font-weight: 500; color: #333; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
         td { padding: 14px 12px; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
+        /* 项目名称列（第2列）：允许换行，长内容不撑爆表格 */
+        td:nth-child(2) {
+            max-width: 320px;
+            word-wrap: break-word;
+            word-break: break-word;
+            white-space: normal;
+        }
         tbody tr { cursor: pointer; transition: background 0.2s; }
         tbody tr:hover { background: #fafbfc; }
         tbody tr:last-child td { border-bottom: none; }
@@ -269,6 +276,10 @@
         function setPaymentText(s) {
             return ({ paid: '已付款', unpaid: '待付款' })[s] || s;
         }
+        function escapeAttr(s) {
+            if (s == null) return '';
+            return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
 
         async function loadData() {
             try {
@@ -341,7 +352,7 @@
                 return `
                     <tr onclick="openOrderDetail('${o.id}')">
                         <td><strong>${o.id}</strong></td>
-                        <td>${o.project_name}</td>
+                        <td title="${escapeAttr(o.project_name)}">${o.project_name}</td>
                         <td>${o.translator_name}</td>
                         <td>${(o.word_count || 0).toLocaleString()}</td>
                         <td><strong>¥${o.client_amount || '-'}</strong></td>

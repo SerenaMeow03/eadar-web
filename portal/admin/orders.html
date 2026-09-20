@@ -173,13 +173,14 @@
             color: #333;
             white-space: nowrap;
         }
-        /* 项目名称列（第3列）：固定宽度，长内容自动省略号 */
+        /* 项目名称列（第3列）：固定 240px 允许换行，悬停显示全称 */
         .orders-table thead tr th:nth-child(3),
         .orders-table tbody tr td:nth-child(3) {
-            width: 120px;
-            max-width: 120px;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            width: 240px;
+            max-width: 240px;
+            white-space: normal;
+            word-wrap: break-word;
+            word-break: break-word;
         }
         .orders-table tr:hover {
             background: #fafafa;
@@ -760,6 +761,11 @@
         // 全量缓存（供 deleteOrder 校验 + 筛选逻辑使用）
         let allOrders = [];
 
+        function escapeAttr(s) {
+            if (s == null) return '';
+            return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
         async function renderOrders(filter = 'all') {
             const orders = await loadOrders();
             allOrders = orders; // 缓存供 G3 删除校验
@@ -828,7 +834,7 @@
                     <tr data-id="${order.id}">
                         <td><input type="checkbox" class="rowCheck" data-id="${order.id}" onchange="updateBatchBtn()"></td>
                         <td>${order.id}</td>
-                        <td>${order.project_name}</td>
+                        <td title="${escapeAttr(order.project_name)}">${order.project_name}</td>
                         <td>${clientLabel}</td>
                         <td>${translatorName}</td>
                         <td>${order.word_count?.toLocaleString() || 0}</td>
