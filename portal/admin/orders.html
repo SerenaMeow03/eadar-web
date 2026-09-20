@@ -740,7 +740,7 @@
     </div>
 
     <!-- SheetJS for Excel export (A8) -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="vendor/xlsx.full.min.js"></script>
     <script>
         // 使用 IIFE 避免全局变量污染
         (function() {
@@ -1051,7 +1051,7 @@
                     <td>${deadline}</td>
                     <td>${escapeHtml(translatorName)}</td>
                     <td><span class="status-badge status-${order.status}">${getStatusText(order.status)}</span></td>
-                    <td><span class="status-badge payment-${clientPaymentStatus}">${getPaymentStatusText(clientPaymentStatus)}</span></td>
+                    <td><span class="status-badge payment-${clientPaymentStatus}">${getClientPaymentStatusText(clientPaymentStatus)}</span></td>
                     <td><span class="status-badge invoice-${order.invoice_status || 'not_issued'}">${getInvoiceStatusText(order.invoice_status || 'not_issued')}</span></td>
                     <td class="${profitCls}">${profitText}</td>
                     <td onclick="event.stopPropagation()">
@@ -1129,6 +1129,14 @@
                 'paid': '已结算'
             };
             return statusMap[status] || '未结算';
+        }
+        // 客户付款状态文案（对客户说，已付款/未付款）
+        function getClientPaymentStatusText(status) {
+            const statusMap = {
+                'unpaid': '未付款',
+                'paid': '已付款'
+            };
+            return statusMap[status] || '未付款';
         }
 
         // 获取发票状态文本
