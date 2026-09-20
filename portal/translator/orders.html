@@ -144,24 +144,42 @@
         .orders-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
         .orders-table th {
             background: #fafafa;
-            padding: 16px 24px;
+            padding: 14px 10px;
             text-align: left;
             font-size: 14px;
             font-weight: 500;
             color: #666;
             border-bottom: 1px solid #f0f0f0;
+            white-space: nowrap;
         }
         .orders-table td {
-            padding: 16px 24px;
+            padding: 14px 10px;
             border-bottom: 1px solid #f0f0f0;
             font-size: 14px;
             color: #333;
+            white-space: nowrap;
         }
         .orders-table tr:hover {
             background: #fafafa;
+        }
+        /* 列宽分配：项目名称独占弹性宽度，其余固定 */
+        .orders-table th:nth-child(1), .orders-table td:nth-child(1) { width: 130px; } /* 订单编号 */
+        .orders-table th:nth-child(2), .orders-table td:nth-child(2) { width: auto; }  /* 项目名称（弹性） */
+        .orders-table th:nth-child(3), .orders-table td:nth-child(3) { width: 60px; }  /* 字数 */
+        .orders-table th:nth-child(4), .orders-table td:nth-child(4) { width: 80px; }  /* 费率 */
+        .orders-table th:nth-child(5), .orders-table td:nth-child(5) { width: 80px; }  /* 金额 */
+        .orders-table th:nth-child(6), .orders-table td:nth-child(6) { width: 100px; } /* 截止日期 */
+        .orders-table th:nth-child(7), .orders-table td:nth-child(7) { width: 70px; }  /* 订单状态 */
+        .orders-table th:nth-child(8), .orders-table td:nth-child(8) { width: 70px; }  /* 结算状态 */
+        .orders-table th:nth-child(9), .orders-table td:nth-child(9) { width: 100px; } /* 操作 */
+        /* 项目名称列：超长省略号 */
+        .orders-table td:nth-child(2) {
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .order-id {
             color: #667eea;
