@@ -54,9 +54,11 @@ async function handleLogin(event, requiredRole) {
   //    .eq('user_id', user.id) 强制按 auth user id 过滤，比依赖 RLS 更稳
   let extra = {};
   if (role === 'translator') {
+    // v7 修复：translators 表实际字段是 name（schema v2.sql），没有 full_name
+    // 之前误查 full_name 返回 undefined，前端 fallback 到 email 显示
     const { data: t, error: tErr } = await service
       .from('translators')
-      .select('id, status, full_name')
+      .select('id, status, name')
       .eq('auth_user_id', user.id)
       .maybeSingle();
     if (tErr) {
@@ -70,7 +72,7 @@ async function handleLogin(event, requiredRole) {
       return corsResponse(403, { error: '账号已终止，请联系管理员' });
     }
     extra.translatorId = t.id;
-    extra.fullName = t.full_name;
+    extra.fullName = t.name;
   } else if (role === 'client') {
     const { data: c, error: cErr } = await service
       .from('clients')
