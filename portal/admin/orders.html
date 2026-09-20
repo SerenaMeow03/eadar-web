@@ -1063,9 +1063,9 @@
             items.push(`<div class="sub-row-item"><span class="label">译员</span><span class="value">${escapeHtml(translator?.name || '未指派')}</span>${translator?.email ? `<span style="color:#999;font-size:12px;margin-left:4px;">${escapeHtml(translator.email)}</span>` : ''}</div>`);
             // 字数（译员侧）
             items.push(`<div class="sub-row-item"><span class="label">字数</span><span class="value">${(order.word_count || 0).toLocaleString()} 字</span></div>`);
-            // 费率（译员侧）：DB 存元/字，显示乘 1000 转成元/千字（与模板/用户录入一致）
-            const ratePerKilo = order.rate != null ? (Number(order.rate) * 1000).toFixed(0) : null;
-            items.push(`<div class="sub-row-item"><span class="label">费率</span><span class="value">${ratePerKilo != null ? '¥' + ratePerKilo + '/千字' : '—'}</span></div>`);
+            // 费率（译员侧）：DB 存元/字，与后台一致
+            const rateDisplay = order.rate != null ? `¥${Number(order.rate).toFixed(2)}/字` : null;
+            items.push(`<div class="sub-row-item"><span class="label">费率</span><span class="value">${rateDisplay || '—'}</span></div>`);
             // 结算价格（译员金额）
             items.push(`<div class="sub-row-item"><span class="label">结算价格</span><span class="value">¥${order.amount}</span></div>`);
             // 结算状态（译员）
@@ -1216,8 +1216,8 @@
                 const clientRate = showClientSide ? order.client_rate : null;
                 const clientAmount = showClientSide ? order.client_amount : null;
                 const cw = clientWordCount != null ? clientWordCount.toLocaleString() : '—';
-                // DB 存元/字，主表列宽有限，显示"×1000 + 元/千字"（与模板/副行一致）
-                const cr = clientRate != null ? `¥${(Number(clientRate) * 1000).toFixed(0)}/千字` : '—';
+                // DB 存元/字，与后台一致
+                const cr = clientRate != null ? `¥${Number(clientRate).toFixed(2)}/字` : '—';
                 const ca = clientAmount != null ? `¥${clientAmount.toLocaleString()}` : '—';
 
                 // 利润率：客户金额 - 译员金额 / 客户金额 × 100%
@@ -1645,11 +1645,11 @@
 
         // C2: 批量导入订单（前端 SheetJS 实现，0 后端改动）
         // 流程：下载模板 → 用户填好上传 → 前端解析 → 按名字查 ID → 重复检测 → 循环调 save-order
-        // 重要：模板里"单价/客户单价"列说"元/千字"，导入时前端 ÷1000 换算成元/字（与后端存储一致）
+        // 模板与后台统一用"元/字"，不做单位换算
         const IMPORT_TEMPLATE_COLS = [
-            '项目名称*', '字数*', '单价*（元/千字）', '截止日期*（YYYY-MM-DD）',
+            '项目名称*', '字数*', '单价*（元/字）', '截止日期*（YYYY-MM-DD）',
             '译员*（填名字）', '客户（填名字，可选）',
-            '客户字数（可选）', '客户单价（元/千字，可选）',
+            '客户字数（可选）', '客户单价（元/字，可选）',
             '状态（pending/progress/completed/cancelled）', '客户付款（unpaid/paid）', '译员付款（unpaid/paid）',
             '备注',
         ];
@@ -1677,11 +1677,11 @@
         function downloadImportTemplate() {
             // 用 SheetJS 生成模板（含列头 + 一行示例 + 译员/客户名字提示列）
             const headers = IMPORT_TEMPLATE_COLS;
-            // 示例数据：单价 500 元/千字（演示用，导入时会自动 ÷1000 换算）
-            const sampleRow = ['2026 Q3 高校医学论文', '5000', '500', '2026-12-31',
+            // 示例数据：单价 0.5 元/字（与后台一致，导入时不做单位换算）
+            const sampleRow = ['2026 Q3 高校医学论文', '5000', '0.5', '2026-12-31',
                 (translatorsCache && translatorsCache[0]?.name) || '译员A',
                 (clientsCache && clientsCache[0]?.company_name) || '客户A',
-                '5000', '500', 'pending', 'unpaid', 'unpaid', '示例：补登历史订单'];
+                '5000', '0.5', 'pending', 'unpaid', 'unpaid', '示例：补登历史订单'];
             const aoa = [headers, sampleRow];
 
             const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -1799,22 +1799,20 @@
                     </div>`);
 
                     if (valid) {
-                        // 关键：模板里"单价/客户单价"是元/千字，导入时 ÷1000 换成元/字（与后端存储一致）
-                        const ratePerChar = Number((rRate / 1000).toFixed(4));
-                        const clientRatePerChar = (clientRate != null && clientRate !== '')
-                            ? Number((Number(String(clientRate).trim()) / 1000).toFixed(4))
-                            : null;
+                        // 模板与后台统一"元/字"，原样存储，不做单位换算
                         importParsedRows.push({
                             project_name: pName,
                             word_count: wCount,
-                            rate: ratePerChar,
+                            rate: rRate,
                             deadline: dDate,
                             translator_id: translatorId,
                             client_id: clientId,
                             client_word_count: clientWordCount && String(clientWordCount).trim()
                                 ? Number(String(clientWordCount).trim())
                                 : null,
-                            client_rate: clientRatePerChar,
+                            client_rate: clientRate != null && String(clientRate).trim() !== ''
+                                ? Number(String(clientRate).trim())
+                                : null,
                             status: ['pending','progress','completed','cancelled'].includes(status) ? status : 'pending',
                             client_payment_status: clientPaymentStatus === 'paid' ? 'paid' : 'unpaid',
                             payment_status: paymentStatus === 'paid' ? 'paid' : 'unpaid',
