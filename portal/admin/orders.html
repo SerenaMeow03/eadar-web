@@ -906,12 +906,11 @@
             items.push(`<div class="sub-row-item"><span class="label">结算价格</span><span class="value">¥${order.amount}</span></div>`);
             // 结算状态（译员）
             items.push(`<div class="sub-row-item"><span class="label">结算状态</span><span class="status-badge payment-${translatorPaymentStatus}">${getPaymentStatusText(translatorPaymentStatus)}</span></div>`);
-            // 接单日期（status=progress/completed 时用 updated_at 近似）
-            const acceptDate = (order.status === 'progress' || order.status === 'completed')
-                ? order.updated_at : null;
+            // 接单日期（v10：直接用 accepted_at 字段，NULL 时显示 —）
+            const acceptDate = order.accepted_at;
             items.push(`<div class="sub-row-item"><span class="label">接单日期</span><span class="value">${acceptDate ? new Date(acceptDate).toLocaleString('zh-CN', { hour12: false }) : '—'}</span></div>`);
-            // 提交日期（status=completed 时用 updated_at 近似）
-            const deliverDate = order.status === 'completed' ? order.updated_at : null;
+            // 提交日期（v10：直接用 submitted_at 字段，NULL 时显示 —）
+            const deliverDate = order.submitted_at;
             items.push(`<div class="sub-row-item"><span class="label">提交日期</span><span class="value">${deliverDate ? new Date(deliverDate).toLocaleString('zh-CN', { hour12: false }) : '—'}</span></div>`);
 
             // 付款/发票按钮（移到副行，操作列不再堆叠）

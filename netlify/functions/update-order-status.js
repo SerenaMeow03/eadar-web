@@ -89,6 +89,14 @@ exports.handler = async (event) => {
       // 如果以后需要分离，再加 admin_note 字段做迁移
       updatePayload.remark = body.translator_note;
     }
+    // v10：状态机转换时写时间戳（区别于 updated_at，admin 改其他字段不刷新）
+    // 方案 A：admin 强制改单也按"完成时间"记录，不区分译员/admin
+    if (body.status === 'progress' && order.status !== 'progress') {
+      updatePayload.accepted_at = new Date().toISOString();
+    }
+    if (body.status === 'completed' && order.status !== 'completed') {
+      updatePayload.submitted_at = new Date().toISOString();
+    }
 
     // 4. 执行更新
     const { data: updated, error: updateErr } = await service
@@ -98,7 +106,7 @@ exports.handler = async (event) => {
       .select(`
         id, project_name, word_count, rate, amount, deadline,
         status, payment_status, description, remark,
-        created_at, updated_at, translator_id,
+        created_at, updated_at, translator_id, accepted_at, submitted_at,
         translators:translator_id ( id, name, email )
       `)
       .single();
