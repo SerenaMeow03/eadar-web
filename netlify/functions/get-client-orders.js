@@ -36,6 +36,7 @@ exports.handler = async (event) => {
       .from('orders')
       .select(`
         id, project_name, word_count, client_word_count, client_rate, client_amount,
+        language_pair,
         deadline, status, client_payment_status,
         invoice_status, invoice_number, invoice_date,
         created_at, updated_at,
@@ -58,6 +59,7 @@ exports.handler = async (event) => {
       client_word_count: o.client_word_count ?? o.word_count,
       client_rate: o.client_rate,
       client_amount: o.client_amount,
+      language_pair: o.language_pair,
       deadline: o.deadline,
       status: o.status,
       payment_status: o.client_payment_status,

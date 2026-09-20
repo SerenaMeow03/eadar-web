@@ -37,6 +37,7 @@ exports.handler = async (event) => {
     client_rate,         // 客户单价（可选）
     client_word_count,   // 客户字数（可选，NULL 时 fallback 到 word_count）
     client_amount,       // 客户金额（可选，不填则按 client_rate * client_word_count / 1000 自动算）
+    language_pair,       // 语言对（可选：'zh-en' / 'zh-ja' / 'zh-ko' / 'en-ja'）
   } = body;
 
   // 必填校验
@@ -61,6 +62,13 @@ exports.handler = async (event) => {
   }
   if (client_word_count !== undefined && client_word_count !== null && Number(client_word_count) < 0) {
     return corsResponse(400, { error: '客户字数不能为负数' });
+  }
+  // 语言对校验（可选，但必须是预设值或自定义字符串 ≤ 32 字符）
+  if (language_pair !== undefined && language_pair !== null && language_pair !== '') {
+    const validPairs = ['zh-en', 'zh-ja', 'zh-ko', 'en-ja', 'en-ko', 'ja-ko'];
+    if (!validPairs.includes(language_pair) && language_pair.length > 32) {
+      return corsResponse(400, { error: '非法语言对' });
+    }
   }
 
   const service = getServiceClient();
@@ -112,6 +120,8 @@ exports.handler = async (event) => {
                 ? Number(client_word_count)
                 : Number(word_count)) * client_rate).toFixed(2))
             : null),
+      // v8：语言对
+      language_pair: language_pair || null,
     };
 
     let result;
