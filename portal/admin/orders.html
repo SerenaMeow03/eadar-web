@@ -539,6 +539,7 @@
                 <span style="color: #999;">至</span>
                 <input type="date" id="dateTo" title="结束日期" style="padding: 5px 10px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px;">
                 <button class="btn btn-danger" onclick="batchDelete()" id="batchDeleteBtn" disabled style="opacity: 0.5;">🗑 批量删除（<span id="selectedCount">0</span>）</button>
+                <button class="btn btn-primary" onclick="openBatchAssignModal()" id="batchAssignBtn" disabled style="opacity: 0.5;">📤 批量派单</button>
                 <button class="btn btn-secondary" onclick="exportToExcel()" id="exportBtn">📊 导出 Excel</button>
                 <button class="btn btn-primary" onclick="openModal()">+ 登记订单</button>
             </div>
@@ -745,6 +746,40 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closePaymentModal()">取消</button>
                     <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 批量派单弹窗 -->
+    <div class="modal" id="batchAssignModal">
+        <div class="modal-content" style="max-width: 560px;">
+            <div class="modal-header">
+                <h3>批量派单</h3>
+                <button class="close-btn" onclick="closeBatchAssignModal()">&times;</button>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <p style="font-size: 13px; color: #999;">
+                    将选中的 <strong id="batchAssignCount" style="color: #1a1a2e;">0</strong> 个订单指派给同一译员，
+                    系统会向译员发送一封汇总通知邮件。
+                </p>
+            </div>
+            <form id="batchAssignForm">
+                <div class="form-group">
+                    <label>指派译员 *</label>
+                    <select id="batchAssignTranslator" required>
+                        <option value="">请选择译员</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>订单列表预览</label>
+                    <div id="batchAssignPreview" style="max-height: 240px; overflow-y: auto; padding: 12px; background: #fafafa; border-radius: 6px; font-size: 13px;">
+                        <span style="color: #999;">加载中...</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeBatchAssignModal()">取消</button>
+                    <button type="submit" class="btn btn-primary" id="batchAssignSubmitBtn">确认派单</button>
                 </div>
             </form>
         </div>
@@ -1309,11 +1344,16 @@
         function updateBatchBtn() {
             const ids = getSelectedIds();
             const btn = document.getElementById('batchDeleteBtn');
+            const assignBtn = document.getElementById('batchAssignBtn');
             const counter = document.getElementById('selectedCount');
             if (counter) counter.textContent = ids.length;
             if (btn) {
                 btn.disabled = ids.length === 0;
                 btn.style.opacity = ids.length === 0 ? '0.5' : '1';
+            }
+            if (assignBtn) {
+                assignBtn.disabled = ids.length === 0;
+                assignBtn.style.opacity = ids.length === 0 ? '0.5' : '1';
             }
             // 同步 master checkbox 状态
             const all = document.querySelectorAll('.rowCheck');
@@ -1364,6 +1404,114 @@
             }
         }
         window.batchDelete = batchDelete;
+
+        // C1: 批量派单
+        async function openBatchAssignModal() {
+            const ids = getSelectedIds();
+            if (!ids.length) return;
+
+            const modal = document.getElementById('batchAssignModal');
+            document.getElementById('batchAssignCount').textContent = ids.length;
+
+            // 复用 loadTranslatorOptions 填充下拉
+            await loadTranslatorOptions();
+            document.getElementById('batchAssignTranslator').value = '';
+
+            // 预览：要派的订单简表（从 allOrders 缓存读）
+            const preview = document.getElementById('batchAssignPreview');
+            const lines = ids.map(id => {
+                const o = allOrders.find(x => x.id === id);
+                if (!o) return `<div>${id}</div>`;
+                const lang = LANGS[o.language_pair] || '—';
+                return `<div style="padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
+                    <span style="font-family: monospace; color: #666;">${o.id}</span>
+                    <span style="color: #333;">${escapeHtml(o.project_name)}</span>
+                    <span style="color: #999; font-size: 12px;">[${lang}]</span>
+                    <span style="color: #cf1322; float: right;">¥${o.amount}</span>
+                </div>`;
+            }).join('');
+            preview.innerHTML = lines || '<span style="color: #999;">无</span>';
+
+            modal.classList.add('active');
+        }
+        window.openBatchAssignModal = openBatchAssignModal;
+
+        function closeBatchAssignModal() {
+            document.getElementById('batchAssignModal').classList.remove('active');
+        }
+        window.closeBatchAssignModal = closeBatchAssignModal;
+
+        async function batchAssign(e) {
+            e.preventDefault();
+            const ids = getSelectedIds();
+            const translatorId = document.getElementById('batchAssignTranslator').value;
+            if (!ids.length || !translatorId) return;
+
+            const submitBtn = document.getElementById('batchAssignSubmitBtn');
+            const original = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '派单中...';
+
+            try {
+                // 1. 批量更新 translator_id
+                const result = await apiCall('batch-assign-orders', {
+                    method: 'POST',
+                    body: JSON.stringify({ orderIds: ids, translatorId }),
+                });
+                const data = result?.data || result || {};
+                const assignedCount = (data.assigned || []).length;
+                const failedCount = (data.failed || []).length;
+                const translatorEmail = data.translator?.email;
+
+                if (assignedCount === 0) {
+                    showToast(`派单失败：全部 ${failedCount} 条订单被跳过`, 'error');
+                    return;
+                }
+
+                // 2. 触发一封汇总通知邮件给译员
+                const assignedIds = data.assigned;
+                if (translatorEmail && assignedIds.length > 0) {
+                    try {
+                        const emailResult = await apiCall('send-batch-order-email', {
+                            method: 'POST',
+                            body: JSON.stringify({ orderIds: assignedIds }),
+                        });
+                        const ed = emailResult?.data || emailResult || {};
+                        if (ed.skipped) {
+                            showToast(`已派 ${assignedCount} 条订单（译员未开启邮件通知，未发送）`, 'success');
+                        } else {
+                            showToast(`已派 ${assignedCount} 条订单，汇总邮件已发给译员`, 'success');
+                        }
+                    } catch (emailErr) {
+                        console.warn('send-batch-order-email failed:', emailErr);
+                        showToast(`已派 ${assignedCount} 条订单，但邮件发送失败：${emailErr.message}`, 'error');
+                    }
+                } else {
+                    showToast(`已派 ${assignedCount} 条订单`, 'success');
+                }
+
+                if (failedCount > 0) {
+                    setTimeout(() => showToast(`另有 ${failedCount} 条被跳过（已完成/已取消）`, 'error'), 500);
+                }
+
+                closeBatchAssignModal();
+                // 清空所有勾选
+                document.querySelectorAll('.rowCheck:checked').forEach(cb => { cb.checked = false; });
+                const master = document.getElementById('selectAllCheckbox');
+                if (master) master.checked = false;
+                updateBatchBtn();
+                await renderOrders(getCurrentFilter());
+            } catch (e) {
+                showToast('批量派单失败: ' + e.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = original;
+            }
+        }
+        window.batchAssign = batchAssign;
+
+        // 绑定表单提交
+        document.getElementById('batchAssignForm').addEventListener('submit', batchAssign);
 
         // 打开弹窗
         async function openModal(orderId = null) {

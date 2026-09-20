@@ -249,12 +249,81 @@ ${isAccepted ? '译员已开始翻译，请关注交付进度。' : '该订单�
 }
 
 // ============================================================
+// 模板 4：批量派单通知（admin 一次派多个订单 → 一封汇总邮件给译员）
+// ============================================================
+function buildBatchOrderAssignedEmail({ orders, translator, smtpUser }) {
+  const translatorName = translator?.name || '译员';
+  const translatorEmail = translator?.email;
+  const count = orders.length;
+
+  const subject = `【${count} 个新订单待接单】谊达翻译批量派单通知`;
+
+  // 订单表格行（每条一行）
+  const orderRowsHtml = orders.map(o => `
+    <tr>
+      <td style="padding: 10px; font-weight: 600; font-family: monospace;">${escapeHtml(o.id)}</td>
+      <td style="padding: 10px;">${escapeHtml(o.project_name)}</td>
+      <td style="padding: 10px;">${escapeHtml(fmtLang(o.language_pair))}</td>
+      <td style="padding: 10px; text-align: right;">${(o.word_count || 0).toLocaleString()} 字</td>
+      <td style="padding: 10px; text-align: right; color: #cf1322; font-weight: 600;">¥${escapeHtml(o.amount)}</td>
+      <td style="padding: 10px; color: #fa8c16; font-weight: 600;">${fmtDate(o.deadline)}</td>
+    </tr>
+  `).join('');
+
+  const orderRowsText = orders.map(o =>
+    `  ${o.id} | ${o.project_name} | ${fmtLang(o.language_pair)} | ${o.word_count}字 | ¥${o.amount} | 截止 ${fmtDate(o.deadline)}`
+  ).join('\n');
+
+  const html = `
+    ${WRAPPER_OPEN}
+    <h2 style="color: #1a1a2e;">您好 ${escapeHtml(translatorName)}，</h2>
+    <p>管理员刚刚给您一次性指派了 <strong style="color: #cf1322;">${count}</strong> 个翻译订单，请尽快登录系统处理：</p>
+    <table style="width: 100%; border-collapse: collapse; background: #fafafa; border-radius: 8px; margin: 20px 0; font-size: 13px;">
+      <thead>
+        <tr style="background: #f0f0f0;">
+          <th style="padding: 10px; text-align: left;">订单号</th>
+          <th style="padding: 10px; text-align: left;">项目名称</th>
+          <th style="padding: 10px; text-align: left;">语言对</th>
+          <th style="padding: 10px; text-align: right;">字数</th>
+          <th style="padding: 10px; text-align: right;">金额</th>
+          <th style="padding: 10px; text-align: left;">截止日期</th>
+        </tr>
+      </thead>
+      <tbody>${orderRowsHtml}</tbody>
+    </table>
+    <p style="color: #666; font-size: 13px;">💡 提示：登录后逐个点击「接单」按钮即可开始翻译。</p>
+    ${CTA_BUTTON('https://admin.eadartrans.com/translator/login.html', '立即登录接单')}
+    ${FOOTER()}
+    ${WRAPPER_CLOSE}
+  `;
+
+  const text = `您好 ${translatorName}，
+
+管理员一次性给您派了 ${count} 个新订单：
+
+${orderRowsText}
+
+请尽快登录 https://admin.eadartrans.com/translator/login.html 处理。
+
+谊达翻译系统`;
+
+  return {
+    subject,
+    html,
+    text,
+    to: translatorEmail,
+    fromName: '谊达翻译',
+  };
+}
+
+// ============================================================
 // 模板列表（便于未来扩展）
 // ============================================================
 const TEMPLATES = {
   ORDER_ASSIGNED: buildOrderAssignedEmail,
   ORDER_COMPLETED: buildOrderCompletedEmail,
   ORDER_RESPONSE: buildOrderResponseEmail,
+  BATCH_ORDER_ASSIGNED: buildBatchOrderAssignedEmail,
 };
 
 module.exports = {
@@ -262,4 +331,5 @@ module.exports = {
   buildOrderAssignedEmail,
   buildOrderCompletedEmail,
   buildOrderResponseEmail,
+  buildBatchOrderAssignedEmail,
 };
