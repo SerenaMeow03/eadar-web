@@ -897,10 +897,11 @@
         window.toggleSubRow = toggleSubRow;
 
         async function renderOrders(filter = 'all') {
-            const orders = await loadOrders();
-            allOrders = orders; // 缓存供 G3 删除校验
-            const translators = await loadTranslators();
             const tbody = document.getElementById('ordersTableBody');
+            try {
+                const orders = await loadOrders();
+                allOrders = orders; // 缓存供 G3 删除校验
+                const translators = await loadTranslators();
 
             // G7: 搜索 + G6: 日期范围 + 状态筛选
             const search = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
@@ -1034,6 +1035,19 @@
             const selAllEl = document.getElementById('selectAllCheckbox');
             if (selAllEl) selAllEl.checked = false;
             updateBatchBtn();
+            } catch (e) {
+                console.error('renderOrders error:', e);
+                // 关键修复：失败时 tbody 永远卡在"加载中..."，必须显式覆盖
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="15" class="empty-state" style="color:#cf1322;">
+                            <div class="empty-state-icon">⚠️</div>
+                            <p>加载订单失败：${escapeHtml(e.message || String(e))}</p>
+                            <p style="font-size:12px;color:#888;margin-top:8px;">请确认 v7 / v8 SQL 已在 Supabase 执行；打开浏览器控制台查看详情</p>
+                        </td>
+                    </tr>
+                `;
+            }
         }
 
         // 财务汇总 - 纯前端聚合
