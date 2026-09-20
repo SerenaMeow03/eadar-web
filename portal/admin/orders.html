@@ -965,7 +965,7 @@
             if (search) {
                 filteredOrders = filteredOrders.filter(o => {
                     const haystack = [
-                        o.id, o.project_name, o.client_name, o.translator_name,
+                        o.id, o.project_name, o.client_name_snapshot, o.translator_name,
                         (o.clients?.contact_name || ''), (o.clients?.company_name || ''),
                     ].join(' ').toLowerCase();
                     return haystack.includes(search);
@@ -1036,12 +1036,14 @@
                     else if (hoursLeft < 48) deadlineColor = '#faad14'; // 橙
                 }
                 const client = order.client_id ? clientsMap[order.client_id] : null;
-                // 客户 join 失败但 client_id 还在 → 显示 client_id + 红 tag「客户已删除」，保留线索
+                // v9：客户 join 失败时优先用 snapshot，没 snapshot 才退回 UUID 前 8 位
                 const clientLost = order.client_id && !client;
                 const clientLabel = client
                     ? (escapeHtml(client.company_name ? client.company_name : client.contact_name))
                     : (clientLost
-                        ? `<span style="color:#cf1322;font-size:11px;">客户已删除</span><br><span style="color:#999;font-size:10px;font-family:monospace;">${String(order.client_id).slice(0, 8)}…</span>`
+                        ? (order.client_name_snapshot
+                            ? `${escapeHtml(order.client_name_snapshot)} <span style="color:#cf1322;font-size:11px;margin-left:4px;">[已删除]</span>`
+                            : `<span style="color:#cf1322;font-size:11px;">客户已删除</span><br><span style="color:#999;font-size:10px;font-family:monospace;">${String(order.client_id).slice(0, 8)}…</span>`)
                         : '—');
 
                 // v8：客户三件套 —— join 失败但数字还在，依然显示数字（保留用户填的数据）
@@ -1240,7 +1242,7 @@
                     const c = o.client_id ? cMap[o.client_id] : null;
                     const clientLabel = c
                         ? (c.company_name || c.contact_name)
-                        : (o.client_name || '-');
+                        : (o.client_name_snapshot || '');
                     return {
                         '订单编号': o.id,
                         '项目名称': o.project_name,

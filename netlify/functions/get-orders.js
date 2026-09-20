@@ -25,7 +25,7 @@ exports.handler = async (event) => {
         status, payment_status, client_payment_status,
         invoice_status, invoice_number, invoice_date,
         client_id, client_rate, client_word_count, client_amount,
-        language_pair,
+        language_pair, client_name_snapshot,
         description, remark,
         created_at, updated_at, translator_id,
         translators:translator_id ( id, name, email ),

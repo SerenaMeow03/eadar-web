@@ -73,12 +73,18 @@ exports.handler = async (event) => {
 
   const service = getServiceClient();
 
+  let clientNameSnapshot = null;
   if (client_id) {
-    // 验证客户存在
-    const { data: c } = await service.from('clients').select('id').eq('id', client_id).single();
+    // 验证客户存在 + snapshot 客户名（v9：客户被删仍能展示原名）
+    const { data: c } = await service
+      .from('clients')
+      .select('id, company_name, contact_name')
+      .eq('id', client_id)
+      .single();
     if (!c) {
       return corsResponse(400, { error: '客户不存在' });
     }
+    clientNameSnapshot = (c.company_name || c.contact_name || '').trim() || null;
   }
 
   try {
@@ -122,6 +128,8 @@ exports.handler = async (event) => {
             : null),
       // v8：语言对
       language_pair: language_pair || null,
+      // v9：客户名快照（写时固化，客户被删仍可追溯）
+      client_name_snapshot: clientNameSnapshot,
     };
 
     let result;
