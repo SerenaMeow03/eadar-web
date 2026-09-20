@@ -16,6 +16,15 @@ const escapeHtml = (s) => String(s == null ? '' : s)
 const fmtDateTime = (d) => d ? new Date(d).toLocaleString('zh-CN', { hour12: false }) : '-';
 const fmtDate = (d) => d ? String(d).slice(0, 10) : '未指定';
 
+// 语言对显示映射（与 admin/orders.html LANGS 对齐）
+const LANG_LABELS = {
+  'zh-en': '中→英', 'en-zh': '英→中',
+  'zh-ja': '中→日', 'en-ja': '英→日',
+  'zh-ko': '中→韩', 'en-ko': '英→韩',
+  'zh-ar': '中→阿', 'zh-ru': '中→俄',
+};
+const fmtLang = (code) => LANG_LABELS[code] || code || '未指定';
+
 // 共用样式（HTML 邮件用）
 const WRAPPER_OPEN = `<div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">`;
 const WRAPPER_CLOSE = `</div>`;
@@ -33,6 +42,7 @@ function buildOrderAssignedEmail({ order, translator, smtpUser }) {
   const translatorName = translator?.name || '译员';
   const translatorEmail = translator?.email;
   const deadlineStr = fmtDate(order.deadline);
+  const langStr = fmtLang(order.language_pair);
 
   const subject = `【新订单待接单】${order.project_name}（订单号 ${order.id}）`;
 
@@ -43,6 +53,7 @@ function buildOrderAssignedEmail({ order, translator, smtpUser }) {
     <table ${TABLE_STYLE}>
       <tr><td ${TD_LABEL}>订单号</td><td ${TD_VALUE_BOLD}>${escapeHtml(order.id)}</td></tr>
       <tr><td ${TD_LABEL}>项目名称</td><td ${TD_VALUE_BOLD}>${escapeHtml(order.project_name)}</td></tr>
+      <tr><td ${TD_LABEL}>语言对</td><td ${TD_VALUE_BOLD}>${escapeHtml(langStr)}</td></tr>
       <tr><td ${TD_LABEL}>字数</td><td ${TD_VALUE}>${(order.word_count || 0).toLocaleString()} 字</td></tr>
       <tr><td ${TD_LABEL}>单价</td><td ${TD_VALUE}>¥${escapeHtml(order.rate)} / 千字</td></tr>
       <tr><td ${TD_LABEL}>订单总金额</td><td style="padding: 10px; font-weight: 600; color: #cf1322;">¥${escapeHtml(order.amount)}</td></tr>
@@ -61,6 +72,7 @@ function buildOrderAssignedEmail({ order, translator, smtpUser }) {
 
 订单号：${order.id}
 项目名称：${order.project_name}
+语言对：${langStr}
 字数：${order.word_count}
 单价：¥${order.rate}/千字
 订单金额：¥${order.amount}
@@ -91,6 +103,7 @@ function buildOrderCompletedEmail({ order, translator, client, smtpUser }) {
     : '未关联客户';
   const deadlineStr = fmtDate(order.deadline);
   const completedAt = fmtDateTime(order.updated_at);
+  const langStr = fmtLang(order.language_pair);
   // v7：客户字数与译员字数分开；客户未填时 fallback 到 word_count
   const clientWordCount = order.client_word_count ?? order.word_count ?? 0;
   const clientRate = order.client_rate;
@@ -105,6 +118,7 @@ function buildOrderCompletedEmail({ order, translator, client, smtpUser }) {
     <table ${TABLE_STYLE}>
       <tr><td ${TD_LABEL}>订单号</td><td ${TD_VALUE_BOLD}>${escapeHtml(order.id)}</td></tr>
       <tr><td ${TD_LABEL}>项目名称</td><td ${TD_VALUE_BOLD}>${escapeHtml(order.project_name)}</td></tr>
+      <tr><td ${TD_LABEL}>语言对</td><td ${TD_VALUE}>${escapeHtml(langStr)}</td></tr>
       <tr><td ${TD_LABEL}>客户</td><td ${TD_VALUE}>${escapeHtml(clientLabel)}</td></tr>
       <tr><td ${TD_LABEL}>译员</td><td ${TD_VALUE}>${escapeHtml(translatorName)}</td></tr>
       <tr><td ${TD_LABEL}>字数（译员）</td><td ${TD_VALUE}>${(order.word_count || 0).toLocaleString()} 字</td></tr>

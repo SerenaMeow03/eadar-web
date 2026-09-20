@@ -48,6 +48,7 @@ exports.handler = async (event) => {
       .from('orders')
       .select(`
         id, project_name, word_count, rate, amount, deadline, status, description,
+        language_pair,
         created_at, remark,
         translators:translator_id ( id, name, email )
       `)
