@@ -830,7 +830,7 @@
                 });
                 showToast('译员账号创建成功！', 'success');
                 closeModal();
-                alert('译员账号创建成功！\n\n业务ID: ' + result.id + '\n邮箱: ' + email + '\n密码: ' + password + (phone ? '\n手机: ' + phone : '') + (languages.length ? '\n语种: ' + languages.join(', ') : '') + (specialties.length ? '\n专业领域: ' + specialties.join(', ') : '') + '\n\n请复制以上信息发送给译员。');
+                alert('译员账号创建成功！\n\n业务ID: ' + result.data.id + '\n邮箱: ' + email + '\n密码: ' + password + (phone ? '\n手机: ' + phone : '') + (languages.length ? '\n语种: ' + languages.join(', ') : '') + (specialties.length ? '\n专业领域: ' + specialties.join(', ') : '') + '\n\n请复制以上信息发送给译员。');
                 cachedTranslators = null;  // 创建后强制刷新
                 await renderTranslators();
             } catch (error) {
