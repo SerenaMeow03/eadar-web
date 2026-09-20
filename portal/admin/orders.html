@@ -567,8 +567,9 @@
                 <span class="label">毛利率</span>
                 <span class="value"><span id="sumProfitRate">0%</span></span>
             </div>
-            <div class="finance-item" style="margin-left: auto; color: #999; font-size: 12px;">
+            <div class="finance-item" style="margin-left: auto; color: #999; font-size: 12px; display: flex; align-items: center; gap: 12px;">
                 <span>（基于当前筛选，<span id="sumCount">0</span> 条订单）</span>
+                <button class="btn btn-secondary" onclick="openFinancialReportModal()" style="padding: 6px 12px; font-size: 13px;">📊 财务报表</button>
             </div>
         </div>
 
@@ -813,6 +814,25 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeImportModal()">取消</button>
                 <button type="button" class="btn btn-primary" id="importSubmitBtn" onclick="confirmImport()" disabled style="opacity: 0.5;">确认导入（<span id="importRowCount">0</span> 条）</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 财务报表弹窗 -->
+    <div class="modal" id="financialReportModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>财务报表</h3>
+                <button class="close-btn" onclick="closeFinancialReportModal()">&times;</button>
+            </div>
+            <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+                <label style="font-size: 14px;">统计月份：</label>
+                <input type="month" id="reportMonth" style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 14px;">
+                <button class="btn btn-primary" onclick="generateFinancialReport()" id="reportGenBtn" style="padding: 6px 16px;">生成报表</button>
+                <span style="color: #999; font-size: 12px;">（按 created_at 月份统计）</span>
+            </div>
+            <div id="financialReportContent" style="max-height: 500px; overflow-y: auto;">
+                <div style="padding: 40px; text-align: center; color: #999;">点击"生成报表"开始统计</div>
             </div>
         </div>
     </div>
@@ -1736,6 +1756,161 @@
             }
         }
         window.confirmImport = confirmImport;
+
+        // C3: 财务报表（按月统计）
+        function openFinancialReportModal() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            document.getElementById('reportMonth').value = `${yyyy}-${mm}`;
+            document.getElementById('financialReportContent').innerHTML =
+                '<div style="padding: 40px; text-align: center; color: #999;">点击"生成报表"开始统计</div>';
+            document.getElementById('financialReportModal').classList.add('active');
+        }
+        window.openFinancialReportModal = openFinancialReportModal;
+
+        function closeFinancialReportModal() {
+            document.getElementById('financialReportModal').classList.remove('active');
+        }
+        window.closeFinancialReportModal = closeFinancialReportModal;
+
+        async function generateFinancialReport() {
+            const month = document.getElementById('reportMonth').value;
+            if (!month) {
+                showToast('请选择月份', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('reportGenBtn');
+            const original = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '统计中...';
+
+            const container = document.getElementById('financialReportContent');
+            container.innerHTML = '<div style="padding: 40px; text-align: center; color: #999;">统计中...</div>';
+
+            try {
+                const result = await apiCall('financial-report?month=' + month);
+                const data = result?.data || result || {};
+                renderFinancialReport(data);
+            } catch (e) {
+                container.innerHTML = `<div style="padding: 40px; text-align: center; color: #cf1322;">统计失败：${e.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = original;
+            }
+        }
+        window.generateFinancialReport = generateFinancialReport;
+
+        const LANG_LABELS_REPORT = {
+            'zh-en': '中英', 'en-zh': '英中',
+            'zh-ja': '中日', 'en-ja': '英日',
+            'zh-ko': '中韩', 'en-ko': '英韩',
+            'zh-ar': '中阿', 'zh-ru': '中俄',
+        };
+
+        function profitClass(rate) {
+            if (rate == null || isNaN(rate)) return '';
+            if (rate >= 50) return 'profit-high';
+            if (rate >= 30) return 'profit-mid';
+            return 'profit-low';
+        }
+
+        function profitBadge(rate) {
+            const cls = profitClass(rate);
+            const text = rate != null ? rate.toFixed(1) + '%' : '—';
+            return cls ? `<span class="${cls}">${text}</span>` : text;
+        }
+
+        function renderFinancialReport(data) {
+            const container = document.getElementById('financialReportContent');
+            const s = data.summary;
+            const bs = s.byStatus || {};
+
+            const html = `
+                <div style="margin-bottom: 20px;">
+                    <div style="font-size: 18px; font-weight: 600; color: #1a1a2e; margin-bottom: 12px;">
+                        ${data.month} 财务月报（${data.range.from} ~ ${new Date(new Date(data.range.to).getTime() - 86400000).toISOString().slice(0,10)}）
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+                        <div class="finance-item" style="background: #fafafa; padding: 12px; border-radius: 8px;">
+                            <span class="label">总订单数</span>
+                            <span class="value" style="color: #1a1a2e;">${s.total}</span>
+                        </div>
+                        <div class="finance-item" style="background: #fafafa; padding: 12px; border-radius: 8px;">
+                            <span class="label">客户金额</span>
+                            <span class="value" style="color: #1a1a2e;">¥${fmtMoney(s.client_revenue)}</span>
+                        </div>
+                        <div class="finance-item" style="background: #fafafa; padding: 12px; border-radius: 8px;">
+                            <span class="label">译员金额</span>
+                            <span class="value" style="color: #1a1a2e;">¥${fmtMoney(s.translator_payable)}</span>
+                        </div>
+                        <div class="finance-item" style="background: #fafafa; padding: 12px; border-radius: 8px;">
+                            <span class="label">毛利率</span>
+                            <span class="value">${profitBadge(s.profit_rate)}</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 12px; padding: 10px; background: #f0f7ff; border-radius: 6px; font-size: 13px; color: #666;">
+                        💰 毛利润 <strong style="color: #cf1322;">¥${fmtMoney(s.gross_profit)}</strong> = 客户金额 ¥${fmtMoney(s.client_revenue)} − 译员金额 ¥${fmtMoney(s.translator_payable)}
+                        <span style="margin-left: 12px;">· 待收 ¥${fmtMoney(s.client_receivable)}</span>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 13px; color: #999;">
+                        状态分布：待处理 ${bs.pending || 0} · 进行中 ${bs.progress || 0} · 已完成 ${bs.completed || 0} · 已取消 ${bs.cancelled || 0}
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <div style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #333;">📊 按语言对</div>
+                    ${renderTable(['语言对', '订单数', '客户金额', '译员金额', '毛利率'],
+                        (data.byLanguage || []).map(r => [
+                            LANG_LABELS_REPORT[r.lang] || r.lang,
+                            r.total,
+                            '¥' + fmtMoney(r.client_revenue),
+                            '¥' + fmtMoney(r.translator_payable),
+                            profitBadge(r.profit_rate),
+                        ]))}
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <div style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #333;">👤 按译员</div>
+                    ${renderTable(['译员', '订单数', '应付金额'],
+                        (data.byTranslator || []).map(r => [
+                            escapeHtml(r.name),
+                            r.total,
+                            '¥' + fmtMoney(r.translator_payable),
+                        ]))}
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <div style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #333;">🏢 按客户</div>
+                    ${renderTable(['客户', '订单数', '客户金额', '待收'],
+                        (data.byClient || []).map(r => [
+                            escapeHtml(r.name),
+                            r.total,
+                            '¥' + fmtMoney(r.client_revenue),
+                            r.client_receivable > 0 ? `<span style="color: #fa8c16;">¥${fmtMoney(r.client_receivable)}</span>` : '—',
+                        ]))}
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        function renderTable(headers, rows) {
+            if (rows.length === 0) {
+                return '<div style="padding: 16px; text-align: center; color: #999; background: #fafafa; border-radius: 6px;">无数据</div>';
+            }
+            return `<table style="width: 100%; border-collapse: collapse; font-size: 13px; background: #fafafa; border-radius: 6px; overflow: hidden;">
+                <thead>
+                    <tr style="background: #f0f0f0;">${headers.map(h => `<th style="padding: 8px; text-align: right; border-bottom: 1px solid #e0e0e0;">${h}</th>`).join('')}</tr>
+                </thead>
+                <tbody>${rows.map(row => `<tr>${row.map((c, i) => `<td style="padding: 8px; text-align: ${i === 0 ? 'left' : 'right'}; border-bottom: 1px solid #f0f0f0;">${c}</td>`).join('')}</tr>`).join('')}</tbody>
+            </table>`;
+        }
+
+        function fmtMoney(n) {
+            if (n == null) return '0';
+            return Number(n).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
 
         // 打开弹窗
         async function openModal(orderId = null) {
