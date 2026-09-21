@@ -1962,6 +1962,38 @@
         }
         window.downloadImportTemplate = downloadImportTemplate;
 
+        // 归一化 Excel 导入日期为 YYYY-MM-DD
+        // 输入可能是 Date 对象（datetime 单元格）/ YYYY/MM/DD / M/D/YYYY / Excel 序列号 / 已经是 YYYY-MM-DD
+        function normalizeImportDate(input) {
+            if (input == null || input === '') return '';
+            // 1) Date 对象 — Excel datetime 单元格
+            if (input instanceof Date && !isNaN(input.getTime())) {
+                const y = input.getFullYear();
+                const m = String(input.getMonth() + 1).padStart(2, '0');
+                const d = String(input.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+            const s = String(input).trim();
+            if (!s) return '';
+            // 2) YYYY-MM-DD / YYYY-M-D（已正确）
+            let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+            if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+            // 3) YYYY/MM/DD（Excel 默认显示）
+            m = s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+            if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+            // 4) M/D/YYYY（少数美式 Excel）
+            m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+            if (m) return `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+            // 5) Excel 序列号（罕见，但保底）
+            if (/^\d+(\.\d+)?$/.test(s) && window.XLSX && XLSX.SSF && XLSX.SSF.parse_date_code) {
+                const dc = XLSX.SSF.parse_date_code(parseFloat(s));
+                if (dc && dc.y) return `${dc.y}-${String(dc.m).padStart(2,'0')}-${String(dc.d).padStart(2,'0')}`;
+            }
+            // 仍无法解析：保留原值，校验会报错提示用户
+            return s;
+        }
+        window.normalizeImportDate = normalizeImportDate;
+
         async function handleImportFile(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1971,8 +2003,7 @@
             // 确保译员/客户缓存已就绪（懒加载，可能 openImportModal 时还没好）
             await Promise.all([loadTranslators(), loadClients()]);
 
-            try {
-                const data = await file.arrayBuffer();
+            try {                const data = await file.arrayBuffer();
                 const wb = XLSX.read(data, { type: 'array' });
                 const ws = wb.Sheets[wb.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
@@ -2008,13 +2039,13 @@
                     const pName = projectName != null ? String(projectName).trim() : '';
                     const wCount = wordCount != null && wordCount !== '' ? Number(String(wordCount).trim()) : NaN;
                     const rRate = rate != null && rate !== '' ? Number(String(rate).trim()) : NaN;
-                    const dDate = deadline != null ? String(deadline).trim() : '';
+                    const dDate = normalizeImportDate(deadline);  // 归一化：Date 对象 / YYYY/MM/DD / M/D/YYYY / 序列号 → YYYY-MM-DD
 
                     if (!pName) errors.push('项目名称空');
                     if (!Number.isFinite(wCount) || wCount <= 0) errors.push(`字数无效"${wordCount}"`);
                     if (!Number.isFinite(rRate) || rRate <= 0) errors.push(`单价无效"${rate}"`);
                     if (!dDate) errors.push('截止日期空');
-                    else if (!/^\d{4}-\d{2}-\d{2}/.test(dDate)) errors.push(`截止日期格式应为 YYYY-MM-DD"${dDate}"`);
+                    else if (!/^\d{4}-\d{2}-\d{2}$/.test(dDate)) errors.push(`截止日期格式无法识别"${deadline}"（应是 YYYY-MM-DD 或 YYYY/MM/DD）`);
 
                     // 按名字查译员 ID
                     let translatorId = null;
@@ -2058,9 +2089,14 @@
                     const bg = valid ? '#f6ffed' : '#fff1f0';
                     const statusIcon = valid ? '✅' : '❌';
                     const statusText = valid ? '可导入' : errors.join(' / ');
+                    // 日期归一化提示：用户输入了 YYYY/MM/DD 或日期对象时，自动转成 YYYY-MM-DD
+                    const rawDeadlineStr = deadline instanceof Date ? deadline.toISOString().slice(0,10) : String(deadline || '');
+                    const deadlineHint = dDate && rawDeadlineStr && rawDeadlineStr !== dDate
+                        ? `<span style="color:#096dd9;font-size:11px;margin-left:6px;">📅 ${escapeHtml(rawDeadlineStr)} → ${escapeHtml(dDate)}</span>`
+                        : '';
 
                     previewLines.push(`<div style="background: ${bg}; padding: 6px 8px; margin-bottom: 4px; border-radius: 4px;">
-                        <strong>${statusIcon} 第${i + 2}行：</strong>${escapeHtml(pName || '(空)')}
+                        <strong>${statusIcon} 第${i + 2}行：</strong>${escapeHtml(pName || '(空)')}${deadlineHint}
                         <span style="color: #999; font-size: 12px; margin-left: 8px;">${statusText}</span>
                     </div>`);
 
