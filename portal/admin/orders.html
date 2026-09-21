@@ -1692,6 +1692,9 @@
 
                 // 刷新列表
                 await renderOrders(getCurrentFilter());
+                // 成功路径也要恢复按钮（之前漏了，按钮会卡在"删除中..."）
+                btn.textContent = original;
+                updateBatchBtn();  // 按选中数量自动启用/禁用（renderOrders 后勾选已清空，按钮会保持禁用）
             } catch (e) {
                 showToast('批量删除失败: ' + e.message, 'error');
                 btn.disabled = false;
