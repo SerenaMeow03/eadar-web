@@ -248,8 +248,8 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        /* 13 列固定宽度分配（删了指派译员，放到副行）
-         * 总宽 ~1450px · 列宽顺序：32/150/220/130/50/80/90/100/105/80/80/80/85/150 */
+        /* 14 列固定宽度分配（删了指派译员，放到副行 + 加风险标签列）
+         * 总宽 ~1560px · 列宽顺序：32/150/220/130/50/80/90/100/105/80/80/80/85/110/150 */
         .orders-table th:nth-child(1), .orders-table td:nth-child(1) { width: 32px; }   /* checkbox */
         .orders-table th:nth-child(2), .orders-table td:nth-child(2) { width: 150px; }  /* 订单编号：完整显示 YD2026092001 */
         .orders-table th:nth-child(3), .orders-table td:nth-child(3) { width: 220px; }  /* 项目名称 */
@@ -262,8 +262,9 @@
         .orders-table th:nth-child(10), .orders-table td:nth-child(10) { width: 80px; } /* 订单状态 */
         .orders-table th:nth-child(11), .orders-table td:nth-child(11) { width: 80px; } /* 付款状态 */
         .orders-table th:nth-child(12), .orders-table td:nth-child(12) { width: 80px; } /* 发票状态 */
-        .orders-table th:nth-child(13), .orders-table td:nth-child(13) { width: 85px; }  /* 利润率（加宽，badge 完整显示）*/
-        .orders-table th:nth-child(14), .orders-table td:nth-child(14) { width: 150px; } /* 操作 */
+        .orders-table th:nth-child(13), .orders-table td:nth-child(13) { width: 85px; }  /* 利润率 */
+        .orders-table th:nth-child(14), .orders-table td:nth-child(14) { width: 110px; } /* 风险标签（新增）*/
+        .orders-table th:nth-child(15), .orders-table td:nth-child(15) { width: 150px; } /* 操作 */
 
         /* 项目名称（第3列）：允许换行 + 悬停 tooltip 显示全称 */
         .orders-table td:nth-child(3) {
@@ -389,6 +390,30 @@
         .profit-high { background: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }   /* ≥50% 绿 */
         .profit-mid  { background: #fff7e6; color: #d46b08; border: 1px solid #ffd591; }   /* 30-50% 橙 */
         .profit-low  { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; }   /* <30% 红 */
+        /* 风险预警标签（任务 #2） */
+        .risk-cell { display: flex; flex-wrap: wrap; gap: 4px; }
+        .risk-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            line-height: 1.4;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .risk-warning { background: #fff7e6; color: #d46b08; border: 1px solid #ffd591; }
+        .risk-danger  { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; }
+        .risk-info    { background: #e6f7ff; color: #096dd9; border: 1px solid #91d5ff; }
+        /* 状态时间线（任务 #1） */
+        .timeline { padding: 12px 0 12px 8px; }
+        .timeline-item { position: relative; padding-left: 24px; padding-bottom: 14px; border-left: 2px solid #e8e8e8; margin-left: 6px; }
+        .timeline-item:last-child { border-left-color: transparent; padding-bottom: 0; }
+        .timeline-dot { position: absolute; left: -7px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: #1a1a2e; border: 2px solid #fff; box-shadow: 0 0 0 2px #1a1a2e; }
+        .timeline-dot.success { background: #52c41a; box-shadow: 0 0 0 2px #52c41a; }
+        .timeline-dot.warn    { background: #faad14; box-shadow: 0 0 0 2px #faad14; }
+        .timeline-time { font-size: 12px; color: #999; margin-bottom: 2px; }
+        .timeline-action { font-size: 14px; color: #333; font-weight: 500; }
+        .timeline-meta { font-size: 12px; color: #999; margin-top: 2px; }
         .action-btns {
             display: flex;
             gap: 8px;
@@ -666,11 +691,12 @@
                         <th>付款状态</th>
                         <th>发票状态</th>
                         <th>利润率</th>
+                        <th style="width: 110px;">风险</th>
                         <th>操作</th>
                     </tr>
                 </thead>
                 <tbody id="ordersTableBody">
-                    <tr><td colspan="14" class="loading">加载中...</td></tr>
+                    <tr><td colspan="15" class="loading">加载中...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -780,6 +806,19 @@
                     <button type="submit" class="btn btn-primary">保存</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- 订单详情 + 状态时间线弹窗（任务 #1） -->
+    <div class="modal" id="orderDetailModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3>订单详情</h3>
+                <button class="close-btn" onclick="closeOrderDetailModal()">&times;</button>
+            </div>
+            <div id="orderDetailContent" style="padding: 0 4px;">
+                <div style="padding: 40px; text-align: center; color: #999;">加载中...</div>
+            </div>
         </div>
     </div>
 
@@ -1287,10 +1326,33 @@
                 const profitText = profitRate != null ? `${profitRate.toFixed(1)}%` : '—';
                 const profitCls = profitClass(profitRate);
 
+                // 风险预警标签（任务 #2）
+                const riskBadges = [];
+                const createdAt = order.created_at ? new Date(order.created_at) : null;
+                const submittedAt = order.submitted_at ? new Date(order.submitted_at) : null;
+                const now = new Date();
+                // ⏰ 未接单超 48h
+                if (order.status === 'pending' && createdAt && (now - createdAt) / 3600000 >= 48) {
+                    riskBadges.push('<span class="risk-tag risk-warning" title="待接单超过 48 小时">⏰待接单</span>');
+                }
+                // 💰 客户未付款超 30 天（已完成订单）
+                if (order.status === 'completed' && clientPaymentStatus !== 'paid'
+                    && submittedAt && (now - submittedAt) / 86400000 >= 30) {
+                    riskBadges.push('<span class="risk-tag risk-danger" title="客户未付款超过 30 天">💰欠款</span>');
+                }
+                // 📄 发票未开（已完成订单）
+                if (order.status === 'completed' && order.invoice_status !== 'issued') {
+                    riskBadges.push('<span class="risk-tag risk-info" title="已完成但未开发票">📄待开票</span>');
+                }
+                // ⚠️ 字数异常（>10万字）
+                if ((order.word_count || 0) > 100000) {
+                    riskBadges.push('<span class="risk-tag risk-warning" title="字数超过 10 万">⚠️大单</span>');
+                }
+
                 return `
                 <tr class="main-row" data-id="${order.id}" onclick="toggleSubRow('${order.id}')">
                     <td onclick="event.stopPropagation()"><input type="checkbox" class="rowCheck" data-id="${order.id}" onchange="updateBatchBtn()"></td>
-                    <td>${order.id}</td>
+                    <td style="cursor:pointer;color:#1a1a2e;font-weight:500;" title="点击查看时间线" onclick="event.stopPropagation();openOrderDetailModal('${order.id}')">${order.id}</td>
                     <td>
                         <span class="expand-icon">▸</span>${escapeHtml(order.project_name)}
                     </td>
@@ -1304,6 +1366,7 @@
                     <td><span class="status-badge payment-${clientPaymentStatus}">${getClientPaymentStatusText(clientPaymentStatus)}</span></td>
                     <td><span class="status-badge invoice-${order.invoice_status || 'not_issued'}">${getInvoiceStatusText(order.invoice_status || 'not_issued')}</span></td>
                     <td class="${profitCls}">${profitText}</td>
+                    <td onclick="event.stopPropagation()"><div class="risk-cell">${riskBadges.join('')}</div></td>
                     <td onclick="event.stopPropagation()">
                         <div class="action-btns">
                             <button class="btn btn-primary" onclick="editOrder('${order.id}')">编辑</button>
@@ -1312,7 +1375,7 @@
                     </td>
                 </tr>
                 <tr class="sub-row" id="sub-row-${order.id}" style="display: none;">
-                    <td colspan="14">
+                    <td colspan="15">
                         ${buildSubRow(order, translator, translatorPaymentStatus)}
                     </td>
                 </tr>
@@ -2534,6 +2597,141 @@
             document.getElementById('paymentModal').classList.remove('active');
         }
         window.closePaymentModal = closePaymentModal;
+
+        // ========== 任务 #1：订单详情 + 状态时间线 ==========
+
+        // 审计 action → 中文标签 + dot 类型
+        // 实际会出现：create_order / update_order / delete_order / update_status / update_payment / batch_assign / batch_update_payment / batch_delete_orders
+        const ACTION_LABELS = {
+            create_order:         { label: '订单登记',    type: '' },
+            update_order:        { label: '编辑订单',    type: '' },
+            update_status:        { label: '状态变更',    type: 'success' },
+            update_payment:       { label: '改付款/发票', type: '' },
+            delete_order:         { label: '删除订单',    type: 'warn' },
+            batch_assign:         { label: '批量派单',    type: '' },       // target_id=null，此订单时间线查不到
+            batch_update_payment: { label: '批量改付款/发票', type: 'warn' },// target_id=null，此订单时间线查不到
+            batch_delete_orders:  { label: '批量删除订单', type: 'warn' }, // target_id=null，此订单时间线查不到
+        };
+
+        // 把 details 里的有用字段拼成一段人类可读的描述
+        function renderDetailLine(details) {
+            if (!details || typeof details !== 'object') return '';
+            // 状态变更：from_status → to_status（update-order-status 约定）
+            if (details.from_status && details.to_status) {
+                return `<b>${escapeHtml(String(details.from_status))}</b> → <b style="color:#1a1a2e;">${escapeHtml(String(details.to_status))}</b>`;
+            }
+            // 派单：分配给 xxx
+            if (details.translator_name || details.translator_id) {
+                const name = details.translator_name || `#${details.translator_id}`;
+                return `分配给 <b style="color:#1a1a2e;">${escapeHtml(String(name))}</b>`;
+            }
+            // 改付款：client_payment_status / invoice_status
+            if (details.client_payment_status || details.invoice_status) {
+                const parts = [];
+                if (details.client_payment_status) {
+                    parts.push(`付款：${details.client_payment_status === 'paid' ? '已付款' : '未付款'}`);
+                }
+                if (details.invoice_status) {
+                    parts.push(`发票：${details.invoice_status === 'issued' ? '已开票' : '未开票'}`);
+                }
+                if (details.invoice_number) parts.push(`#${escapeHtml(String(details.invoice_number))}`);
+                return parts.join(' · ');
+            }
+            // 批量改付款：列出 affected / summary
+            if (details.summary && typeof details.summary === 'object') {
+                const s = details.summary;
+                const bits = [];
+                if (s.updated != null) bits.push(`成功 ${s.updated}`);
+                if (s.failed  != null) bits.push(`失败 ${s.failed}`);
+                if (s.requested != null) bits.push(`请求 ${s.requested}`);
+                return bits.join(' / ');
+            }
+            // 邮件发送
+            if (details.to) return `收件人：${escapeHtml(String(details.to))}`;
+            // 兜底：JSON 摘要
+            const entries = Object.entries(details).slice(0, 3);
+            if (!entries.length) return '';
+            return entries.map(([k, v]) => `${k}=${escapeHtml(String(v))}`).join(' · ');
+        }
+
+        async function openOrderDetailModal(orderId) {
+            const modal = document.getElementById('orderDetailModal');
+            const content = document.getElementById('orderDetailContent');
+            content.innerHTML = '<div style="padding: 40px; text-align: center; color: #999;">加载中...</div>';
+            modal.classList.add('active');
+
+            try {
+                // 1) 订单基本信息（重新拉一次确保是 DB 最新状态）
+                const orderResp = await apiCall('get-orders');
+                const order = (orderResp.data || []).find(o => String(o.id) === String(orderId));
+                if (!order) throw new Error('未找到订单 #' + orderId);
+
+                // 2) 审计时间线
+                const auditResp = await apiCall(
+                    `get-audit-logs?target_id=${encodeURIComponent(orderId)}&pageSize=200`
+                );
+                const logs = (auditResp.data && auditResp.data.logs) || [];
+
+                const projectName = order.project_name || '—';
+                const totalAmount = (order.client_amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                // 3) 渲染
+                if (!logs.length) {
+                    content.innerHTML = `
+                        <div style="padding: 16px;">
+                            <div style="background:#fafafa; padding: 14px 16px; border-radius: 8px; margin-bottom: 16px;">
+                                <div style="font-size: 18px; font-weight: 600; color:#1a1a2e;">订单 #${escapeHtml(String(orderId))} · ${escapeHtml(projectName)}</div>
+                                <div style="margin-top: 6px; font-size: 13px; color:#666;">
+                                    客户金额：¥${totalAmount} · 状态：${escapeHtml(getStatusText(order.status))}
+                                </div>
+                            </div>
+                            <div style="text-align:center; padding: 30px 0; color: #999;">暂无操作记录</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const items = logs.map(log => {
+                    const meta = ACTION_LABELS[log.action] || { label: log.action, type: '' };
+                    const time = (log.created_at || '').replace('T', ' ').slice(0, 19);
+                    const detailLine = renderDetailLine(log.details);
+                    const user = log.user_email ? `· ${escapeHtml(log.user_email)}` : '';
+                    return `
+                        <div class="timeline-item">
+                            <div class="timeline-dot ${meta.type}"></div>
+                            <div class="timeline-time">${time}</div>
+                            <div class="timeline-action">${escapeHtml(meta.label)}</div>
+                            ${detailLine ? `<div class="timeline-meta" style="color:#555;">${detailLine}${user}</div>` : `<div class="timeline-meta">${user}</div>`}
+                        </div>
+                    `;
+                }).join('');
+
+                content.innerHTML = `
+                    <div style="padding: 16px;">
+                        <div style="background:#fafafa; padding: 14px 16px; border-radius: 8px; margin-bottom: 16px;">
+                            <div style="font-size: 18px; font-weight: 600; color:#1a1a2e;">订单 #${escapeHtml(String(orderId))} · ${escapeHtml(projectName)}</div>
+                            <div style="margin-top: 6px; font-size: 13px; color:#666;">
+                                客户金额：¥${totalAmount} · 状态：${escapeHtml(getStatusText(order.status))} · 共 ${logs.length} 条操作记录
+                            </div>
+                        </div>
+                        <div class="timeline">
+                            ${items}
+                        </div>
+                        <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed #eee; font-size: 12px; color: #999;">
+                            提示：本时间线包含本订单全部"单独"操作记录。如需查看一次批量派单 / 批量付款影响哪些订单，请到「操作日志」页查询。
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                content.innerHTML = `<div style="padding: 40px; text-align: center; color: #cf1322;">加载失败：${escapeHtml(err.message)}</div>`;
+            }
+        }
+        window.openOrderDetailModal = openOrderDetailModal;
+
+        function closeOrderDetailModal() {
+            document.getElementById('orderDetailModal').classList.remove('active');
+        }
+        window.closeOrderDetailModal = closeOrderDetailModal;
 
         document.getElementById('paymentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
