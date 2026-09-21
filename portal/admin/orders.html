@@ -84,21 +84,31 @@
         }
         .section-header {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
+            flex-direction: column;
+            gap: 12px;
             margin-bottom: 16px;
-            padding: 12px 16px;
+            padding: 14px 16px;
             background: #fff;
             border-radius: 10px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        .section-header .toolbar-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
             flex-wrap: wrap;
         }
-        .section-header .toolbar-group:first-child {
-            flex: 1;
-            min-width: 0;
+        .section-header .toolbar-row > .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
-        .section-header .toolbar-group:last-child {
+        .section-header .toolbar-row > .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             flex-shrink: 0;
         }
         .section-header h2 {
@@ -232,7 +242,7 @@
         .orders-table th {
             background: #fafafa;
             padding: 11px 10px;
-            text-align: center;
+            text-align: left;
             font-size: 13px;
             font-weight: 500;
             color: #666;
@@ -249,31 +259,48 @@
             overflow: hidden;
             text-overflow: ellipsis;
             line-height: 1.6;
-            text-align: center;
+            text-align: left;
         }
-        /* 第2列（订单编号）也居中：内容接近列宽（"YD20260920045" ~98px vs 列宽 110px）
-         * 居中后左右 ~6px 对称留白，跟全表视觉一致；之前 left 导致右侧留白比其他列都明显 */
-        .orders-table th:nth-child(2), .orders-table td:nth-child(2) { text-align: center; }
-        /* 第3列（项目名称）也居中：短名"test1"居中读起来也舒服，长名换行居中视觉统一 */
-        .orders-table th:nth-child(3), .orders-table td:nth-child(3) { text-align: center; }
-        /* 15 列固定宽度分配（fixed + 内容居中，避免右侧留白）
-         * 列宽总和 972px · 顺序：32/110/100/65/50/60/60/70/80/50/50/50/55/70/70
-         * + 每列 10px×2 padding（合计 300px），实际渲染 ~1272px，落在 1380 容器内一行显示 */
+        /* 数值类列居中（金额/数字/状态徽章/百分比/风险 tag/按钮都对齐居中读） */
+        .orders-table td:nth-child(6),  /* 客户字数 */
+        .orders-table td:nth-child(7),  /* 客户单价 */
+        .orders-table td:nth-child(8),  /* 客户金额 */
+        .orders-table td:nth-child(10), /* 订单状态 */
+        .orders-table td:nth-child(11), /* 付款状态 */
+        .orders-table td:nth-child(12), /* 发票状态 */
+        .orders-table td:nth-child(13), /* 利润率 */
+        .orders-table td:nth-child(14), /* 风险 */
+        .orders-table td:nth-child(15)  /* 操作 */
+        { text-align: center; }
+        /* 表头对应列也居中（保持一致） */
+        .orders-table th:nth-child(6),
+        .orders-table th:nth-child(7),
+        .orders-table th:nth-child(8),
+        .orders-table th:nth-child(10),
+        .orders-table th:nth-child(11),
+        .orders-table th:nth-child(12),
+        .orders-table th:nth-child(13),
+        .orders-table th:nth-child(14),
+        .orders-table th:nth-child(15)
+        { text-align: center; }
+        /* 15 列固定宽度分配（按内容最长字符加宽，避免被截断）
+         * 列宽总和 1055px · 顺序：32/110/125/85/50/60/65/75/75/65/65/65/50/70/65
+         * + 每列 10px×2 padding（合计 300px），实际渲染 ~1355px，落在 1380 容器内一行显示 */
         .orders-table th:nth-child(1), .orders-table td:nth-child(1) { width: 32px; }   /* checkbox */
-        .orders-table th:nth-child(2), .orders-table td:nth-child(2) { width: 110px; }  /* 订单编号 */
-        .orders-table th:nth-child(3), .orders-table td:nth-child(3) { width: 100px; }  /* 项目名称 */
-        .orders-table th:nth-child(4), .orders-table td:nth-child(4) { width: 65px; }   /* 客户 */
+        .orders-table th:nth-child(2), .orders-table td:nth-child(2) { width: 110px; }  /* 订单编号 YD20260920459 完整 */
+        .orders-table th:nth-child(3), .orders-table td:nth-child(3) { width: 125px; }  /* 项目名称 */
+        .orders-table th:nth-child(4), .orders-table td:nth-child(4) { width: 85px; }   /* 客户 */
         .orders-table th:nth-child(5), .orders-table td:nth-child(5) { width: 50px; }   /* 语言对 */
         .orders-table th:nth-child(6), .orders-table td:nth-child(6) { width: 60px; }   /* 客户字数 */
-        .orders-table th:nth-child(7), .orders-table td:nth-child(7) { width: 60px; }   /* 客户单价 */
-        .orders-table th:nth-child(8), .orders-table td:nth-child(8) { width: 70px; }   /* 客户金额 */
-        .orders-table th:nth-child(9), .orders-table td:nth-child(9) { width: 80px; }   /* 截止日期 */
-        .orders-table th:nth-child(10), .orders-table td:nth-child(10) { width: 50px; } /* 订单状态 */
-        .orders-table th:nth-child(11), .orders-table td:nth-child(11) { width: 50px; } /* 付款状态 */
-        .orders-table th:nth-child(12), .orders-table td:nth-child(12) { width: 50px; } /* 发票状态 */
-        .orders-table th:nth-child(13), .orders-table td:nth-child(13) { width: 55px; } /* 利润率 */
+        .orders-table th:nth-child(7), .orders-table td:nth-child(7) { width: 65px; }   /* 客户单价 */
+        .orders-table th:nth-child(8), .orders-table td:nth-child(8) { width: 75px; }   /* 客户金额 */
+        .orders-table th:nth-child(9), .orders-table td:nth-child(9) { width: 75px; }   /* 截止日期 */
+        .orders-table th:nth-child(10), .orders-table td:nth-child(10) { width: 65px; } /* 订单状态 */
+        .orders-table th:nth-child(11), .orders-table td:nth-child(11) { width: 65px; } /* 付款状态 */
+        .orders-table th:nth-child(12), .orders-table td:nth-child(12) { width: 65px; } /* 发票状态 */
+        .orders-table th:nth-child(13), .orders-table td:nth-child(13) { width: 50px; } /* 利润率 */
         .orders-table th:nth-child(14), .orders-table td:nth-child(14) { width: 70px; } /* 风险标签 */
-        .orders-table th:nth-child(15), .orders-table td:nth-child(15) { width: 70px; } /* 操作 */
+        .orders-table th:nth-child(15), .orders-table td:nth-child(15) { width: 65px; } /* 操作 */
         .orders-table td:nth-child(3) {
             white-space: normal;
             word-wrap: break-word;
@@ -626,27 +653,43 @@
 
     <div class="container">
         <div class="section-header">
-            <div class="toolbar-group">
-                <div class="filter-tabs">
-                    <button class="filter-tab active" data-filter="all">全部</button>
-                    <button class="filter-tab" data-filter="pending">待处理</button>
-                    <button class="filter-tab" data-filter="progress">进行中</button>
-                    <button class="filter-tab" data-filter="completed">已完成</button>
+            <!-- 第1行：状态筛选 tab（左侧）+ 操作按钮组（右侧）-->
+            <div class="toolbar-row">
+                <div class="toolbar-left">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-filter="all">全部</button>
+                        <button class="filter-tab" data-filter="pending">待处理</button>
+                        <button class="filter-tab" data-filter="progress">进行中</button>
+                        <button class="filter-tab" data-filter="completed">已完成</button>
+                    </div>
                 </div>
-                <input type="text" id="searchInput" placeholder="🔍 搜索订单号/项目/客户" class="toolbar-search">
-                <div class="date-range">
+                <div class="toolbar-right">
+                    <button class="btn btn-danger btn-sm" onclick="batchDelete()" id="batchDeleteBtn" disabled>🗑 删除（<span id="selectedCount">0</span>）</button>
+                    <button class="btn btn-primary btn-sm" onclick="openBatchAssignModal()" id="batchAssignBtn" disabled>📤 派单</button>
+                    <button class="btn btn-ghost btn-sm" onclick="openBatchPaymentModal()" id="batchPaymentBtn" disabled>💰 付款/发票</button>
+                    <button class="btn btn-secondary btn-sm" onclick="openImportModal()">📥 批量导入</button>
+                    <button class="btn btn-primary btn-highlight btn-sm" onclick="openModal()">+ 登记订单</button>
+                </div>
+            </div>
+
+            <!-- 第2行：搜索框（宽） -->
+            <div class="toolbar-row">
+                <div class="toolbar-left" style="flex: 1; min-width: 0;">
+                    <input type="text" id="searchInput" placeholder="🔍 搜索订单号/项目/客户" class="toolbar-search" style="flex: 1; min-width: 200px;">
+                </div>
+                <div class="toolbar-right">
+                    <button class="btn btn-ghost btn-sm" onclick="exportToExcel()" id="exportBtn">📊 导出 Excel</button>
+                </div>
+            </div>
+
+            <!-- 第3行：日期范围 -->
+            <div class="toolbar-row">
+                <div class="toolbar-left">
+                    <span class="date-sep" style="font-size: 13px; color: #666;">日期范围：</span>
                     <input type="date" id="dateFrom" title="开始日期" class="toolbar-date">
                     <span class="date-sep">至</span>
                     <input type="date" id="dateTo" title="结束日期" class="toolbar-date">
                 </div>
-            </div>
-            <div class="toolbar-group">
-                <button class="btn btn-danger btn-sm" onclick="batchDelete()" id="batchDeleteBtn" disabled>🗑 删除（<span id="selectedCount">0</span>）</button>
-                <button class="btn btn-primary btn-sm" onclick="openBatchAssignModal()" id="batchAssignBtn" disabled>📤 派单</button>
-                <button class="btn btn-ghost btn-sm" onclick="openBatchPaymentModal()" id="batchPaymentBtn" disabled>💰 付款/发票</button>
-                <button class="btn btn-ghost btn-sm" onclick="exportToExcel()" id="exportBtn">📊 导出 Excel</button>
-                <button class="btn btn-secondary btn-sm" onclick="openImportModal()">📥 批量导入</button>
-                <button class="btn btn-primary btn-highlight btn-sm" onclick="openModal()">+ 登记订单</button>
             </div>
         </div>
 
