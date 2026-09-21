@@ -251,8 +251,9 @@
             line-height: 1.6;
             text-align: center;
         }
-        /* 第2列（订单编号）保留左对齐：点击+色变，习惯左对齐读 */
-        .orders-table th:nth-child(2), .orders-table td:nth-child(2) { text-align: left; }
+        /* 第2列（订单编号）也居中：内容接近列宽（"YD20260920045" ~98px vs 列宽 110px）
+         * 居中后左右 ~6px 对称留白，跟全表视觉一致；之前 left 导致右侧留白比其他列都明显 */
+        .orders-table th:nth-child(2), .orders-table td:nth-child(2) { text-align: center; }
         /* 第3列（项目名称）也居中：短名"test1"居中读起来也舒服，长名换行居中视觉统一 */
         .orders-table th:nth-child(3), .orders-table td:nth-child(3) { text-align: center; }
         /* 15 列固定宽度分配（fixed + 内容居中，避免右侧留白）
