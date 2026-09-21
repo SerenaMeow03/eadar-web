@@ -284,23 +284,33 @@
         .orders-table th:nth-child(15)
         { text-align: center; }
         /* 15 列固定宽度分配（按内容最长字符加宽，避免被截断）
-         * 列宽总和 1055px · 顺序：32/110/125/85/50/60/65/75/75/65/65/65/50/70/65
-         * + 每列 10px×2 padding（合计 300px），实际渲染 ~1355px，落在 1380 容器内一行显示 */
+         * 列宽总和 990px · 顺序：32/110/135/75/40/60/55/60/70/65/55/55/50/70/50
+         * + 每列 10px×2 padding（合计 300px），实际渲染 ~1290px，落在 1380 容器内一行显示
+         * 调整理由：
+         *   - 项目名称 125→135（第二行 28 字符被截断，加宽解决）
+         *   - 客户 85→75（"上海交通大..." 12 字符缩到 75 够）
+         *   - 语言对 50→40（"中英"/"英中"/"—" 30px 足够）
+         *   - 客户单价 65→55（"¥0.50/字" 6 字符）
+         *   - 客户金额 75→60（"¥362" 5 字符）
+         *   - 截止日期 75→70（"2026-09-22" 10 字符）
+         *   - 付款状态 65→55（"未付款"/"已付款" 3 字 + padding）
+         *   - 发票状态 65→55（同上）
+         *   - 操作 65→50（图标按钮 50 足够，原列空白 38px） */
         .orders-table th:nth-child(1), .orders-table td:nth-child(1) { width: 32px; }   /* checkbox */
         .orders-table th:nth-child(2), .orders-table td:nth-child(2) { width: 110px; }  /* 订单编号 YD20260920459 完整 */
-        .orders-table th:nth-child(3), .orders-table td:nth-child(3) { width: 125px; }  /* 项目名称 */
-        .orders-table th:nth-child(4), .orders-table td:nth-child(4) { width: 85px; }   /* 客户 */
-        .orders-table th:nth-child(5), .orders-table td:nth-child(5) { width: 50px; }   /* 语言对 */
+        .orders-table th:nth-child(3), .orders-table td:nth-child(3) { width: 135px; }  /* 项目名称（加宽解决第二行 28 字符截断） */
+        .orders-table th:nth-child(4), .orders-table td:nth-child(4) { width: 75px; }   /* 客户 */
+        .orders-table th:nth-child(5), .orders-table td:nth-child(5) { width: 40px; }   /* 语言对 */
         .orders-table th:nth-child(6), .orders-table td:nth-child(6) { width: 60px; }   /* 客户字数 */
-        .orders-table th:nth-child(7), .orders-table td:nth-child(7) { width: 65px; }   /* 客户单价 */
-        .orders-table th:nth-child(8), .orders-table td:nth-child(8) { width: 75px; }   /* 客户金额 */
-        .orders-table th:nth-child(9), .orders-table td:nth-child(9) { width: 75px; }   /* 截止日期 */
+        .orders-table th:nth-child(7), .orders-table td:nth-child(7) { width: 55px; }   /* 客户单价 */
+        .orders-table th:nth-child(8), .orders-table td:nth-child(8) { width: 60px; }   /* 客户金额 */
+        .orders-table th:nth-child(9), .orders-table td:nth-child(9) { width: 70px; }   /* 截止日期 */
         .orders-table th:nth-child(10), .orders-table td:nth-child(10) { width: 65px; } /* 订单状态 */
-        .orders-table th:nth-child(11), .orders-table td:nth-child(11) { width: 65px; } /* 付款状态 */
-        .orders-table th:nth-child(12), .orders-table td:nth-child(12) { width: 65px; } /* 发票状态 */
+        .orders-table th:nth-child(11), .orders-table td:nth-child(11) { width: 55px; } /* 付款状态 */
+        .orders-table th:nth-child(12), .orders-table td:nth-child(12) { width: 55px; } /* 发票状态 */
         .orders-table th:nth-child(13), .orders-table td:nth-child(13) { width: 50px; } /* 利润率 */
         .orders-table th:nth-child(14), .orders-table td:nth-child(14) { width: 70px; } /* 风险标签 */
-        .orders-table th:nth-child(15), .orders-table td:nth-child(15) { width: 65px; } /* 操作 */
+        .orders-table th:nth-child(15), .orders-table td:nth-child(15) { width: 50px; } /* 操作 */
         .orders-table td:nth-child(3) {
             white-space: normal;
             word-wrap: break-word;
