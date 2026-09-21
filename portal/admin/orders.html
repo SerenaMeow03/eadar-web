@@ -653,7 +653,7 @@
 
     <div class="container">
         <div class="section-header">
-            <!-- 第1行：状态筛选 tab（左侧）+ 操作按钮组（右侧）-->
+            <!-- 第1行：状态筛选 tab（左侧）+ 操作按钮组（中间）+ 导出 Excel（最右）-->
             <div class="toolbar-row">
                 <div class="toolbar-left">
                     <div class="filter-tabs">
@@ -669,26 +669,20 @@
                     <button class="btn btn-ghost btn-sm" onclick="openBatchPaymentModal()" id="batchPaymentBtn" disabled>💰 付款/发票</button>
                     <button class="btn btn-secondary btn-sm" onclick="openImportModal()">📥 批量导入</button>
                     <button class="btn btn-primary btn-highlight btn-sm" onclick="openModal()">+ 登记订单</button>
-                </div>
-            </div>
-
-            <!-- 第2行：搜索框（宽） -->
-            <div class="toolbar-row">
-                <div class="toolbar-left" style="flex: 1; min-width: 0;">
-                    <input type="text" id="searchInput" placeholder="🔍 搜索订单号/项目/客户" class="toolbar-search" style="flex: 1; min-width: 200px;">
-                </div>
-                <div class="toolbar-right">
                     <button class="btn btn-ghost btn-sm" onclick="exportToExcel()" id="exportBtn">📊 导出 Excel</button>
                 </div>
             </div>
 
-            <!-- 第3行：日期范围 -->
+            <!-- 第2行：日期范围（左）+ 搜索框（右）-->
             <div class="toolbar-row">
                 <div class="toolbar-left">
                     <span class="date-sep" style="font-size: 13px; color: #666;">日期范围：</span>
                     <input type="date" id="dateFrom" title="开始日期" class="toolbar-date">
                     <span class="date-sep">至</span>
                     <input type="date" id="dateTo" title="结束日期" class="toolbar-date">
+                </div>
+                <div class="toolbar-right" style="flex: 1; min-width: 0;">
+                    <input type="text" id="searchInput" placeholder="🔍 搜索订单号/项目/客户" class="toolbar-search" style="flex: 1; min-width: 200px;">
                 </div>
             </div>
         </div>
