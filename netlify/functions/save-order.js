@@ -38,6 +38,7 @@ exports.handler = async (event) => {
     client_word_count,   // 客户字数（可选，NULL 时 fallback 到 word_count）
     client_amount,       // 客户金额（可选，不填则按 client_rate * client_word_count / 1000 自动算）
     language_pair,       // 语言对（可选：'zh-en' / 'zh-ja' / 'zh-ko' / 'en-ja'）
+    batch_id,            // 批量导入批次 ID（V11，可选）。带此字段的订单由 send-batch-import-email 统一发汇总邮件，跳过下方 C2 单条派单邮件
   } = body;
 
   // 必填校验
@@ -130,6 +131,8 @@ exports.handler = async (event) => {
       language_pair: language_pair || null,
       // v9：客户名快照（写时固化，客户被删仍可追溯）
       client_name_snapshot: clientNameSnapshot,
+      // v11：批量导入批次 ID（带 batch_id 的订单跳过 C2 单条派单邮件，由新链路统一发汇总）
+      batch_id: batch_id || null,
     };
 
     let result;
@@ -177,6 +180,8 @@ exports.handler = async (event) => {
         amount,
         deadline,
         status,
+        // V11：批量导入批次 ID（便于审计追溯"这批是 admin 哪次 Excel 导入的"）
+        batch_id: batch_id || null,
       },
     });
 
@@ -187,7 +192,8 @@ exports.handler = async (event) => {
     // 后端 await 同步调用：100% 可靠，前端 UI 已 closeModal 不阻塞感官
     // 改前：context.waitUntil() — Netlify 不支持，throw error
     // 改前：裸 fetch() — 实测丢失（38s 延迟 + 第二次完全没发出）
-    if (!id && status === 'pending') {
+    // V11 批量导入：带 batch_id 的订单不在这条链路发单条邮件，由 send-batch-import-email 按译员聚合发汇总
+    if (!id && status === 'pending' && !batch_id) {
       try {
         const protocol = event.headers['x-forwarded-proto'] || 'https';
         const host = event.headers.host;

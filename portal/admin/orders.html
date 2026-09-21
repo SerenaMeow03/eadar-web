@@ -2143,6 +2143,13 @@
             submitBtn.disabled = true;
             submitBtn.textContent = '导入中...';
 
+            // V11 批量导入链路：生成 batch_id，让所有订单共享同一批次 ID
+            // → 后端 save-order 跳过单条派单邮件
+            // → 全部写完后调一次 send-batch-import-email 按译员聚合发汇总
+            const batchId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                ? `import-${crypto.randomUUID().slice(0, 8)}`
+                : `import-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
             let success = 0;
             let failed = 0;
             const failedReasons = [];
@@ -2153,7 +2160,7 @@
                 try {
                     await apiCall('save-order', {
                         method: 'POST',
-                        body: JSON.stringify(row),
+                        body: JSON.stringify({ ...row, batch_id: batchId }),
                     });
                     success++;
                     successList.push(`第${i + 2}行：${row.project_name}`);
@@ -2166,14 +2173,67 @@
             submitBtn.disabled = false;
             submitBtn.textContent = original;
 
+            // V11: 全部导入成功后调一次 send-batch-import-email，按译员聚合发汇总邮件
+            // - success 是 0 就不发（避免给 0 个译员发空邮件）
+            // - failed > 0 但 success > 0 也发（部分成功的订单仍需要通知）
+            let emailSummaryHtml = '';
+            if (success > 0) {
+                try {
+                    submitBtn.textContent = '发送汇总通知中...';
+                    submitBtn.disabled = true;
+                    const emailResp = await apiCall('send-batch-import-email', {
+                        method: 'POST',
+                        body: JSON.stringify({ batchId }),
+                    });
+                    const emailData = emailResp?.data || emailResp || {};
+                    const notified = emailData.notifiedTranslators ?? 0;
+                    const skipped = emailData.skippedTranslators ?? 0;
+                    const failedEm = emailData.failedTranslators ?? 0;
+                    const totalT = emailData.totalTranslators ?? 0;
+
+                    // 每个译员的发送状态明细
+                    const detailRows = (emailData.results || []).map(r => {
+                        const statusIcon = r.status === 'sent' ? '✅'
+                            : r.status === 'skipped' ? '⏭️'
+                            : '❌';
+                        const statusText = r.status === 'sent' ? `已发送 (${r.count}单)`
+                            : r.status === 'skipped' ? `跳过：${r.reason}`
+                            : `失败：${r.reason}`;
+                        return `<div style="font-size: 12px; margin-left: 8px;">
+                            ${statusIcon} ${escapeHtml(r.translatorEmail || '(无邮箱)')} · ${statusText}
+                        </div>`;
+                    }).join('');
+
+                    emailSummaryHtml = `
+                        <div style="margin-top: 10px; padding: 10px 12px; border-radius: 6px; background: #f0f0ff; border: 1px solid #91d5ff;">
+                            <div style="font-weight: 600; margin-bottom: 6px; color: #096dd9;">
+                                📧 汇总邮件：共 ${totalT} 位译员，发送 ${notified} / 跳过 ${skipped}${failedEm > 0 ? ` / 失败 ${failedEm}` : ''}
+                            </div>
+                            ${detailRows}
+                        </div>
+                    `;
+                } catch (e) {
+                    emailSummaryHtml = `
+                        <div style="margin-top: 10px; padding: 10px 12px; border-radius: 6px; background: #fff1f0; border: 1px solid #ffa39e;">
+                            <div style="color: #cf1322;">📧 汇总邮件发送失败：${escapeHtml(e.message)}（订单已导入，可在"批量派单"中重发）</div>
+                        </div>
+                    `;
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = original;
+                }
+            }
+
             // 把成功/失败明细展示在 modal 内（之前只 toast 一句话，错误详情用户看不到）
             const resultHtml = `
                 <div style="margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: ${failed === 0 ? '#f6ffed' : '#fff7e6'}; border: 1px solid ${failed === 0 ? '#b7eb8f' : '#ffd591'};">
                     <div style="font-weight: 600; margin-bottom: 6px;">
                         ✅ 成功 ${success} 条${failed > 0 ? `，❌ 失败 ${failed} 条` : ''}
                     </div>
-                    ${successList.length > 0 ? `<div style="font-size: 12px; color: #666;">成功：${successList.join('、')}</div>` : ''}
+                    <div style="font-size: 11px; color: #999;">批次 ID：${escapeHtml(batchId)}</div>
+                    ${successList.length > 0 ? `<div style="font-size: 12px; color: #666; margin-top: 4px;">成功：${successList.join('、')}</div>` : ''}
                     ${failedReasons.length > 0 ? `<div style="font-size: 12px; color: #cf1322; margin-top: 4px;">失败：${failedReasons.join('；')}</div>` : ''}
+                    ${emailSummaryHtml}
                 </div>
             `;
             const previewEl = document.getElementById('importPreview');
@@ -2182,8 +2242,8 @@
             if (failed === 0) {
                 showToast(`成功导入 ${success} 条订单`, 'success');
                 await renderOrders(getCurrentFilter());
-                // 成功后 1.5s 自动关闭 modal（让用户先看到成功明细）
-                setTimeout(closeImportModal, 1500);
+                // 成功后 2.5s 自动关闭 modal（延长一点，让用户看清邮件发送明细）
+                setTimeout(closeImportModal, 2500);
             } else {
                 // toast 显示前 3 条失败原因（之前只一行，错误详情用户看不到）
                 const topFailures = failedReasons.slice(0, 3).map(r => r.replace(/第\d+行（/, '行 ')).join('；');
