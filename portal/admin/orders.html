@@ -253,8 +253,8 @@
         }
         /* 第2列（订单编号）保留左对齐：点击+色变，习惯左对齐读 */
         .orders-table th:nth-child(2), .orders-table td:nth-child(2) { text-align: left; }
-        /* 第3列（项目名称）保留左对齐：长文本左对齐更易读 */
-        .orders-table th:nth-child(3), .orders-table td:nth-child(3) { text-align: left; }
+        /* 第3列（项目名称）也居中：短名"test1"居中读起来也舒服，长名换行居中视觉统一 */
+        .orders-table th:nth-child(3), .orders-table td:nth-child(3) { text-align: center; }
         /* 15 列固定宽度分配（fixed + 内容居中，避免右侧留白）
          * 列宽总和 972px · 顺序：32/110/100/65/50/60/60/70/80/50/50/50/55/70/70
          * + 每列 10px×2 padding（合计 300px），实际渲染 ~1272px，落在 1380 容器内一行显示 */
