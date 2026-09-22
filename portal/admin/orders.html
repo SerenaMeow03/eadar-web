@@ -2599,7 +2599,15 @@
         // 表单提交
         document.getElementById('orderForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
+            // 防重复提交：提交期间禁用保存按钮，结束后恢复
+            // （之前没 disable，连点保存会触发多次 save-order，重复创建/更新订单）
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn.disabled) return;
+            submitBtn.disabled = true;
+            const originalBtnText = submitBtn.textContent;
+            submitBtn.textContent = '保存中...';
+
             const id = document.getElementById('orderId').value;
             const projectName = document.getElementById('projectName').value;
             const wordCount = parseInt(document.getElementById('wordCount').value);
@@ -2678,6 +2686,10 @@
 
             await renderOrders(getCurrentFilter());
             closeModal();
+
+            // 恢复按钮（无论成功失败，失败路径已在 catch 内 return）
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalBtnText;
         });
 
         // 筛选标签切换
@@ -2882,6 +2894,14 @@
 
         document.getElementById('paymentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+
+            // 防重复提交（同 orderForm）：提交期间禁用保存按钮
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn.disabled) return;
+            submitBtn.disabled = true;
+            const originalBtnText = submitBtn.textContent;
+            submitBtn.textContent = '保存中...';
+
             const id = document.getElementById('pmtOrderId').value;
             const client_payment_status = document.getElementById('pmtClientPaymentStatus').value;
             const invoice_status = document.getElementById('pmtInvoiceStatus').value;
@@ -2902,6 +2922,9 @@
                 await renderOrders(getCurrentFilter());
             } catch (err) {
                 showToast('更新失败: ' + err.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
             }
         });
 
