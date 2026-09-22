@@ -333,7 +333,7 @@
                     </div>
                     <div class="button-group" id="bankButtons" style="display: none;">
                         <button class="cancel-btn" onclick="cancelBankEdit()">取消</button>
-                        <button class="save-btn" onclick="saveBankInfo()">保存</button>
+                        <button class="save-btn" onclick="saveBankInfo(this)">保存</button>
                     </div>
                 </div>
 
@@ -385,7 +385,7 @@
                     </div>
                     <div class="button-group" id="passwordButtons" style="display: none;">
                         <button class="cancel-btn" onclick="cancelPasswordEdit()">取消</button>
-                        <button class="save-btn" onclick="savePassword()">保存</button>
+                        <button class="save-btn" onclick="savePassword(this)">保存</button>
                     </div>
                 </div>
             </div>
@@ -535,7 +535,7 @@
             toggleBankEdit();
         }
 
-        async function saveBankInfo() {
+        async function saveBankInfo(btn) {
             const bankName = document.getElementById('bankName').value.trim();
             const bankCard = document.getElementById('bankCard').value.trim();
             const bankHolder = document.getElementById('bankHolder').value.trim();
@@ -552,33 +552,43 @@
                 bankBranch: document.getElementById('bankBranch').value.trim()
             };
 
-            try {
-                // 走后端 Netlify Function
-                await apiCall('update-translator-bank', {
-                    method: 'POST',
-                    body: JSON.stringify(bankInfo)
-                });
+            // 防重复提交：连点会多次 update 银行信息（后端幂等但浪费）
+            if (btn) {
+                if (btn.disabled) return;
+                btn.disabled = true;
+                const originalText = btn.textContent;
+                btn.textContent = '保存中...';
 
-                // 更新本地数据
-                translatorData = { ...translatorData, ...bankInfo };
+                try {
+                    // 走后端 Netlify Function
+                    await apiCall('update-translator-bank', {
+                        method: 'POST',
+                        body: JSON.stringify(bankInfo)
+                    });
 
-                // 退出编辑模式
-                isBankEditing = false;
-                const inputs = ['bankName', 'bankCard', 'bankHolder', 'bankBranch'];
-                inputs.forEach(id => {
-                    document.getElementById(id).readOnly = true;
-                    document.getElementById(id).style.background = '#fafafa';
-                });
-                document.getElementById('editBankBtn').style.display = 'inline-block';
-                document.getElementById('bankButtons').style.display = 'none';
+                    // 更新本地数据
+                    translatorData = { ...translatorData, ...bankInfo };
 
-                // 显示成功消息
-                const successMsg = document.getElementById('successMessage');
-                successMsg.textContent = '✅ 银行信息保存成功！';
-                successMsg.classList.add('show');
-                setTimeout(() => successMsg.classList.remove('show'), 3000);
-            } catch (err) {
-                alert('保存失败：' + err.message);
+                    // 退出编辑模式
+                    isBankEditing = false;
+                    const inputs = ['bankName', 'bankCard', 'bankHolder', 'bankBranch'];
+                    inputs.forEach(id => {
+                        document.getElementById(id).readOnly = true;
+                        document.getElementById(id).style.background = '#fafafa';
+                    });
+                    document.getElementById('editBankBtn').style.display = 'inline-block';
+                    document.getElementById('bankButtons').style.display = 'none';
+
+                    // 显示成功消息
+                    const successMsg = document.getElementById('successMessage');
+                    successMsg.textContent = '✅ 银行信息保存成功！';
+                    successMsg.classList.add('show');
+                    setTimeout(() => successMsg.classList.remove('show'), 3000);
+                } catch (err) {
+                    alert('保存失败：' + err.message);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
             }
         }
 
@@ -607,7 +617,7 @@
             togglePasswordEdit();
         }
 
-        async function savePassword() {
+        async function savePassword(btn) {
             const currentPwd = document.getElementById('currentPassword').value;
             const newPwd = document.getElementById('newPassword').value;
             const confirmPwd = document.getElementById('confirmPassword').value;
@@ -628,41 +638,53 @@
                 return;
             }
 
-            try {
-                // 用当前密码试登，验证旧密码
-                const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
-                const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                const { error: signInErr } = await sb.auth.signInWithPassword({
-                    email: currentTranslator.email || currentTranslator.username,
-                    password: currentPwd
-                });
-                if (signInErr) {
-                    alert('当前密码错误');
-                    return;
+            // 防重复提交：连点会多次 signInWithPassword + 多次 update-password
+            if (btn) {
+                if (btn.disabled) return;
+                btn.disabled = true;
+                const originalText = btn.textContent;
+                btn.textContent = '保存中...';
+
+                try {
+                    // 用当前密码试登，验证旧密码
+                    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+                    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    const { error: signInErr } = await sb.auth.signInWithPassword({
+                        email: currentTranslator.email || currentTranslator.username,
+                        password: currentPwd
+                    });
+                    if (signInErr) {
+                        alert('当前密码错误');
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                        return;
+                    }
+
+                    // 验证通过，调后端 update-password
+                    await apiCall('update-password', {
+                        method: 'POST',
+                        body: JSON.stringify({ newPassword: newPwd })
+                    });
+
+                    // 退出编辑模式
+                    isPasswordEditing = false;
+                    document.getElementById('passwordForm').style.display = 'none';
+                    document.getElementById('passwordButtons').style.display = 'none';
+                    document.getElementById('editPasswordBtn').style.display = 'inline-block';
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+
+                    // 显示成功消息
+                    const successMsg = document.getElementById('successMessage');
+                    successMsg.textContent = '✅ 密码修改成功！';
+                    successMsg.classList.add('show');
+                    setTimeout(() => successMsg.classList.remove('show'), 3000);
+                } catch (err) {
+                    alert('密码修改失败：' + err.message);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
                 }
-
-                // 验证通过，调后端 update-password
-                await apiCall('update-password', {
-                    method: 'POST',
-                    body: JSON.stringify({ newPassword: newPwd })
-                });
-
-                // 退出编辑模式
-                isPasswordEditing = false;
-                document.getElementById('passwordForm').style.display = 'none';
-                document.getElementById('passwordButtons').style.display = 'none';
-                document.getElementById('editPasswordBtn').style.display = 'inline-block';
-                document.getElementById('currentPassword').value = '';
-                document.getElementById('newPassword').value = '';
-                document.getElementById('confirmPassword').value = '';
-
-                // 显示成功消息
-                const successMsg = document.getElementById('successMessage');
-                successMsg.textContent = '✅ 密码修改成功！';
-                successMsg.classList.add('show');
-                setTimeout(() => successMsg.classList.remove('show'), 3000);
-            } catch (err) {
-                alert('密码修改失败：' + err.message);
             }
         }
 

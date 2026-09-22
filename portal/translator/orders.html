@@ -745,6 +745,14 @@
         }
         document.getElementById('completeForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+
+            // 防重复提交：标记完成会触发后端邮件给 admin，连点会多次发邮件
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn.disabled) return;
+            submitBtn.disabled = true;
+            const originalBtnText = submitBtn.textContent;
+            submitBtn.textContent = '提交中...';
+
             const id = document.getElementById('completeOrderId').value;
             const translatorNote = document.getElementById('translatorNote').value.trim();
             try {
@@ -764,6 +772,9 @@
                 showToast('订单已完成', 'success');
             } catch (e) {
                 showToast('操作失败: ' + e.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
             }
         });
 

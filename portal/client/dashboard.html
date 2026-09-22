@@ -431,7 +431,10 @@
                 return;
             }
 
+            // 防重复提交（同时修同类缺陷：成功路径漏恢复，靠 openPwdModal 兜底太脆弱）
+            if (btn.disabled) return;
             btn.disabled = true;
+            const originalText = btn.textContent;
             btn.textContent = '提交中...';
 
             try {
@@ -450,8 +453,9 @@
                 closePwdModal();
             } catch (e) {
                 showToast('密码修改失败：' + (e.message || '未知错误'), 'error');
+            } finally {
                 btn.disabled = false;
-                btn.textContent = '确认修改';
+                btn.textContent = originalText;
             }
         }
         window.changePassword = changePassword;

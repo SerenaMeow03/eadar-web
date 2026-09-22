@@ -669,15 +669,29 @@
 
         document.getElementById('resetPwdForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+
+            // 防重复提交：连点会多次重置密码（后端幂等但浪费 API + 审计日志刷屏）
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn.disabled) return;
+            submitBtn.disabled = true;
+            const originalBtnText = submitBtn.textContent;
+            submitBtn.textContent = '重置中...';
+
             const email = document.getElementById('resetPwdEmail').value;
             const newPwd = document.getElementById('resetPwdInput').value.trim();
 
             if (newPwd && newPwd.length < 6) {
                 showToast('自定义密码至少 6 位', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
                 return;
             }
 
-            if (!confirm(`确定要重置 ${email} 的登录密码吗？\n\n提示用户应立即修改密码。`)) return;
+            if (!confirm(`确定要重置 ${email} 的登录密码吗？\n\n提示用户应立即修改密码。`)) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
+                return;
+            }
 
             try {
                 const payload = { email, role: 'translator' };
@@ -695,6 +709,9 @@
                 showToast('密码已重置', 'success');
             } catch (err) {
                 showToast('重置失败: ' + err.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
             }
         });
 
@@ -814,6 +831,13 @@
         document.getElementById('translatorForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
+            // 防重复提交：创建译员会触发 Supabase Auth + 后端 insert，连点会创建多个账号
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn.disabled) return;
+            submitBtn.disabled = true;
+            const originalBtnText = submitBtn.textContent;
+            submitBtn.textContent = '创建中...';
+
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const fullName = document.getElementById('fullName').value.trim();
@@ -835,6 +859,9 @@
                 await renderTranslators();
             } catch (error) {
                 showToast('创建失败: ' + error.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
             }
         });
 
