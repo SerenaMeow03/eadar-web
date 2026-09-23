@@ -4,68 +4,38 @@
 //   1. 用 service_role 调 admin.createUser 创建 Supabase Auth 用户
 //   2. 在 translators 表插入业务记录，关联 auth_user_id
 
-const { createClient } = require('@supabase/supabase-js');
-
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+const { getServiceClient } = require('./_shared/supabase');
+const { corsResponse, preflight, authenticate, requireMethod, parseBody } = require('./_shared/auth');
 
 exports.handler = async (event) => {
-  // 预检
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers, body: '' };
-  }
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+  const pre = preflight(event);
+  if (pre) return pre;
+
+  const methodErr = requireMethod(event, 'POST');
+  if (methodErr) return methodErr;
+
+  const auth = await authenticate(event, 'admin');
+  if (auth.error) return auth.error;
+
+  const body = parseBody(event);
+  if (!body) {
+    return corsResponse(400, { error: 'Invalid JSON body' });
   }
 
-  // 鉴权：必须是管理员
-  const authHeader = event.headers.authorization || event.headers.Authorization;
-  if (!authHeader) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Missing Authorization' }) };
-  }
-  const token = authHeader.replace(/^Bearer\s+/i, '');
+  const { email, password, fullName, languages, specialties, phone } = body;
 
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceKey) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: 'Supabase env not configured' }) };
+  if (!email || !password) {
+    return corsResponse(400, { error: '邮箱和密码不能为空' });
+  }
+  if (password.length < 6) {
+    return corsResponse(400, { error: '密码至少 6 位' });
   }
 
-  const supabase = createClient(supabaseUrl, serviceKey);
+  const service = getServiceClient();
 
   try {
-    // 验证调用者是 admin
-    const { data: callerData, error: callerErr } = await supabase.auth.getUser(token);
-    if (callerErr || !callerData?.user) {
-      return { statusCode: 401, headers, body: JSON.stringify({ error: 'Invalid token' }) };
-    }
-    const callerRole = callerData.user.app_metadata?.role;
-    if (callerRole !== 'admin') {
-      return { statusCode: 403, headers, body: JSON.stringify({ error: 'Requires admin role' }) };
-    }
-
-    // 解析 body
-    let body;
-    try {
-      body = JSON.parse(event.body || '{}');
-    } catch (e) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) };
-    }
-
-    const { email, password, fullName, languages, specialties, phone } = body;
-
-    if (!email || !password) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: '邮箱和密码不能为空' }) };
-    }
-    if (password.length < 6) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: '密码至少 6 位' }) };
-    }
-
     // 1. 创建 Supabase Auth 用户
-    const { data: userData, error: createErr } = await supabase.auth.admin.createUser({
+    const { data: userData, error: createErr } = await service.auth.admin.createUser({
       email: email,
       password: password,
       email_confirm: true,
@@ -77,7 +47,7 @@ exports.handler = async (event) => {
     });
 
     if (createErr) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: createErr.message }) };
+      return corsResponse(400, { error: createErr.message });
     }
 
     const authUserId = userData.user.id;
@@ -86,7 +56,7 @@ exports.handler = async (event) => {
     const businessId = 'T' + Date.now().toString().slice(-6);
 
     // 3. 插入 translators 表
-    const { data: translator, error: insertErr } = await supabase
+    const { data: translator, error: insertErr } = await service
       .from('translators')
       .insert({
         id: businessId,
@@ -103,26 +73,21 @@ exports.handler = async (event) => {
 
     if (insertErr) {
       // 回滚 auth 用户
-      await supabase.auth.admin.deleteUser(authUserId);
-      return { statusCode: 500, headers, body: JSON.stringify({ error: '业务表写入失败：' + insertErr.message }) };
+      await service.auth.admin.deleteUser(authUserId);
+      return corsResponse(500, { error: '业务表写入失败：' + insertErr.message });
     }
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        success: true,
+    return corsResponse(200, {
+      data: {
+        id: translator.id,
+        email: translator.email,
+        name: translator.name,
+        authUserId: translator.auth_user_id,
         message: '译员账号创建成功',
-        data: {
-          id: translator.id,
-          email: translator.email,
-          name: translator.name,
-          authUserId: translator.auth_user_id,
-        },
-      }),
-    };
+      },
+    });
   } catch (err) {
     console.error('create-translator unhandled:', err);
-    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
+    return corsResponse(500, { error: err.message });
   }
 };

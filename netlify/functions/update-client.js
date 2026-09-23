@@ -6,6 +6,7 @@
 
 const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate, parseBody } = require('./_shared/auth');
+const { writeAudit } = require('./_shared/audit');
 
 exports.handler = async (event) => {
   const pre = preflight(event);
@@ -52,6 +53,16 @@ exports.handler = async (event) => {
       return corsResponse(500, { error: error.message });
     }
     if (!data) return corsResponse(404, { error: '客户不存在' });
+
+    // A7: 审计日志（客户信息变动留痕，含归档/联系方式变更）
+    await writeAudit(service, {
+      user_email: auth.user?.email || 'unknown',
+      user_role: auth.role,
+      action: 'update_client',
+      target_type: 'client',
+      target_id: id,
+      details: update,
+    });
 
     return corsResponse(200, { data, message: '客户已更新' });
   } catch (e) {

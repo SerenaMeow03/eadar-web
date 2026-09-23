@@ -61,10 +61,12 @@ exports.handler = async (event) => {
     }
 
     // 3) 校验角色匹配（防止重置错对象）
+    //    出于安全考虑：不向调用方透露账号实际角色，仅提示"不匹配"
     const userRole = targetUser.app_metadata?.role;
     if (userRole !== role) {
+      console.warn('[admin-reset-password] role mismatch:', { email, required: role, actual: userRole });
       return corsResponse(400, {
-        error: `角色不匹配：${email} 的实际角色是 ${userRole || '未设置'}，不是 ${role}`,
+        error: '邮箱与角色不匹配',
       });
     }
 

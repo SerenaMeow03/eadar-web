@@ -3,6 +3,7 @@
 
 const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate, requireMethod, parseBody } = require('./_shared/auth');
+const { writeAudit } = require('./_shared/audit');
 
 exports.handler = async (event) => {
   const pre = preflight(event);
@@ -57,6 +58,22 @@ exports.handler = async (event) => {
       console.error('update-translator-bank error:', error);
       return corsResponse(500, { error: error.message });
     }
+
+    // A7: 审计日志（金融字段变动 — 必须留痕，admin 后续审计用）
+    // 注意：writeAudit 失败不阻塞主流程（writeAudit 内部 try-catch）
+    await writeAudit(service, {
+      user_email: auth.user?.email || ('translator:' + auth.translatorId),
+      user_role: auth.role,
+      action: 'update_bank_info',
+      target_type: 'translator',
+      target_id: auth.translatorId,
+      details: {
+        bankName: String(bankName).trim(),
+        bankHolder: String(bankHolder).trim(),
+        // 不写卡号 / 开户行（敏感字段脱敏）
+        bankCard_tail: String(bankCard).slice(-4),
+      },
+    });
 
     return corsResponse(200, { data, message: '银行信息已更新' });
   } catch (e) {

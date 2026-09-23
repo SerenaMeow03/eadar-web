@@ -43,9 +43,11 @@ async function handleLogin(event, requiredRole) {
   const role = user.app_metadata?.role;
 
   // 2) 校验角色
+  //    出于安全考虑：不向调用方透露账号实际角色，仅提示"无权限"
   if (role !== requiredRole) {
+    console.warn('[login] role mismatch:', { email: user.email, required: requiredRole, actual: role });
     return corsResponse(403, {
-      error: `此账号不是 ${requiredRole}，无法登录该入口（实际角色：${role || '未设置'}）`,
+      error: '此账号无法登录该入口',
     });
   }
 

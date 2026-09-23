@@ -20,6 +20,7 @@
 
 const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate, requireMethod, parseBody } = require('./_shared/auth');
+const { writeAudit } = require('./_shared/audit');
 
 exports.handler = async (event) => {
   const pre = preflight(event);
@@ -75,6 +76,21 @@ exports.handler = async (event) => {
       console.error('delete-translator update error:', updateErr);
       return corsResponse(500, { error: updateErr.message });
     }
+
+    // A7: 审计日志（软删除译员合作状态 — 留痕供后续审计）
+    await writeAudit(service, {
+      user_email: auth.user?.email || 'unknown',
+      user_role: auth.role,
+      action: 'terminate_translator',
+      target_type: 'translator',
+      target_id: updated.id,
+      details: {
+        name: updated.name,
+        email: updated.email,
+        previous_status: previousStatus,
+        new_status: updated.status,
+      },
+    });
 
     return corsResponse(200, {
       data: {
