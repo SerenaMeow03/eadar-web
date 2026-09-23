@@ -241,8 +241,8 @@
         }
         .orders-table th {
             background: #fafafa;
-            padding: 11px 10px;
-            text-align: left;
+            padding: 10px 4px;
+            text-align: center;
             font-size: 13px;
             font-weight: 500;
             color: #666;
@@ -251,7 +251,7 @@
             line-height: 1.6;
         }
         .orders-table td {
-            padding: 11px 10px;
+            padding: 10px 4px;
             border-bottom: 1px solid #f0f0f0;
             font-size: 13px;
             color: #333;
@@ -259,8 +259,10 @@
             overflow: hidden;
             text-overflow: ellipsis;
             line-height: 1.6;
-            text-align: left;
+            text-align: center;
         }
+        /* 项目名称列（3）单独左对齐 */
+        .orders-table td:nth-child(3) { text-align: left; }
         /* 操作列 sticky-right：窄屏横滚时永远在最右可见（用户不会找不到删除按钮） */
         .orders-table th:last-child,
         .orders-table td:last-child {
@@ -280,11 +282,11 @@
         /* 中等屏（≤1440 笔记本）：缩 padding + 字号，让所有列在 1366 屏尽量完整显示 */
         @media (max-width: 1440px) {
             .container { max-width: 100%; }
-            .orders-table th, .orders-table td { padding: 9px 6px; font-size: 12px; }
+            .orders-table th, .orders-table td { padding: 9px 4px; font-size: 12px; }
         }
         /* 窄屏（≤1280）：进一步缩，触发横滚 */
         @media (max-width: 1280px) {
-            .orders-table th, .orders-table td { padding: 7px 4px; font-size: 11px; }
+            .orders-table th, .orders-table td { padding: 8px 3px; font-size: 11px; }
         }
         /* 数值类列居中（金额/数字/状态徽章/百分比/风险 tag/按钮都对齐居中读） */
         .orders-table td:nth-child(6),  /* 客户字数 */
@@ -313,20 +315,20 @@
          * 列宽总和 1129px · 顺序：26/105/200/150/55/55/80/55/100/52/52/52/50/55/42
          * + 每列 15px padding（合计 225px），实际渲染 1354px，容器 1380 buffer 26 */
         .orders-table th:nth-child(1), .orders-table td:nth-child(1) { width: 26px; }   /* checkbox ☑ */
-        .orders-table th:nth-child(2), .orders-table td:nth-child(2) { width: 105px; }  /* 订单编号 */
+        .orders-table th:nth-child(2), .orders-table td:nth-child(2) { width: 95px; }   /* 订单编号 */
         .orders-table th:nth-child(3), .orders-table td:nth-child(3) { width: 200px; }  /* 项目名称 */
-        .orders-table th:nth-child(4), .orders-table td:nth-child(4) { width: 150px; }  /* 客户 */
-        .orders-table th:nth-child(5), .orders-table td:nth-child(5) { width: 55px; }   /* 语言对 */
-        .orders-table th:nth-child(6), .orders-table td:nth-child(6) { width: 55px; }   /* 客户字数 */
-        .orders-table th:nth-child(7), .orders-table td:nth-child(7) { width: 80px; }   /* 客户单价 ¥0.20/字 */
-        .orders-table th:nth-child(8), .orders-table td:nth-child(8) { width: 55px; }   /* 客户金额 ¥362 */
-        .orders-table th:nth-child(9), .orders-table td:nth-child(9) { width: 100px; }  /* 截止日期 2026-09-22 */
+        .orders-table th:nth-child(4), .orders-table td:nth-child(4) { width: 130px; }  /* 客户 */
+        .orders-table th:nth-child(5), .orders-table td:nth-child(5) { width: 50px; }   /* 语言对 */
+        .orders-table th:nth-child(6), .orders-table td:nth-child(6) { width: 50px; }   /* 客户字数 */
+        .orders-table th:nth-child(7), .orders-table td:nth-child(7) { width: 70px; }   /* 客户单价 ¥0.20/字 */
+        .orders-table th:nth-child(8), .orders-table td:nth-child(8) { width: 50px; }   /* 客户金额 ¥362 */
+        .orders-table th:nth-child(9), .orders-table td:nth-child(9) { width: 90px; }   /* 截止日期 2026-09-22 */
         .orders-table th:nth-child(10), .orders-table td:nth-child(10) { width: 52px; } /* 订单状态 已完成 */
         .orders-table th:nth-child(11), .orders-table td:nth-child(11) { width: 52px; } /* 付款状态 */
         .orders-table th:nth-child(12), .orders-table td:nth-child(12) { width: 52px; } /* 发票状态 */
-        .orders-table th:nth-child(13), .orders-table td:nth-child(13) { width: 50px; } /* 利润率 */
+        .orders-table th:nth-child(13), .orders-table td:nth-child(13) { width: 45px; } /* 利润率 */
         .orders-table th:nth-child(14), .orders-table td:nth-child(14) { width: 55px; } /* 风险标签 */
-        .orders-table th:nth-child(15), .orders-table td:nth-child(15) { width: 42px; } /* 操作 */
+        .orders-table th:nth-child(15), .orders-table td:nth-child(15) { width: 90px; } /* 操作（编辑 + 删除） */
 
 
 
@@ -479,6 +481,7 @@
         .action-btns {
             display: flex;
             gap: 4px;
+            justify-content: center;
         }
         .action-btns button {
             padding: 4px 8px;
@@ -825,8 +828,8 @@
                     </select>
                 </div>
                     <div class="form-group">
-                        <label>所属客户（可选）</label>
-                        <select id="clientId">
+                        <label>所属客户 *</label>
+                        <select id="clientId" required>
                             <option value="">不关联客户</option>
                         </select>
                     </div>
@@ -2618,6 +2621,14 @@
             const deadline = document.getElementById('deadline').value;
             const translatorId = document.getElementById('translatorId').value;
             const clientId = document.getElementById('clientId').value || null;
+
+            // 客户必填（手动登记订单场景；批量导入场景走 batch_id 路径由后端放过）
+            if (!clientId) {
+                showToast('请选择所属客户（批量导入除外）', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
+                return;
+            }
             const clientRateRaw = document.getElementById('clientRate').value;
             const clientWordCountRaw = document.getElementById('clientWordCount').value;
             const clientAmountRaw = document.getElementById('clientAmount').value;
@@ -2664,11 +2675,9 @@
                     showToast('订单更新成功', 'success');
                 } catch (err) {
                     showToast('更新失败: ' + err.message, 'error');
-                    return;
                 }
             } else {
                 // 添加
-                let result;
                 try {
                     result = await apiCall('save-order', {
                         method: 'POST',
@@ -2677,14 +2686,13 @@
                     showToast('订单登记成功', 'success');
                 } catch (err) {
                     showToast('登记失败: ' + err.message, 'error');
-                    return;
                 }
             }
 
             await renderOrders(getCurrentFilter());
             closeModal();
 
-            // 恢复按钮（无论成功失败，失败路径已在 catch 内 return）
+            // 恢复按钮（finally 模式，无论成功失败都恢复 —— 之前的 catch+return 写法漏恢复）
             submitBtn.disabled = false;
             submitBtn.textContent = originalBtnText;
         });
