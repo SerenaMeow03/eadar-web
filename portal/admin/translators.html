@@ -375,6 +375,7 @@
                 <a href="clients.html">客户管理</a>
                 <a href="audit.html">操作日志</a>
                 <a href="notifications.html">通知偏好</a>
+                <a href="email-failures.html">邮件失败</a>
             </nav>
             <div class="user-info">
                 <span class="user-name">管理员</span>
@@ -499,6 +500,49 @@
         </div>
     </div>
 
+    <!-- 编辑译员弹窗 -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>编辑译员信息</h3>
+                <button class="close-btn" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label>姓名 *</label>
+                    <input type="text" id="editName" required placeholder="请输入译员姓名">
+                </div>
+                <div class="form-group">
+                    <label>手机号</label>
+                    <input type="tel" id="editPhone" placeholder="请输入手机号码">
+                </div>
+                <div class="form-group">
+                    <label>语种（用逗号分隔）</label>
+                    <input type="text" id="editLanguages" placeholder="例如：英语,日语,韩语">
+                </div>
+                <div class="form-group">
+                    <label>专业领域（用逗号分隔）</label>
+                    <input type="text" id="editSpecialties" placeholder="例如:医学,法律,商务">
+                </div>
+                <div class="form-group">
+                    <label>状态 *</label>
+                    <select id="editStatus" required>
+                        <option value="active">合作中（active）</option>
+                        <option value="backup">备选（backup）</option>
+                        <option value="terminated">已终止（terminated）</option>
+                    </select>
+                    <div style="font-size: 12px; color: #999; margin-top: 4px;">提示：终止译员请用"删除"按钮（保留历史订单）；仅在调整合作/备选状态时用此选项</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存修改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../_shared/api-client.js"></script>
     <script>
         // 使用 IIFE 避免全局变量污染
         (function() {
@@ -506,38 +550,7 @@
         const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
 
-        function getAccessToken() {
-            const keys = Object.keys(localStorage);
-            for (const k of keys) {
-                if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
-                    try {
-                        const data = JSON.parse(localStorage.getItem(k));
-                        return data?.access_token || null;
-                    } catch (e) { return null; }
                 }
-            }
-            return null;
-        }
-
-        async function apiCall(path, options = {}) {
-            const token = getAccessToken();
-            if (!token) { window.location.href = 'login.html'; throw new Error('No session'); }
-            const res = await fetch('/.netlify/functions/' + path, {
-                ...options,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token,
-                    ...(options.headers || {}),
-                }
-            });
-            if (res.status === 401 || res.status === 403) {
-                window.location.href = 'login.html';
-                throw new Error('Unauthorized');
-            }
-            const json = await res.json();
-            if (!res.ok) throw new Error(json.error || '请求失败');
-            return json;  // 不解包
-        }
 
         // 检查登录状态
         const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));
@@ -631,6 +644,7 @@
                         <td>
                             <div class="action-btns">
                                 <button class="btn btn-secondary" onclick="viewTranslator('${t.id}')">查看</button>
+                                <button class="btn btn-secondary" onclick="openEditModal('${t.id}')">编辑</button>
                                 <button class="btn btn-warning" onclick="openResetPwdModal('${t.id}', '${escapeAttr(t.email)}', '${escapeAttr(t.name)}')">重置密码</button>
                                 ${deleteBtn}
                             </div>
@@ -782,6 +796,96 @@
         function closeViewModal() {
             document.getElementById('viewModal').classList.remove('active');
         }
+
+        // ============= 编辑译员 =============
+        // 打开编辑弹窗：先 fetch 当前数据 → 填表单 → 显示
+        async function openEditModal(id) {
+            const modal = document.getElementById('editModal');
+            const submitBtn = document.querySelector('#editForm button[type="submit"]');
+            const originalBtnText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '加载中...';
+
+            document.getElementById('editId').value = id;
+            document.getElementById('editName').value = '';
+            document.getElementById('editPhone').value = '';
+            document.getElementById('editLanguages').value = '';
+            document.getElementById('editSpecialties').value = '';
+            document.getElementById('editStatus').value = 'active';
+
+            modal.classList.add('active');
+
+            try {
+                // 用缓存（已加载过），缺则强刷
+                let list = cachedTranslators;
+                if (!list) list = await loadTranslators(true);
+                const t = list.find(x => x.id === id);
+                if (!t) {
+                    showToast('译员不存在', 'error');
+                    closeEditModal();
+                    return;
+                }
+                document.getElementById('editName').value = t.name || '';
+                document.getElementById('editPhone').value = t.phone || '';
+                document.getElementById('editLanguages').value = Array.isArray(t.languages) ? t.languages.join(', ') : '';
+                document.getElementById('editSpecialties').value = Array.isArray(t.specialties) ? t.specialties.join(', ') : '';
+                document.getElementById('editStatus').value = t.status || 'active';
+            } catch (e) {
+                showToast('加载译员信息失败：' + e.message, 'error');
+                closeEditModal();
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
+            }
+        }
+        window.openEditModal = openEditModal;
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+        window.closeEditModal = closeEditModal;
+
+        // 表单 submit：调 update-translator
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn.disabled) return;
+            submitBtn.disabled = true;
+            const originalBtnText = submitBtn.textContent;
+            submitBtn.textContent = '保存中...';
+
+            const id = document.getElementById('editId').value;
+            const name = document.getElementById('editName').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
+            const status = document.getElementById('editStatus').value;
+            const languagesInput = document.getElementById('editLanguages').value.trim();
+            const languages = languagesInput ? languagesInput.split(',').map(l => l.trim()).filter(Boolean) : [];
+            const specialtiesInput = document.getElementById('editSpecialties').value.trim();
+            const specialties = specialtiesInput ? specialtiesInput.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+            if (!name) {
+                showToast('姓名不能为空', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
+                return;
+            }
+
+            try {
+                await apiCall('update-translator', {
+                    method: 'POST',
+                    body: JSON.stringify({ id, name, phone, status, languages, specialties }),
+                });
+                showToast('保存成功', 'success');
+                closeEditModal();
+                cachedTranslators = null;  // 改后强刷
+                await renderTranslators();
+            } catch (err) {
+                showToast('保存失败：' + err.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
+            }
+        });
 
         // 删除译员（软删：status → terminated，历史订单保留）
         async function deleteTranslator(id) {

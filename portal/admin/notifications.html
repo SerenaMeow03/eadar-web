@@ -80,6 +80,7 @@
                 <a href="clients.html">客户管理</a>
                 <a href="audit.html">操作日志</a>
                 <a href="notifications.html" class="active">通知偏好</a>
+                <a href="email-failures.html">邮件失败</a>
             </nav>
             <div class="user-info">
                 <span class="user-name">管理员</span>
@@ -101,42 +102,12 @@
         </div>
     </div>
 
+    <script src="../_shared/api-client.js"></script>
     <script>
         const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
 
-        function getAccessToken() {
-            const keys = Object.keys(localStorage);
-            for (const k of keys) {
-                if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
-                    try {
-                        const data = JSON.parse(localStorage.getItem(k));
-                        return data?.access_token || null;
-                    } catch (e) { return null; }
                 }
-            }
-            return null;
-        }
-
-        async function apiCall(path, options = {}) {
-            const token = getAccessToken();
-            if (!token) { window.location.href = 'login.html'; throw new Error('No session'); }
-            const res = await fetch('/.netlify/functions/' + path, {
-                ...options,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token,
-                    ...(options.headers || {}),
-                }
-            });
-            if (res.status === 401 || res.status === 403) {
-                window.location.href = 'login.html';
-                throw new Error('Unauthorized');
-            }
-            const json = await res.json();
-            if (!res.ok) throw new Error(json.error || '请求失败');
-            return json;
-        }
 
         // 检查登录状态
         const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));

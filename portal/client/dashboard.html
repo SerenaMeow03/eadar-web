@@ -236,37 +236,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="../verify-role.js"></script>
+    <script src="../_shared/api-client.js"></script>
     <script>
     (function() {
-        function getAccessToken() {
-            const keys = Object.keys(localStorage);
-            for (const k of keys) {
-                if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
-                    try {
-                        const data = JSON.parse(localStorage.getItem(k));
-                        return data?.access_token || null;
-                    } catch (e) { return null; }
-                }
-            }
-            return null;
-        }
-
-        async function apiCall(path, options = {}) {
-            const token = getAccessToken();
-            if (!token) { window.location.href = 'login.html'; throw new Error('No session'); }
-            const res = await fetch('/.netlify/functions/' + path, {
-                ...options,
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(options.headers || {}),
-                    'Authorization': 'Bearer ' + token,
-                },
-            });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-            return data;  // 不解包
-        }
-
+        
         let allOrders = [];
         let currentFilter = 'all';
 

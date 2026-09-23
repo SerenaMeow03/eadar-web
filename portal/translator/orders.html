@@ -509,6 +509,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="../verify-role.js"></script>
+    <script src="../_shared/api-client.js"></script>
     <script>
         // ============= 工具：当前筛选状态 =============
         function getCurrentFilter() {
@@ -517,38 +518,7 @@
         }
 
         // ============= 统一 API 调用封装 =============
-        function getAccessToken() {
-            const keys = Object.keys(localStorage);
-            for (const k of keys) {
-                if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
-                    try {
-                        const data = JSON.parse(localStorage.getItem(k));
-                        return data?.access_token || null;
-                    } catch (e) { return null; }
                 }
-            }
-            return null;
-        }
-
-        async function apiCall(path, options = {}) {
-            const token = getAccessToken();
-            if (!token) { window.location.href = 'login.html'; throw new Error('No session'); }
-            const res = await fetch('/.netlify/functions/' + path, {
-                ...options,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token,
-                    ...(options.headers || {}),
-                }
-            });
-            if (res.status === 401 || res.status === 403) {
-                window.location.href = 'login.html';
-                throw new Error('Unauthorized');
-            }
-            const json = await res.json();
-            if (!res.ok) throw new Error(json.error || '请求失败');
-            return json;  // 不解包
-        }
 
         // 检查登录状态 + 角色校验（防止 admin/client token 残留）
         const currentTranslator = JSON.parse(localStorage.getItem('currentTranslator'));
