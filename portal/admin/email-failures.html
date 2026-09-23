@@ -176,13 +176,15 @@
 
     <script src="../_shared/api-client.js"></script>
     <script>
-        // 检查登录
+        // 检查登录（仅读 localStorage，不调后端——其他 admin 页面统一模式）
         (async function checkAuth() {
             const token = getAccessToken();
             if (!token) { window.location.href = 'login.html'; return; }
-            const me = await apiCall('get-translator-me').catch(() => null);
-            if (!me || me.role !== 'admin') { window.location.href = 'login.html'; return; }
-            document.body.style.display = 'block';
+            const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin') || 'null');
+            if (!currentAdmin || currentAdmin.role !== 'admin') {
+                window.location.href = 'login.html';
+                return;
+            }
             loadLogs();
         })();
 
