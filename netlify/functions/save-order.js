@@ -45,6 +45,10 @@ exports.handler = async (event) => {
   if (!project_name || !word_count || !rate || !deadline || !translator_id) {
     return corsResponse(400, { error: '项目名称、字数、费率、截止日期、译员为必填' });
   }
+  // 客户字段必填（手动登记订单场景）；批量导入场景（带 batch_id）允许空
+  if (!client_id && !batch_id) {
+    return corsResponse(400, { error: '所属客户为必填（批量导入除外）' });
+  }
   if (Number(word_count) <= 0 || Number(rate) <= 0) {
     return corsResponse(400, { error: '字数和费率必须大于 0' });
   }

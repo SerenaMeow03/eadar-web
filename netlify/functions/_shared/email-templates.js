@@ -317,6 +317,118 @@ ${orderRowsText}
 }
 
 // ============================================================
+// 模板 5：客户欢迎邮件（admin 创建客户 → 通知客户）
+// ============================================================
+function buildClientWelcomeEmail({ client, tempPassword, smtpUser }) {
+  const name = client?.contact_name || '客户';
+  const company = client?.company_name || '';
+  const loginUrl = 'https://admin.eadartrans.com/portal/client/login.html';
+
+  const subject = `【欢迎加入谊达翻译】您的账号已开通`;
+
+  const html = `
+    ${WRAPPER_OPEN}
+    <h2 style="color: #1a1a2e;">您好 ${escapeHtml(name)}，</h2>
+    <p>欢迎使用谊达翻译订单管理系统！您的账号已由管理员开通：</p>
+    <table ${TABLE_STYLE}>
+      ${company ? `<tr><td ${TD_LABEL}>公司名称</td><td ${TD_VALUE_BOLD}>${escapeHtml(company)}</td></tr>` : ''}
+      <tr><td ${TD_LABEL}>联系人</td><td ${TD_VALUE_BOLD}>${escapeHtml(name)}</td></tr>
+      <tr><td ${TD_LABEL}>登录邮箱</td><td ${TD_VALUE}>${escapeHtml(client.email)}</td></tr>
+      <tr><td ${TD_LABEL}>初始密码</td><td style="padding: 10px; font-family: monospace; font-weight: 600; color: #cf1322; background: #fff7e6;">${escapeHtml(tempPassword)}</td></tr>
+    </table>
+    <p style="background: #fffbe6; border: 1px solid #ffe58f; padding: 12px; border-radius: 6px; color: #ad6800;">
+      ⚠️ <strong>首次登录后请尽快修改密码</strong>（进入「仪表盘」→「修改密码」）。
+    </p>
+    <p>登录后可查看分配给您的所有翻译订单、跟踪进度、确认付款状态。</p>
+    ${CTA_BUTTON(loginUrl, '立即登录')}
+    ${FOOTER('如有任何问题，请联系您的项目对接人。')}
+    ${WRAPPER_CLOSE}
+  `;
+
+  const text = `您好 ${name}，
+
+欢迎使用谊达翻译订单管理系统！您的账号已开通：
+
+${company ? '公司名称：' + company + '\n' : ''}联系人：${name}
+登录邮箱：${client.email}
+初始密码：${tempPassword}
+
+⚠️ 首次登录后请尽快修改密码（仪表盘 → 修改密码）。
+
+登录地址：${loginUrl}
+
+如有问题请联系您的项目对接人。
+
+谊达翻译`;
+
+  return {
+    subject,
+    html,
+    text,
+    to: client.email,
+    fromName: '谊达翻译',
+  };
+}
+
+// ============================================================
+// 模板 6：译员欢迎邮件（admin 创建译员 → 通知译员）
+// ============================================================
+function buildTranslatorWelcomeEmail({ translator, password, smtpUser }) {
+  const name = translator?.name || translator?.email?.split('@')[0] || '译员';
+  const langs = (translator?.languages || []).map(fmtLang).filter(Boolean).join('、') || '待补充';
+  const loginUrl = 'https://admin.eadartrans.com/portal/translator/login.html';
+
+  const subject = `【欢迎加入谊达翻译译员团队】您的账号已开通`;
+
+  const html = `
+    ${WRAPPER_OPEN}
+    <h2 style="color: #1a1a2e;">您好 ${escapeHtml(name)}，</h2>
+    <p>欢迎加入谊达翻译译员团队！您的账号已由管理员开通：</p>
+    <table ${TABLE_STYLE}>
+      <tr><td ${TD_LABEL}>姓名</td><td ${TD_VALUE_BOLD}>${escapeHtml(name)}</td></tr>
+      <tr><td ${TD_LABEL}>登录邮箱</td><td ${TD_VALUE}>${escapeHtml(translator.email)}</td></tr>
+      <tr><td ${TD_LABEL}>语种</td><td ${TD_VALUE}>${escapeHtml(langs)}</td></tr>
+      <tr><td ${TD_LABEL}>初始密码</td><td style="padding: 10px; font-family: monospace; font-weight: 600; color: #cf1322; background: #fff7e6;">${escapeHtml(password)}</td></tr>
+    </table>
+    <p style="background: #fffbe6; border: 1px solid #ffe58f; padding: 12px; border-radius: 6px; color: #ad6800;">
+      ⚠️ <strong>首次登录后请尽快修改密码</strong>（进入「我的资料」→「修改密码」）。
+    </p>
+    <p>登录后可查看分配给您的所有翻译订单、接单、提交完成。</p>
+    <p style="color: #666; font-size: 13px;">💡 建议在「通知偏好」中开启「新订单通知」开关，确保第一时间收到派单通知。</p>
+    ${CTA_BUTTON(loginUrl, '立即登录')}
+    ${FOOTER('如有任何问题，请联系管理员。')}
+    ${WRAPPER_CLOSE}
+  `;
+
+  const text = `您好 ${name}，
+
+欢迎加入谊达翻译译员团队！您的账号已开通：
+
+姓名：${name}
+登录邮箱：${translator.email}
+语种：${langs}
+初始密码：${password}
+
+⚠️ 首次登录后请尽快修改密码（我的资料 → 修改密码）。
+
+登录地址：${loginUrl}
+
+💡 建议在「通知偏好」中开启「新订单通知」开关。
+
+如有问题请联系管理员。
+
+谊达翻译`;
+
+  return {
+    subject,
+    html,
+    text,
+    to: translator.email,
+    fromName: '谊达翻译',
+  };
+}
+
+// ============================================================
 // 模板列表（便于未来扩展）
 // ============================================================
 const TEMPLATES = {
@@ -332,4 +444,6 @@ module.exports = {
   buildOrderCompletedEmail,
   buildOrderResponseEmail,
   buildBatchOrderAssignedEmail,
+  buildClientWelcomeEmail,
+  buildTranslatorWelcomeEmail,
 };

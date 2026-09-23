@@ -9,6 +9,9 @@
 
 const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate, parseBody } = require('./_shared/auth');
+const { buildClientWelcomeEmail } = require('./_shared/email-templates');
+const { logEmailFailed } = require('./_shared/email-log');
+const nodemailer = require('nodemailer');
 
 function generateTempPassword() {
   // 12 位临时密码：大写+小写+数字，避免特殊字符
@@ -89,6 +92,41 @@ exports.handler = async (event) => {
     }
 
     console.log('client created:', clientData.id, 'by admin:', auth.user.email);
+
+    // 4) 发送欢迎邮件给客户（非阻塞，失败仅记日志 + audit）
+    try {
+      const smtpHost = process.env.SMTP_HOST;
+      const smtpUser = process.env.SMTP_USER;
+      const smtpPass = process.env.SMTP_PASS;
+      if (!smtpHost || !smtpUser || !smtpPass) {
+        console.warn('register-client: SMTP not configured, skip welcome email');
+      } else {
+        const tpl = buildClientWelcomeEmail({ client: clientData, tempPassword, smtpUser });
+        const transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: Number(process.env.SMTP_PORT || 465),
+          secure: Number(process.env.SMTP_PORT || 465) === 465,
+          auth: { user: smtpUser, pass: smtpPass },
+        });
+        const info = await transporter.sendMail({
+          from: `"${tpl.fromName}" <${smtpUser}>`,
+          to: tpl.to,
+          subject: tpl.subject,
+          text: tpl.text,
+          html: tpl.html,
+        });
+        console.log('register-client welcome email sent:', info.messageId);
+      }
+    } catch (emailErr) {
+      console.error('register-client welcome email failed:', emailErr);
+      // 失败留痕：admin 后台 email-failures.html 可定位
+      await logEmailFailed(service, {
+        orderId: null,
+        emailType: 'client_welcome',
+        to: clientData.email,
+        error: emailErr,
+      }).catch(() => {});
+    }
 
     return corsResponse(200, {
       data: {
