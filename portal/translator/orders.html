@@ -518,8 +518,6 @@
         }
 
         // ============= 统一 API 调用封装 =============
-                }
-
         // 检查登录状态 + 角色校验（防止 admin/client token 残留）
         const currentTranslator = JSON.parse(localStorage.getItem('currentTranslator'));
         if (!currentTranslator) {

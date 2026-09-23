@@ -546,12 +546,6 @@
     <script>
         // 使用 IIFE 避免全局变量污染
         (function() {
-        // ============= 统一 API 调用封装 =============
-        const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
-
-                }
-
         // 检查登录状态
         const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));
         if (!currentAdmin || currentAdmin.role !== 'admin') {
@@ -1000,8 +994,13 @@
             });
         }
 
-        // 初始化
-        renderTranslators();
+        // 初始化（带 catch：失败显示 toast，避免卡"加载中..."无限循环）
+        renderTranslators().catch(err => {
+            console.error('renderTranslators init failed:', err);
+            const tbody = document.getElementById('translatorsTableBody');
+            if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="loading" style="color:#cf1322;">加载失败：${err.message || '未知错误'}</td></tr>`;
+            if (typeof showToast === 'function') showToast('译员列表加载失败: ' + err.message, 'error');
+        });
         })();
     </script>
 </body>
