@@ -17,6 +17,7 @@ const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate } = require('./_shared/auth');
 const { buildBatchOrderAssignedEmail } = require('./_shared/email-templates');
 const { checkPreference } = require('./_shared/notifications');
+const { logEmailFailed } = require('./_shared/email-log');
 const nodemailer = require('nodemailer');
 
 exports.handler = async (event) => {
@@ -162,6 +163,15 @@ exports.handler = async (event) => {
       } catch (mailErr) {
         results.push({ translatorId: tid, translatorEmail: translator.email, status: 'failed', reason: mailErr.message, count: tOrders.length });
         console.error('send-batch-import-email mail failed for translator', translator.email, ':', mailErr.message);
+        // 邮件失败留痕：admin 后台 audit_logs 查 action='email_send_failed' + translatorId 定位
+        // batchId 作为 target_id 聚合整个批次的所有失败（partial failure 也好排查）
+        await logEmailFailed(service, {
+          batchId,
+          emailType: 'batch_import_assigned',
+          to: translator.email,
+          error: mailErr,
+          translatorId: tid,
+        });
       }
     }
 

@@ -9,6 +9,7 @@ const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate } = require('./_shared/auth');
 const { buildBatchOrderAssignedEmail } = require('./_shared/email-templates');
 const { checkPreference } = require('./_shared/notifications');
+const { logEmailFailed } = require('./_shared/email-log');
 const nodemailer = require('nodemailer');
 
 exports.handler = async (event) => {
@@ -113,6 +114,9 @@ exports.handler = async (event) => {
     });
   } catch (e) {
     console.error('send-batch-order-email error:', e);
+    // 邮件失败留痕：admin 后台 audit_logs 查 action='email_send_failed' 可定位
+    // 注意：批量派单只发 1 封，但多个订单都有失败风险；这里只记 1 条代表整个批次
+    await logEmailFailed(service, { orderId: null, emailType: 'batch_order_assigned', to: tpl.to, error: e });
     return corsResponse(500, { error: '邮件发送失败：' + e.message });
   }
 };
