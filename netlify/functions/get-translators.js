@@ -29,6 +29,7 @@ exports.handler = async (event) => {
       .select(`
         id, name, username, email, phone,
         bank_info, languages, specialties, standard_rate, urgent_rate,
+        auth_user_id,
         status, remark, created_at, updated_at
       `)
       // 字母序：active → suspended → terminated

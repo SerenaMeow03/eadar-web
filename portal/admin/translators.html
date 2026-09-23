@@ -221,21 +221,40 @@
         .translators-table table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
         .translators-table th {
             background: #fafafa;
-            padding: 16px;
+            padding: 12px 8px;
             text-align: left;
             font-size: 14px;
             font-weight: 500;
             color: #666;
             border-bottom: 1px solid #f0f0f0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .translators-table td {
-            padding: 16px;
+            padding: 12px 8px;
             border-bottom: 1px solid #f0f0f0;
             font-size: 14px;
             color: #333;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* 姓名列单独左对齐 */
+        .translators-table td:nth-child(2) { text-align: left; }
+        /* 列宽：固定分配，操作列加宽到 180px 容纳 4 个按钮 */
+        .translators-table th:nth-child(1), .translators-table td:nth-child(1) { width: 100px; }   /* 译员ID */
+        .translators-table th:nth-child(2), .translators-table td:nth-child(2) { width: 100px; }   /* 姓名 */
+        .translators-table th:nth-child(3), .translators-table td:nth-child(3) { width: 200px; }   /* 用户名（邮箱） */
+        .translators-table th:nth-child(4), .translators-table td:nth-child(4) { width: 130px; }   /* 银行卡信息 */
+        .translators-table th:nth-child(5), .translators-table td:nth-child(5) { width: 80px; }    /* 状态 */
+        .translators-table th:nth-child(6), .translators-table td:nth-child(6) { width: 110px; }   /* 注册时间 */
+        .translators-table th:nth-child(7), .translators-table td:nth-child(7) { width: 220px; }   /* 操作 4 按钮 */
         }
         .translators-table tr:hover {
             background: #fafafa;
@@ -625,6 +644,11 @@
                     ? '<button class="btn btn-danger" disabled style="opacity:0.4; cursor:not-allowed;">已终止</button>'
                     : `<button class="btn btn-danger" onclick="deleteTranslator('${t.id}')">删除</button>`;
 
+                // auth_user_id 缺失 → 显示"重绑Auth"按钮（橙底警示）
+                const rebindBtn = !t.auth_user_id
+                    ? `<button class="btn btn-warning" onclick="rebindTranslator('${t.id}')" title="该译员 auth 账号未绑定，点击修复登录问题">⚠ 重绑Auth</button>`
+                    : '';
+
                 const createdAt = t.created_at ? t.created_at.split('T')[0] : '-';
 
                 return `
@@ -639,7 +663,8 @@
                             <div class="action-btns">
                                 <button class="btn btn-secondary" onclick="viewTranslator('${t.id}')">查看</button>
                                 <button class="btn btn-secondary" onclick="openEditModal('${t.id}')">编辑</button>
-                                <button class="btn btn-warning" onclick="openResetPwdModal('${t.id}', '${escapeAttr(t.email)}', '${escapeAttr(t.name)}')">重置密码</button>
+                                <button class="btn btn-warning" onclick="openResetPwdModal('${t.id}', '${escapeAttr(t.email)}', '${escapeAttr(t.name)}')" title="重置密码">重置</button>
+                                ${rebindBtn}
                                 ${deleteBtn}
                             </div>
                         </td>
@@ -660,6 +685,22 @@
             return String(s || '').replace(/['"\\<>]/g, c => ({
                 "'": '&#39;', '"': '&quot;', '\\': '\\\\', '<': '&lt;', '>': '&gt;'
             })[c]);
+        }
+
+        // 重绑 auth_user_id（早期手动插入的译员行 auth_user_id 字段为空时使用）
+        async function rebindTranslator(translatorId) {
+            if (!confirm(`确认重绑译员 ${translatorId} 的 auth 账号？\n会自动按邮箱查 auth.users 并回填 auth_user_id。`)) return;
+            try {
+                const result = await apiCall('rebind-translator-auth', {
+                    method: 'POST',
+                    body: JSON.stringify({ translatorId }),
+                });
+                const data = result?.data || result || {};
+                showToast(data.message || '重绑成功', 'success');
+                await renderTranslators();
+            } catch (err) {
+                showToast('重绑失败：' + (err.message || err), 'error');
+            }
         }
 
         // 重置密码相关
