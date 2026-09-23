@@ -41,14 +41,6 @@ async function handleLogin(event, requiredRole) {
   const user = data.user;
   const session = data.session;
   const role = user.app_metadata?.role;
-  // 🐛 临时诊断：登录成功后的关键身份字段
-  console.log('[login DEBUG] signIn success', {
-    email: user.email,
-    user_id: user.id,
-    role,
-    app_metadata: user.app_metadata,
-    required_role: requiredRole,
-  });
 
   // 2) 校验角色
   //    出于安全考虑：不向调用方透露账号实际角色，仅提示"无权限"
@@ -71,15 +63,6 @@ async function handleLogin(event, requiredRole) {
       .select('id, status, name')
       .eq('auth_user_id', user.id)
       .maybeSingle();
-    // 🐛 临时诊断：打印 service_role 查询实际拿到的结果
-    console.log('[login-translator DEBUG]', {
-      email: user.email,
-      user_id: user.id,
-      query_error: tErr?.message || null,
-      query_error_code: tErr?.code || null,
-      translator_found: t || null,
-      timestamp: new Date().toISOString(),
-    });
     if (tErr) {
       console.error('[login-translator] query error:', tErr);
       return corsResponse(500, { error: '译员业务记录查询失败：' + tErr.message });
@@ -98,15 +81,6 @@ async function handleLogin(event, requiredRole) {
       .select('id, status, contact_name, company_name')
       .eq('user_id', user.id)
       .maybeSingle();
-    // 🐛 临时诊断：打印 service_role 查询实际拿到的结果
-    console.log('[login-client DEBUG]', {
-      email: user.email,
-      user_id: user.id,
-      query_error: cErr?.message || null,
-      query_error_code: cErr?.code || null,
-      client_found: c || null,
-      timestamp: new Date().toISOString(),
-    });
     if (cErr) {
       console.error('[login-client] clients query error:', cErr);
       return corsResponse(500, { error: '客户业务记录查询失败：' + cErr.message });
