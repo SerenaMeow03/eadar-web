@@ -140,7 +140,16 @@ exports.handler = async (event) => {
     };
 
     let result;
+    let oldPaymentStatus = null;  // C5: 用于检测 unpaid → paid 触发结算通知
     if (id) {
+      // C5: 先读旧 payment_status（避免 SELECT 再 UPDATE 多一轮 RT）
+      const { data: prev } = await service
+        .from('orders')
+        .select('payment_status')
+        .eq('id', id)
+        .single();
+      oldPaymentStatus = prev?.payment_status || null;
+
       // 更新
       const { data, error } = await service
         .from('orders')
@@ -216,6 +225,32 @@ exports.handler = async (event) => {
       }
     } else if (!id) {
       console.log('[save-order] C2 trigger skipped: status=', status, 'orderId=', result.id);
+    }
+
+    // C5: 结算通知译员（仅编辑模式 + payment_status: unpaid → paid 才触发）
+    // 用户诉求：admin 改"已结算"时通知译员
+    // - 仅 unpaid → paid 变化触发，避免重复打扰
+    // - 编辑路径独有（创建路径 payment_status 默认 unpaid，不会触发）
+    // 后端 await 同步调用：与 C2 同模式，100% 可靠
+    if (id && oldPaymentStatus === 'unpaid' && payment_status === 'paid') {
+      try {
+        const protocol = event.headers['x-forwarded-proto'] || 'https';
+        const host = event.headers.host;
+        const authHeader = event.headers.authorization || event.headers.Authorization || '';
+        const resp = await fetch(`${protocol}://${host}/.netlify/functions/send-translator-payment-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader,
+          },
+          body: JSON.stringify({ orderId: result.id }),
+        });
+        console.log('[save-order] C5 trigger response:', resp.status, 'payment_status: unpaid→paid');
+      } catch (err) {
+        console.warn('[save-order] C5 trigger failed (non-blocking):', err.message);
+      }
+    } else if (id && payment_status === 'paid') {
+      console.log('[save-order] C5 trigger skipped: oldPaymentStatus=', oldPaymentStatus);
     }
 
     return corsResponse(200, { data: result, message: id ? '订单已更新' : '订单已创建' });

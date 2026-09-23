@@ -429,6 +429,64 @@ function buildTranslatorWelcomeEmail({ translator, password, smtpUser }) {
 }
 
 // ============================================================
+// 模板 7：结算通知（admin 改已结算 → 通知译员 C5）
+// ============================================================
+function buildTranslatorPaymentEmail({ order, translator, smtpUser }) {
+  const translatorName = translator?.name || '译员';
+  const translatorEmail = translator?.email;
+  const deadlineStr = fmtDate(order.deadline);
+  const paidAt = fmtDateTime(new Date().toISOString());
+
+  const subject = `【结算通知】${order.project_name}（订单号 ${order.id}）已结算 ¥${order.amount}`;
+
+  const html = `
+    ${WRAPPER_OPEN}
+    <h2 style="color: #1a1a2e;">您好 ${escapeHtml(translatorName)}，</h2>
+    <p>您负责的翻译订单已完成结算，结算金额已记录到系统：</p>
+    <table ${TABLE_STYLE}>
+      <tr><td ${TD_LABEL}>订单号</td><td ${TD_VALUE_BOLD}>${escapeHtml(order.id)}</td></tr>
+      <tr><td ${TD_LABEL}>项目名称</td><td ${TD_VALUE_BOLD}>${escapeHtml(order.project_name)}</td></tr>
+      <tr><td ${TD_LABEL}>字数</td><td ${TD_VALUE}>${(order.word_count || 0).toLocaleString()} 字</td></tr>
+      <tr><td ${TD_LABEL}>单价</td><td ${TD_VALUE}>¥${escapeHtml(order.rate)} / 千字</td></tr>
+      <tr><td ${TD_LABEL}>结算金额</td><td style="padding: 10px; font-weight: 600; color: #52c41a;">¥${escapeHtml(order.amount)}</td></tr>
+      <tr><td ${TD_LABEL}>截止日期</td><td ${TD_VALUE}>${deadlineStr}</td></tr>
+      <tr><td ${TD_LABEL}>结算时间</td><td style="padding: 10px; font-weight: 600; color: #52c41a;">${paidAt}</td></tr>
+      ${order.remark ? `<tr><td ${TD_LABEL}>备注</td><td ${TD_VALUE}>${escapeHtml(order.remark)}</td></tr>` : ''}
+    </table>
+    <p style="background: #f6ffed; border: 1px solid #b7eb8f; padding: 12px; border-radius: 6px; color: #389e0d;">
+      ✅ <strong>结算已确认</strong>，请关注银行到账信息。如对结算金额有疑问，请尽快联系对接人核对。
+    </p>
+    ${FOOTER('本邮件由谊达翻译系统自动发送，仅作为结算通知。')}
+    ${WRAPPER_CLOSE}
+  `;
+
+  const text = `您好 ${translatorName}，
+
+您负责的翻译订单已完成结算：
+
+订单号：${order.id}
+项目名称：${order.project_name}
+字数：${order.word_count}
+单价：¥${order.rate}/千字
+结算金额：¥${order.amount}
+截止日期：${deadlineStr}
+结算时间：${paidAt}
+${order.remark ? '\n备注：' + order.remark : ''}
+
+✅ 结算已确认，请关注银行到账信息。如对结算金额有疑问，请尽快联系对接人核对。
+
+谊达翻译系统`;
+
+  return {
+    subject,
+    html,
+    text,
+    to: translatorEmail,
+    fromName: '谊达翻译系统',
+  };
+}
+
+// ============================================================
 // 模板列表（便于未来扩展）
 // ============================================================
 const TEMPLATES = {
@@ -436,6 +494,7 @@ const TEMPLATES = {
   ORDER_COMPLETED: buildOrderCompletedEmail,
   ORDER_RESPONSE: buildOrderResponseEmail,
   BATCH_ORDER_ASSIGNED: buildBatchOrderAssignedEmail,
+  TRANSLATOR_PAYMENT: buildTranslatorPaymentEmail,
 };
 
 module.exports = {
@@ -446,4 +505,5 @@ module.exports = {
   buildBatchOrderAssignedEmail,
   buildClientWelcomeEmail,
   buildTranslatorWelcomeEmail,
+  buildTranslatorPaymentEmail,
 };

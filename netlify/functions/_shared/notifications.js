@@ -14,6 +14,7 @@ const APPLICABLE_ROLES = {
   order_response: ['admin'],        // 译员响应派单通知 PM
   order_completed: ['admin'],       // 译员标记完成通知 PM
   payment_received: ['translator'], // 译费到账通知译员
+  translator_payment: ['translator'], // admin 改"已结算"通知译员（C5）
 };
 
 // 每个角色应看到的偏好项（含 label / desc / 默认启用）
@@ -40,6 +41,11 @@ const ROLE_PREFERENCES = {
       key: 'payment_received',
       label: '译费到账通知',
       desc: '当公司结算译费到我账上时，邮件通知我',
+    },
+    {
+      key: 'translator_payment',
+      label: '订单结算通知',
+      desc: '当我的某个订单被标记为已结算时，邮件通知我',
     },
   ],
   client: [], // 客户通知走 admin 手动邮件，不发系统通知
