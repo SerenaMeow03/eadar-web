@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="/portal/admin/">
+    <title>邮件失败 - 谊达翻译</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif; background: #f5f7fa; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 20px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header-content { max-width: 1400px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 20px; font-weight: 500; }
+        .header-logo { display: flex; align-items: center; gap: 12px; }
+        .header-logo img { height: 40px; width: auto; }
+        .nav-menu { display: flex; gap: 30px; }
+        .nav-menu a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 14px; transition: color 0.3s; }
+        .nav-menu a:hover, .nav-menu a.active { color: white; }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .user-name { font-size: 14px; }
+        .logout-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: background 0.3s; }
+        .logout-btn:hover { background: rgba(255,255,255,0.3); }
+        .container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
+
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .section-header h2 { font-size: 20px; color: #333; }
+
+        .summary-bar { background: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; display: flex; gap: 24px; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); flex-wrap: wrap; }
+        .summary-item { display: flex; flex-direction: column; align-items: flex-start; }
+        .summary-num { font-size: 24px; font-weight: 600; color: #1a1a2e; }
+        .summary-label { font-size: 12px; color: #999; margin-top: 2px; }
+        .summary-item.pending .summary-num { color: #ff4d4f; }
+        .summary-item.resent .summary-num { color: #52c41a; }
+
+        .filter-bar { background: white; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .filter-bar label { font-size: 13px; color: #666; }
+        .filter-bar select { padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; }
+        .filter-bar button { padding: 6px 14px; background: #1a1a2e; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .filter-bar button:hover:not(:disabled) { background: #16213e; }
+        .filter-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .filter-bar button.resend { background: #fa8c16; }
+        .filter-bar button.resend:hover:not(:disabled) { background: #d46b08; }
+        .filter-bar button.reset { background: #f0f0f0; color: #333; }
+        .filter-bar .count { color: #999; font-size: 13px; margin-left: auto; }
+
+        .logs-card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #fafbfc; }
+        th { padding: 12px 14px; text-align: left; font-weight: 500; color: #666; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
+        td { padding: 12px 14px; border-bottom: 1px solid #f5f5f5; font-size: 13px; color: #333; }
+        tbody tr:hover { background: #fafbfc; }
+
+        .email-type-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+        .type-order_assigned { background: #e6f7ff; color: #1890ff; }
+        .type-order_completed { background: #f6ffed; color: #52c41a; }
+        .type-order_response { background: #fff7e6; color: #fa8c16; }
+        .type-batch_order_assigned, .type-batch_import_assigned { background: #f9f0ff; color: #722ed1; }
+
+        .status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+        .status-pending { background: #fff1f0; color: #ff4d4f; }
+        .status-pending_resend { background: #fff7e6; color: #fa8c16; }
+        .status-resent { background: #f6ffed; color: #52c41a; }
+
+        .to-cell { font-size: 12px; color: #555; }
+        .target-cell { font-family: monospace; font-size: 12px; color: #1890ff; cursor: pointer; }
+        .target-cell:hover { text-decoration: underline; }
+        .error-cell { font-size: 11px; color: #ff4d4f; max-width: 300px; word-break: break-all; }
+        .time-cell { white-space: nowrap; color: #999; font-size: 12px; }
+
+        .action-btn { padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 4px; transition: background 0.2s; }
+        .action-btn.resend { background: #fa8c16; color: white; }
+        .action-btn.resend:hover:not(:disabled) { background: #d46b08; }
+        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 16px; padding: 12px; }
+        .pagination button { padding: 6px 12px; border: 1px solid #d9d9d9; background: white; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .pagination button:hover:not(:disabled) { border-color: #1a1a2e; color: #1a1a2e; }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pagination .info { padding: 6px 12px; color: #666; font-size: 13px; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .loading { text-align: center; padding: 40px; color: #999; }
+        .toast { position: fixed; top: 20px; right: 20px; padding: 12px 24px; border-radius: 6px; color: white; font-size: 14px; z-index: 2000; }
+        .toast.success { background: #52c41a; }
+        .toast.error { background: #ff4d4f; }
+        .toast.info { background: #1890ff; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="header-logo">
+                <img src="../../images/logo-white.png" alt="Logo">
+                <h1>管理后台</h1>
+            </div>
+            <nav class="nav-menu">
+                <a href="dashboard.html">首页</a>
+                <a href="translators.html">译员管理</a>
+                <a href="orders.html">订单管理</a>
+                <a href="clients.html">客户管理</a>
+                <a href="audit.html">操作日志</a>
+                <a href="notifications.html">通知偏好</a>
+                <a href="email-failures.html" class="active">邮件失败</a>
+            </nav>
+            <div class="user-info">
+                <span class="user-name">管理员</span>
+                <button class="logout-btn" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="section-header">
+            <h2>邮件失败记录</h2>
+            <button id="refreshBtn" class="filter-bar-btn" style="padding:6px 14px; background:#1a1a2e; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px;">刷新</button>
+        </div>
+
+        <div class="summary-bar" id="summaryBar">
+            <div class="summary-item pending">
+                <span class="summary-num" id="pendingCount">-</span>
+                <span class="summary-label">待重发</span>
+            </div>
+            <div class="summary-item resent">
+                <span class="summary-num" id="resentCount">-</span>
+                <span class="summary-label">已重发成功</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-num" id="totalCount">-</span>
+                <span class="summary-label">全部失败记录</span>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <label>状态筛选：</label>
+            <select id="statusFilter">
+                <option value="pending">待重发</option>
+                <option value="resent">已重发</option>
+                <option value="all">全部</option>
+            </select>
+            <label>邮件类型：</label>
+            <select id="typeFilter">
+                <option value="">全部</option>
+                <option value="order_assigned">订单分配</option>
+                <option value="order_completed">订单完成</option>
+                <option value="order_response">客户响应</option>
+                <option value="batch_order_assigned">批量派单</option>
+                <option value="batch_import_assigned">批量导入</option>
+            </select>
+            <button id="batchResendBtn" class="resend">批量重发选中 (0)</button>
+            <button id="resendAllPendingBtn" class="resend" title="重发所有待重发记录（最多 50 个）">一键重发全部待重发</button>
+            <span class="count" id="listCount">加载中...</span>
+        </div>
+
+        <div class="logs-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:36px;"><input type="checkbox" id="selectAll"></th>
+                        <th style="width:140px;">时间</th>
+                        <th style="width:110px;">邮件类型</th>
+                        <th style="width:200px;">收件人</th>
+                        <th style="width:140px;">目标 ID</th>
+                        <th>错误信息</th>
+                        <th style="width:90px;">状态</th>
+                        <th style="width:140px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="logsTbody">
+                    <tr><td colspan="8" class="loading">加载中...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <script src="../_shared/api-client.js"></script>
+    <script>
+        // 检查登录
+        (async function checkAuth() {
+            const token = getAccessToken();
+            if (!token) { window.location.href = 'login.html'; return; }
+            const me = await apiCall('get-translator-me').catch(() => null);
+            if (!me || me.role !== 'admin') { window.location.href = 'login.html'; return; }
+            document.body.style.display = 'block';
+            loadLogs();
+        })();
+
+        let currentPage = 1;
+        const pageSize = 20;
+        let totalCount = 0;
+        let currentLogs = [];
+        let pendingTotal = 0;
+        let resentTotal = 0;
+
+        const TYPE_LABELS = {
+            order_assigned: '订单分配',
+            order_completed: '订单完成',
+            order_response: '客户响应',
+            batch_order_assigned: '批量派单',
+            batch_import_assigned: '批量导入',
+        };
+
+        const STATUS_LABELS = {
+            resent: '已重发',
+            pending_resend: '重发失败',
+            pending: '待重发',
+        };
+
+        function logout() {
+            ['access_token', 'admin_token'].forEach(k => localStorage.removeItem(k));
+            const keys = Object.keys(localStorage);
+            keys.filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
+                .forEach(k => localStorage.removeItem(k));
+            window.location.href = 'login.html';
+        }
+
+        function showToast(msg, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        async function loadLogs() {
+            const tbody = document.getElementById('logsTbody');
+            tbody.innerHTML = '<tr><td colspan="8" class="loading">加载中...</td></tr>';
+
+            const status = document.getElementById('statusFilter').value;
+            const emailType = document.getElementById('typeFilter').value;
+
+            try {
+                // 1. 取总览（用于顶部统计）
+                const allData = await apiCall('get-audit-logs?action=email_send_failed&pageSize=200');
+                const allLogs = allData.logs || [];
+                pendingTotal = allLogs.filter(l => !l.details?.status || l.details.status === 'pending' || l.details.status === 'pending_resend').length;
+                resentTotal = allLogs.filter(l => l.details?.status === 'resent').length;
+                totalCount = allLogs.length;
+                document.getElementById('pendingCount').textContent = pendingTotal;
+                document.getElementById('resentCount').textContent = resentTotal;
+                document.getElementById('totalCount').textContent = totalCount;
+
+                // 2. 客户端按 status 过滤（因为后端只能按 action 过滤，status 在 details 里）
+                let filtered = allLogs;
+                if (status === 'pending') {
+                    filtered = allLogs.filter(l => !l.details?.status || l.details.status === 'pending' || l.details.status === 'pending_resend');
+                } else if (status === 'resent') {
+                    filtered = allLogs.filter(l => l.details?.status === 'resent');
+                }
+                if (emailType) {
+                    filtered = filtered.filter(l => l.details?.emailType === emailType);
+                }
+
+                // 客户端分页
+                totalCount = filtered.length;
+                const start = (currentPage - 1) * pageSize;
+                const end = start + pageSize;
+                currentLogs = filtered.slice(start, end);
+
+                renderLogs();
+                renderPagination();
+                updateSelectAll();
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="8" class="loading" style="color:#ff4d4f;">加载失败：${e.message}</td></tr>`;
+            }
+        }
+
+        function renderLogs() {
+            const tbody = document.getElementById('logsTbody');
+            if (currentLogs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">没有失败记录 ✓</td></tr>';
+                document.getElementById('listCount').textContent = '0 条';
+                return;
+            }
+
+            tbody.innerHTML = currentLogs.map(log => {
+                const details = log.details || {};
+                const type = details.emailType || 'unknown';
+                const to = details.to || '-';
+                const targetId = log.target_id || '-';
+                const error = details.error || '-';
+                const status = details.status || 'pending';
+                const time = log.created_at ? new Date(log.created_at).toLocaleString('zh-CN', { hour12: false }) : '-';
+
+                return `<tr data-id="${log.id}">
+                    <td><input type="checkbox" class="row-check" data-id="${log.id}"></td>
+                    <td class="time-cell">${time}</td>
+                    <td><span class="email-type-tag type-${type}">${TYPE_LABELS[type] || type}</span></td>
+                    <td class="to-cell">${escapeHtml(to)}</td>
+                    <td class="target-cell" onclick="openTarget('${type}', '${escapeHtml(targetId)}')">${escapeHtml(targetId)}</td>
+                    <td class="error-cell">${escapeHtml(error)}</td>
+                    <td><span class="status-tag status-${status}">${STATUS_LABELS[status] || status}</span></td>
+                    <td>
+                        ${status === 'resent'
+                            ? '<button class="action-btn resend" disabled>已重发</button>'
+                            : `<button class="action-btn resend" onclick="resendOne('${log.id}', this)">重发</button>`
+                        }
+                        ${details.lastResendAt ? `<div style="font-size:11px;color:#999;margin-top:4px;">最近重发：${new Date(details.lastResendAt).toLocaleString('zh-CN', { hour12: false })}</div>` : ''}
+                    </td>
+                </tr>`;
+            }).join('');
+
+            document.getElementById('listCount').textContent = `${totalCount} 条`;
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(totalCount / pageSize);
+            const pagination = document.getElementById('pagination');
+            if (totalPages <= 1) { pagination.innerHTML = ''; return; }
+            let html = `<button ${currentPage === 1 ? 'disabled' : ''} onclick="goPage(${currentPage - 1})">上一页</button>`;
+            html += `<span class="info">第 ${currentPage} / ${totalPages} 页</span>`;
+            html += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="goPage(${currentPage + 1})">下一页</button>`;
+            pagination.innerHTML = html;
+        }
+
+        function goPage(p) {
+            currentPage = p;
+            renderLogs();
+            renderPagination();
+        }
+
+        function updateSelectAll() {
+            const checked = document.querySelectorAll('.row-check:checked').length;
+            document.getElementById('batchResendBtn').textContent = `批量重发选中 (${checked})`;
+        }
+
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function openTarget(emailType, targetId) {
+            if (!targetId || targetId === '-') return;
+            if (emailType === 'order_assigned' || emailType === 'order_completed' || emailType === 'order_response') {
+                window.open(`orders.html?search=${encodeURIComponent(targetId)}`, '_blank');
+            } else {
+                showToast(`批量类邮件的目标 ID（${targetId}）通常关联多个订单，请在"订单管理"页搜索`, 'info');
+            }
+        }
+
+        async function resendOne(logId, btn) {
+            if (btn.disabled) return;
+            btn.disabled = true;
+            const origText = btn.textContent;
+            btn.textContent = '发送中...';
+            try {
+                const result = await apiCall('resend-failed-email', {
+                    method: 'POST',
+                    body: JSON.stringify({ auditLogId: logId }),
+                });
+                const r = result.results?.[0];
+                if (r?.status === 'success') {
+                    showToast(r.skipped ? '已重发但被收件人开关跳过' : '重发成功', 'success');
+                } else {
+                    showToast(`重发失败：${r?.reason || '未知错误'}`, 'error');
+                }
+                loadLogs();
+            } catch (e) {
+                showToast('重发失败：' + e.message, 'error');
+                btn.disabled = false;
+                btn.textContent = origText;
+            }
+        }
+
+        async function batchResend() {
+            const checked = Array.from(document.querySelectorAll('.row-check:checked')).map(c => c.dataset.id);
+            if (checked.length === 0) { showToast('请先勾选要重发的记录', 'info'); return; }
+            if (!confirm(`确定重发这 ${checked.length} 条失败邮件？`)) return;
+
+            const btn = document.getElementById('batchResendBtn');
+            btn.disabled = true;
+            const origText = btn.textContent;
+            btn.textContent = '重发中...';
+            try {
+                const result = await apiCall('resend-failed-email', {
+                    method: 'POST',
+                    body: JSON.stringify({ auditLogIds: checked }),
+                });
+                const { success, failed, skipped } = result.summary || {};
+                showToast(`${result.message || ''}（成功 ${success} / 失败 ${failed} / 跳过 ${skipped}）`,
+                    failed > 0 ? 'error' : 'success');
+                loadLogs();
+            } catch (e) {
+                showToast('批量重发失败：' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = origText;
+                updateSelectAll();
+            }
+        }
+
+        async function resendAllPending() {
+            if (pendingTotal === 0) { showToast('没有待重发的邮件', 'info'); return; }
+            if (pendingTotal > 50) {
+                if (!confirm(`当前有 ${pendingTotal} 条待重发记录，将重发最早 50 条。是否继续？`)) return;
+            } else {
+                if (!confirm(`确定重发全部 ${pendingTotal} 条待重发邮件？`)) return;
+            }
+
+            const btn = document.getElementById('resendAllPendingBtn');
+            btn.disabled = true;
+            const origText = btn.textContent;
+            btn.textContent = '重发中...';
+            try {
+                // 取所有 pending id（最多 50）
+                const allData = await apiCall('get-audit-logs?action=email_send_failed&pageSize=200');
+                const pendingIds = (allData.logs || [])
+                    .filter(l => !l.details?.status || l.details.status === 'pending' || l.details.status === 'pending_resend')
+                    .slice(0, 50)
+                    .map(l => l.id);
+                if (pendingIds.length === 0) { showToast('没有待重发邮件', 'info'); btn.disabled = false; btn.textContent = origText; return; }
+
+                const result = await apiCall('resend-failed-email', {
+                    method: 'POST',
+                    body: JSON.stringify({ auditLogIds: pendingIds }),
+                });
+                const { success, failed, skipped } = result.summary || {};
+                showToast(`${result.message || ''}（成功 ${success} / 失败 ${failed} / 跳过 ${skipped}）`,
+                    failed > 0 ? 'error' : 'success');
+                loadLogs();
+            } catch (e) {
+                showToast('一键重发失败：' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = origText;
+            }
+        }
+
+        // 事件绑定
+        document.getElementById('refreshBtn').onclick = () => { currentPage = 1; loadLogs(); };
+        document.getElementById('statusFilter').onchange = () => { currentPage = 1; loadLogs(); };
+        document.getElementById('typeFilter').onchange = () => { currentPage = 1; loadLogs(); };
+        document.getElementById('batchResendBtn').onclick = batchResend;
+        document.getElementById('resendAllPendingBtn').onclick = resendAllPending;
+        document.getElementById('selectAll').onchange = (e) => {
+            document.querySelectorAll('.row-check').forEach(c => c.checked = e.target.checked);
+            updateSelectAll();
+        };
+        // 委托：勾选行时更新计数
+        document.getElementById('logsTbody').addEventListener('change', e => {
+            if (e.target.classList.contains('row-check')) updateSelectAll();
+        });
+    </script>
+</body>
+</html>
