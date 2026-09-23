@@ -487,6 +487,71 @@ ${order.remark ? '\n备注：' + order.remark : ''}
 }
 
 // ============================================================
+// 模板 8：订单取消通知（admin 取消订单 → 通知已接单的译员 C6）
+// ============================================================
+// 触发条件：admin 把 progress/completed 改为 cancelled
+// 不触发：pending → cancelled（译员没接单不知道，没必要打扰）
+function buildOrderCancelledEmail({ order, translator, smtpUser }) {
+  const translatorName = translator?.name || '译员';
+  const translatorEmail = translator?.email;
+  const deadlineStr = fmtDate(order.deadline);
+  const cancelledAt = fmtDateTime(new Date().toISOString());
+  const wasCompleted = order.previous_status === 'completed'; // 上一状态（admin 改的源头）
+  const stageLabel = wasCompleted ? '已完成' : '翻译中';
+
+  const subject = `【订单已取消】${order.project_name}（订单号 ${order.id}）`;
+
+  const html = `
+    ${WRAPPER_OPEN}
+    <h2 style="color: #1a1a2e;">您好 ${escapeHtml(translatorName)}，</h2>
+    <p>您原本负责的翻译订单被管理员取消了，请留意后续安排：</p>
+    <table ${TABLE_STYLE}>
+      <tr><td ${TD_LABEL}>订单号</td><td ${TD_VALUE_BOLD}>${escapeHtml(order.id)}</td></tr>
+      <tr><td ${TD_LABEL}>项目名称</td><td ${TD_VALUE_BOLD}>${escapeHtml(order.project_name)}</td></tr>
+      <tr><td ${TD_LABEL}>取消前状态</td><td ${TD_VALUE_BOLD}>${escapeHtml(stageLabel)}</td></tr>
+      <tr><td ${TD_LABEL}>字数</td><td ${TD_VALUE}>${(order.word_count || 0).toLocaleString()} 字</td></tr>
+      <tr><td ${TD_LABEL}>原计划金额</td><td ${TD_VALUE}>¥${escapeHtml(order.amount)}</td></tr>
+      <tr><td ${TD_LABEL}>原截止日期</td><td ${TD_VALUE}>${deadlineStr}</td></tr>
+      <tr><td ${TD_LABEL}>取消时间</td><td style="padding: 10px; font-weight: 600; color: #cf1322;">${cancelledAt}</td></tr>
+      ${order.remark ? `<tr><td ${TD_LABEL}>取消原因</td><td ${TD_VALUE}>${escapeHtml(order.remark)}</td></tr>` : ''}
+    </table>
+    <p style="background: #fff1f0; border: 1px solid #ffa39e; padding: 12px; border-radius: 6px; color: #a8071a;">
+      ⚠️ <strong>该订单已作废</strong>${wasCompleted ? '，请停止后续任何交付动作。' : '，如已开工请暂停并联系对接人确认。'}
+    </p>
+    <p style="color: #666; font-size: 13px;">💡 如对取消有疑问，请及时联系对接人。</p>
+    ${FOOTER()}
+    ${WRAPPER_CLOSE}
+  `;
+
+  const text = `您好 ${translatorName}，
+
+您原本负责的翻译订单被管理员取消了：
+
+订单号：${order.id}
+项目名称：${order.project_name}
+取消前状态：${stageLabel}
+字数：${order.word_count}
+原计划金额：¥${order.amount}
+原截止日期：${deadlineStr}
+取消时间：${cancelledAt}
+${order.remark ? '\n取消原因：' + order.remark : ''}
+
+⚠️ 该订单已作废${wasCompleted ? '，请停止后续任何交付动作。' : '，如已开工请暂停并联系对接人确认。'}
+
+如对取消有疑问，请及时联系对接人。
+
+谊达翻译系统`;
+
+  return {
+    subject,
+    html,
+    text,
+    to: translatorEmail,
+    fromName: '谊达翻译系统',
+  };
+}
+
+// ============================================================
 // 模板列表（便于未来扩展）
 // ============================================================
 const TEMPLATES = {
@@ -495,6 +560,7 @@ const TEMPLATES = {
   ORDER_RESPONSE: buildOrderResponseEmail,
   BATCH_ORDER_ASSIGNED: buildBatchOrderAssignedEmail,
   TRANSLATOR_PAYMENT: buildTranslatorPaymentEmail,
+  ORDER_CANCELLED: buildOrderCancelledEmail,
 };
 
 module.exports = {
@@ -506,4 +572,5 @@ module.exports = {
   buildClientWelcomeEmail,
   buildTranslatorWelcomeEmail,
   buildTranslatorPaymentEmail,
+  buildOrderCancelledEmail,
 };

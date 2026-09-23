@@ -173,6 +173,28 @@ exports.handler = async (event) => {
       }
     }
 
+    // C6: 取消通知译员（admin 把 progress/completed → cancelled）
+    // 设计：pending → cancelled 不通知（译员没接单不知道，避免打扰）
+    // 后端 await 同步调用：与 C3/C4 同模式，100% 可靠
+    if ((order.status === 'progress' || order.status === 'completed') && body.status === 'cancelled') {
+      try {
+        const protocol = event.headers['x-forwarded-proto'] || 'https';
+        const host = event.headers.host;
+        const authHeader = event.headers.authorization || event.headers.Authorization || '';
+        const resp = await fetch(`${protocol}://${host}/.netlify/functions/send-order-cancel-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader,
+          },
+          body: JSON.stringify({ orderId: body.id, previousStatus: order.status }),
+        });
+        console.log('[update-order-status] C6 trigger response:', resp.status, 'previousStatus=', order.status);
+      } catch (err) {
+        console.warn('[update-order-status] C6 trigger failed (non-blocking):', err.message);
+      }
+    }
+
     return corsResponse(200, { data: updated });
   } catch (e) {
     console.error('update-order-status unhandled:', e);
