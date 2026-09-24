@@ -355,7 +355,9 @@
                     method: 'POST',
                     body: JSON.stringify({ auditLogId: logId }),
                 });
-                const r = result.results?.[0];
+                // 修复（2026-09-24）：apiCall 不解包，后端返回 { data: { results, summary }, message }
+                // 之前 result.results / result.summary 是 undefined，所有判断永远走 false
+                const r = result.data?.results?.[0];
                 if (r?.status === 'success') {
                     showToast(r.skipped ? '已重发但被收件人开关跳过' : '重发成功', 'success');
                 } else {
@@ -383,7 +385,8 @@
                     method: 'POST',
                     body: JSON.stringify({ auditLogIds: checked }),
                 });
-                const { success, failed, skipped } = result.summary || {};
+                // 修复（2026-09-24）：apiCall 不解包，读 result.data.summary
+                const { success, failed, skipped } = result.data?.summary || {};
                 showToast(`${result.message || ''}（成功 ${success} / 失败 ${failed} / 跳过 ${skipped}）`,
                     failed > 0 ? 'error' : 'success');
                 loadLogs();
@@ -421,7 +424,8 @@
                     method: 'POST',
                     body: JSON.stringify({ auditLogIds: pendingIds }),
                 });
-                const { success, failed, skipped } = result.summary || {};
+                // 修复（2026-09-24）：apiCall 不解包，读 result.data.summary
+                const { success, failed, skipped } = result.data?.summary || {};
                 showToast(`${result.message || ''}（成功 ${success} / 失败 ${failed} / 跳过 ${skipped}）`,
                     failed > 0 ? 'error' : 'success');
                 loadLogs();
