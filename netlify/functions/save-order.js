@@ -211,35 +211,47 @@ exports.handler = async (event) => {
     // 完全不知道邮件失败。现在把每个 trigger 的状态写入 response.data.emailNotifications，
     // 前端拿到后追加 secondary warning toast：admin 能看到「订单已创建，但 X 封邮件失败」。
     // 保留「主流程优先」语义：邮件失败不阻塞订单创建/更新。
+    //
+    // 2026-09-24 P1：trigger 改并发（之前 C2-resign + C7 + C7-reassign 串行 await，3 个触发时
+    // 串行 4.5s + 业务 200ms ≈ 4.7s，接近 Netlify 同步函数 10s 阈值，用户实测连续改派场景
+    // （progress→progress + translator 改）撞 504 Gateway Timeout）
+    // 修法：fetch 收集到 promises 数组，最后 Promise.all 并发；每个 fetch 加 AbortController 5s 兜底
     const emailNotifications = [];
+    const fireAndAwait = []; // 各 trigger 的 promise，最后统一 Promise.all
 
-    // C2: 派单通知译员（仅创建时 + 仅待处理状态触发）
-    // 用户诉求：只有"待处理"才通知译员，进行中/已完成/取消不通知
-    // - 编辑路径永远不重发
-    // - 创建但 status ≠ pending（极端场景：admin 补登历史已完成的单子）也不发
-    // 后端 await 同步调用：100% 可靠，前端 UI 已 closeModal 不阻塞感官
-    // 改前：context.waitUntil() — Netlify 不支持，throw error
-    // 改前：裸 fetch() — 实测丢失（38s 延迟 + 第二次完全没发出）
-    // V11 批量导入：带 batch_id 的订单不在这条链路发单条邮件，由 send-batch-import-email 按译员聚合发汇总
-    if (!id && status === 'pending' && !batch_id) {
+    // 通用 trigger：fetch + 5s 超时 + 异常吞错 + 写 emailNotifications
+    // 故意 await fetch 但不阻塞外部逻辑（外部 await Promise.all）
+    const fireEmailTrigger = async (type, body) => {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 5000);
       try {
         const protocol = event.headers['x-forwarded-proto'] || 'https';
         const host = event.headers.host;
         const authHeader = event.headers.authorization || event.headers.Authorization || '';
-        const resp = await fetch(`${protocol}://${host}/.netlify/functions/send-order-email`, {
+        const resp = await fetch(`${protocol}://${host}/.netlify/functions/${type === 'C2' ? 'send-order-email' : type === 'C5' ? 'send-translator-payment-email' : 'send-order-cancel-email'}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': authHeader,
           },
-          body: JSON.stringify({ orderId: result.id }),
+          body: JSON.stringify(body),
+          signal: controller.signal,
         });
-        emailNotifications.push({ type: 'C2', status: resp.ok ? 'sent' : 'failed', code: resp.status });
-        console.log('[save-order] C2 trigger response:', resp.status, 'status=pending');
+        emailNotifications.push({ type, status: resp.ok ? 'sent' : 'failed', code: resp.status });
       } catch (err) {
-        emailNotifications.push({ type: 'C2', status: 'failed', error: err.message });
-        console.warn('[save-order] C2 trigger failed (non-blocking):', err.message);
+        emailNotifications.push({ type, status: 'failed', error: err.message });
+      } finally {
+        clearTimeout(tid);
       }
+    };
+
+    // C2: 派单通知译员（仅创建时 + 仅待处理状态触发）
+    // 用户诉求：只有"待处理"才通知译员，进行中/已完成/取消不通知
+    // - 编辑路径永远不重发
+    // - 创建但 status ≠ pending（极端场景：admin 补登历史已完成的单子）也不发
+    // V11 批量导入：带 batch_id 的订单不在这条链路发单条邮件，由 send-batch-import-email 按译员聚合发汇总
+    if (!id && status === 'pending' && !batch_id) {
+      fireAndAwait.push(fireEmailTrigger('C2', { orderId: result.id }));
     } else if (!id) {
       console.log('[save-order] C2 trigger skipped: status=', status, 'orderId=', result.id);
     }
@@ -252,52 +264,16 @@ exports.handler = async (event) => {
     // 包括 oldTranslatorId=null 的场景：批量导入时译员空，admin 后续补指定译员
     // send-order-email 内部用 translators:translator_id JOIN 查关联译员，编辑后 order.translator_id 是新值，
     // 所以会发对新译员（无需再传 originalTranslatorId）
-    // 后端 await 同步调用：与 C2/C5/C7 同模式，100% 可靠
     if (id && oldTranslatorId !== translator_id && translator_id !== null && ['pending', 'progress'].includes(status) && !batch_id) {
-      try {
-        const protocol = event.headers['x-forwarded-proto'] || 'https';
-        const host = event.headers.host;
-        const authHeader = event.headers.authorization || event.headers.Authorization || '';
-        const resp = await fetch(`${protocol}://${host}/.netlify/functions/send-order-email`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authHeader,
-          },
-          body: JSON.stringify({ orderId: result.id }),
-        });
-        emailNotifications.push({ type: 'C2-resign', status: resp.ok ? 'sent' : 'failed', code: resp.status });
-        console.log('[save-order] C2-resign trigger response:', resp.status, 'notify new translator:', translator_id, '(old:', oldTranslatorId, ', status:', status, ')');
-      } catch (err) {
-        emailNotifications.push({ type: 'C2-resign', status: 'failed', error: err.message });
-        console.warn('[save-order] C2-resign trigger failed (non-blocking):', err.message);
-      }
+      fireAndAwait.push(fireEmailTrigger('C2-resign', { orderId: result.id }));
     }
 
     // C5: 结算通知译员（仅编辑模式 + payment_status: unpaid → paid 才触发）
     // 用户诉求：admin 改"已结算"时通知译员
     // - 仅 unpaid → paid 变化触发，避免重复打扰
     // - 编辑路径独有（创建路径 payment_status 默认 unpaid，不会触发）
-    // 后端 await 同步调用：与 C2 同模式，100% 可靠
     if (id && oldPaymentStatus === 'unpaid' && payment_status === 'paid') {
-      try {
-        const protocol = event.headers['x-forwarded-proto'] || 'https';
-        const host = event.headers.host;
-        const authHeader = event.headers.authorization || event.headers.Authorization || '';
-        const resp = await fetch(`${protocol}://${host}/.netlify/functions/send-translator-payment-email`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authHeader,
-          },
-          body: JSON.stringify({ orderId: result.id }),
-        });
-        emailNotifications.push({ type: 'C5', status: resp.ok ? 'sent' : 'failed', code: resp.status });
-        console.log('[save-order] C5 trigger response:', resp.status, 'payment_status: unpaid→paid');
-      } catch (err) {
-        emailNotifications.push({ type: 'C5', status: 'failed', error: err.message });
-        console.warn('[save-order] C5 trigger failed (non-blocking):', err.message);
-      }
+      fireAndAwait.push(fireEmailTrigger('C5', { orderId: result.id }));
     } else if (id && payment_status === 'paid') {
       console.log('[save-order] C5 trigger skipped: oldPaymentStatus=', oldPaymentStatus);
     }
@@ -306,66 +282,36 @@ exports.handler = async (event) => {
     // 触发条件：admin 编辑订单时，把 status 从 progress 改成 pending（收回已接单）
     // 不触发：pending → pending（无效）；completed → pending（已完成被收回是 admin 误操作）
     // 之前 1d67f62b 错把 trigger 放到 update-order-status.js，但 admin 改状态走 save-order，不是 update-order-status
-    // 后端 await 同步调用：与 C2/C5 同模式，100% 可靠
     //
     // 关键（2026-09-24 用户反馈修复）：必须传 originalTranslatorId 通知**原译员**，不能从 order.translator_id 读
     // ——save-order 触发时 order 已是 UPDATE 后的新值（B），如果按 order.translator_id 查就发给 B 错
     // oldTranslatorId 是 UPDATE 前的旧值（A），传过去通知 A 才正确
     if (id && oldStatus === 'progress' && status === 'pending') {
-      try {
-        const protocol = event.headers['x-forwarded-proto'] || 'https';
-        const host = event.headers.host;
-        const authHeader = event.headers.authorization || event.headers.Authorization || '';
-        const resp = await fetch(`${protocol}://${host}/.netlify/functions/send-order-cancel-email`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authHeader,
-          },
-          body: JSON.stringify({
-            orderId: result.id,
-            previousStatus: oldStatus,
-            action: 'recalled',
-            originalTranslatorId: oldTranslatorId,  // C7 修复：通知原译员，不是新译员
-          }),
-        });
-        emailNotifications.push({ type: 'C7', status: resp.ok ? 'sent' : 'failed', code: resp.status });
-        console.log('[save-order] C7 trigger response:', resp.status, 'progress→pending', 'notify translator:', oldTranslatorId);
-      } catch (err) {
-        emailNotifications.push({ type: 'C7', status: 'failed', error: err.message });
-        console.warn('[save-order] C7 trigger failed (non-blocking):', err.message);
-      }
+      fireAndAwait.push(fireEmailTrigger('C7', {
+        orderId: result.id,
+        previousStatus: oldStatus,
+        action: 'recalled',
+        originalTranslatorId: oldTranslatorId,  // C7 修复：通知原译员，不是新译员
+      }));
     }
 
     // C7-reassign: 连续改派通知（progress → progress + translator_id 改了）
     // 用户反馈（2026-09-24 第 2 次）："B译员接单后，直接admin在系统中将订单从B译员改为C译员"
     //   → B 应该收到「订单收回通知」+ C 应该收到「新派单通知」（C2-resign 已覆盖）
     // 跟上面 C7 trigger 不冲突：上面是 progress→pending（status 改），这里是 progress→progress（status 不变）
-    // 后端 await 同步调用：与 C7 同模式
     if (id && oldTranslatorId && oldTranslatorId !== translator_id && oldStatus === 'progress' && status === 'progress') {
-      try {
-        const protocol = event.headers['x-forwarded-proto'] || 'https';
-        const host = event.headers.host;
-        const authHeader = event.headers.authorization || event.headers.Authorization || '';
-        const resp = await fetch(`${protocol}://${host}/.netlify/functions/send-order-cancel-email`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authHeader,
-          },
-          body: JSON.stringify({
-            orderId: result.id,
-            previousStatus: oldStatus,
-            action: 'recalled',
-            originalTranslatorId: oldTranslatorId,
-          }),
-        });
-        emailNotifications.push({ type: 'C7-reassign', status: resp.ok ? 'sent' : 'failed', code: resp.status });
-        console.log('[save-order] C7-reassign trigger response:', resp.status, 'progress→progress', 'notify old translator:', oldTranslatorId);
-      } catch (err) {
-        emailNotifications.push({ type: 'C7-reassign', status: 'failed', error: err.message });
-        console.warn('[save-order] C7-reassign trigger failed (non-blocking):', err.message);
-      }
+      fireAndAwait.push(fireEmailTrigger('C7-reassign', {
+        orderId: result.id,
+        previousStatus: oldStatus,
+        action: 'recalled',
+        originalTranslatorId: oldTranslatorId,
+      }));
+    }
+
+    // 并发执行所有触发的邮件 trigger（之前串行 await，3 个触发时 ~4.5s 撞 Netlify 10s 超时）
+    if (fireAndAwait.length > 0) {
+      await Promise.all(fireAndAwait);
+      console.log('[save-order] all triggers done:', emailNotifications.map(n => `${n.type}:${n.status}`).join(', '));
     }
 
     return corsResponse(200, {
