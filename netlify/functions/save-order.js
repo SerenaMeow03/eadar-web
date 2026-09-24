@@ -147,15 +147,17 @@ exports.handler = async (event) => {
     let result;
     let oldPaymentStatus = null;  // C5: 用于检测 unpaid → paid 触发结算通知
     let oldStatus = null;          // C7: 用于检测 progress → pending 触发收回通知
+    let oldTranslatorId = null;    // C7 修复（2026-09-24）：原译员 — admin 改派时通知原译员而非新译员
     if (id) {
-      // 一次读旧 status + payment_status（避免 SELECT 再 UPDATE 多一轮 RT）
+      // 一次读旧 status + payment_status + translator_id（避免 SELECT 再 UPDATE 多一轮 RT）
       const { data: prev } = await service
         .from('orders')
-        .select('status, payment_status')
+        .select('status, payment_status, translator_id')
         .eq('id', id)
         .single();
       oldPaymentStatus = prev?.payment_status || null;
       oldStatus = prev?.status || null;
+      oldTranslatorId = prev?.translator_id || null;
 
       // 更新
       const { data, error } = await service
@@ -242,6 +244,34 @@ exports.handler = async (event) => {
       console.log('[save-order] C2 trigger skipped: status=', status, 'orderId=', result.id);
     }
 
+    // C2 编辑模式转派通知（admin 把 translator_id 改成新译员 + status='pending'）
+    // 与上面创建 trigger 区分（创建是 !id && status='pending' && !batch_id，编辑改派是 id && translator 变了）
+    // 必须 status='pending' 才发（与 C2 设计一致：只有待处理才通知，避免进行中/已完成打扰）
+    // 包括 oldTranslatorId=null 的场景：批量导入时译员空，admin 后续补指定译员
+    // send-order-email 内部用 translators:translator_id JOIN 查关联译员，编辑后 order.translator_id 是新值，
+    // 所以会发对新译员（无需再传 originalTranslatorId）
+    // 后端 await 同步调用：与 C2/C5/C7 同模式，100% 可靠
+    if (id && oldTranslatorId !== translator_id && status === 'pending' && !batch_id) {
+      try {
+        const protocol = event.headers['x-forwarded-proto'] || 'https';
+        const host = event.headers.host;
+        const authHeader = event.headers.authorization || event.headers.Authorization || '';
+        const resp = await fetch(`${protocol}://${host}/.netlify/functions/send-order-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader,
+          },
+          body: JSON.stringify({ orderId: result.id }),
+        });
+        emailNotifications.push({ type: 'C2-resign', status: resp.ok ? 'sent' : 'failed', code: resp.status });
+        console.log('[save-order] C2-resign trigger response:', resp.status, 'notify new translator:', translator_id, '(old:', oldTranslatorId, ')');
+      } catch (err) {
+        emailNotifications.push({ type: 'C2-resign', status: 'failed', error: err.message });
+        console.warn('[save-order] C2-resign trigger failed (non-blocking):', err.message);
+      }
+    }
+
     // C5: 结算通知译员（仅编辑模式 + payment_status: unpaid → paid 才触发）
     // 用户诉求：admin 改"已结算"时通知译员
     // - 仅 unpaid → paid 变化触发，避免重复打扰
@@ -275,6 +305,10 @@ exports.handler = async (event) => {
     // 不触发：pending → pending（无效）；completed → pending（已完成被收回是 admin 误操作）
     // 之前 1d67f62b 错把 trigger 放到 update-order-status.js，但 admin 改状态走 save-order，不是 update-order-status
     // 后端 await 同步调用：与 C2/C5 同模式，100% 可靠
+    //
+    // 关键（2026-09-24 用户反馈修复）：必须传 originalTranslatorId 通知**原译员**，不能从 order.translator_id 读
+    // ——save-order 触发时 order 已是 UPDATE 后的新值（B），如果按 order.translator_id 查就发给 B 错
+    // oldTranslatorId 是 UPDATE 前的旧值（A），传过去通知 A 才正确
     if (id && oldStatus === 'progress' && status === 'pending') {
       try {
         const protocol = event.headers['x-forwarded-proto'] || 'https';
@@ -286,10 +320,15 @@ exports.handler = async (event) => {
             'Content-Type': 'application/json',
             'Authorization': authHeader,
           },
-          body: JSON.stringify({ orderId: result.id, previousStatus: oldStatus, action: 'recalled' }),
+          body: JSON.stringify({
+            orderId: result.id,
+            previousStatus: oldStatus,
+            action: 'recalled',
+            originalTranslatorId: oldTranslatorId,  // C7 修复：通知原译员，不是新译员
+          }),
         });
         emailNotifications.push({ type: 'C7', status: resp.ok ? 'sent' : 'failed', code: resp.status });
-        console.log('[save-order] C7 trigger response:', resp.status, 'progress→pending');
+        console.log('[save-order] C7 trigger response:', resp.status, 'progress→pending', 'notify translator:', oldTranslatorId);
       } catch (err) {
         emailNotifications.push({ type: 'C7', status: 'failed', error: err.message });
         console.warn('[save-order] C7 trigger failed (non-blocking):', err.message);

@@ -124,7 +124,12 @@ exports.handler = async (event) => {
             'Content-Type': 'application/json',
             'Authorization': authHeader,
           },
-          body: JSON.stringify({ orderId: id, previousStatus: o.status, action: 'recalled' }),
+          body: JSON.stringify({
+            orderId: id,
+            previousStatus: o.status,
+            action: 'recalled',
+            originalTranslatorId: o.translator_id,  // C7 修复（2026-09-24）：通知原译员不是新译员
+          }),
         }).then(r => ({ id, status: r.status }))
           .catch(err => ({ id, status: 'failed', error: err.message }))
       ));

@@ -34,7 +34,7 @@ exports.handler = async (event) => {
   try { body = JSON.parse(event.body || '{}'); }
   catch (e) { return corsResponse(400, { error: 'Invalid JSON' }); }
 
-  const { orderId, previousStatus } = body;
+  const { orderId, previousStatus, originalTranslatorId } = body;
   if (!orderId) {
     return corsResponse(400, { error: 'orderId 必填' });
   }
@@ -47,13 +47,12 @@ exports.handler = async (event) => {
   const service = getServiceClient();
 
   try {
-    // 1. 查订单 + 关联译员
+    // 1. 查订单（不带 translator JOIN —— 译员由下面 originalTranslatorId 决定）
     const { data: order, error: fetchErr } = await service
       .from('orders')
       .select(`
         id, project_name, word_count, rate, amount, deadline,
-        status, remark, language_pair,
-        translators:translator_id ( id, name, email )
+        status, remark, language_pair
       `)
       .eq('id', orderId)
       .single();
@@ -63,7 +62,31 @@ exports.handler = async (event) => {
       return corsResponse(404, { error: '订单不存在' });
     }
 
-    const translator = order.translators;
+    // 2. 选译员：优先用调用方传的 originalTranslatorId（C7 修复 2026-09-24）
+    // ——save-order 触发时 order.translator_id 已是 UPDATE 后新值，必须用旧值
+    // ——batch-assign-orders 不传 originalTranslatorId，fallback 到 order.translator_id
+    let translator;
+    if (originalTranslatorId) {
+      const { data: t, error: tErr } = await service
+        .from('translators')
+        .select('id, name, email')
+        .eq('id', originalTranslatorId)
+        .single();
+      if (tErr || !t) {
+        console.warn('[send-order-cancel-email] originalTranslatorId not found:', originalTranslatorId);
+      } else {
+        translator = t;
+      }
+    }
+    if (!translator) {
+      const { data: t } = await service
+        .from('translators')
+        .select('id, name, email')
+        .eq('id', order.translator_id)
+        .single();
+      translator = t;
+    }
+
     if (!translator || !translator.email) {
       console.warn('[send-order-cancel-email] no translator/email for order', orderId);
       return corsResponse(200, { data: { skipped: true, reason: 'no translator email' } });
