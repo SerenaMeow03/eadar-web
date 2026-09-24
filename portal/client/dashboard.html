@@ -219,6 +219,10 @@
                     请输入新密码（至少 6 位），修改后下次请用新密码登录。
                 </p>
                 <div class="pwd-form-group">
+                    <label>当前密码</label>
+                    <input type="password" id="currentPwd" placeholder="输入当前密码以验证身份" autocomplete="current-password">
+                </div>
+                <div class="pwd-form-group">
                     <label>新密码</label>
                     <input type="password" id="newPwd" placeholder="至少 6 位" autocomplete="new-password">
                 </div>
@@ -394,10 +398,12 @@
         window.closePwdModal = closePwdModal;
 
         async function changePassword() {
+            const currentPwd = document.getElementById('currentPwd').value;
             const pwd = document.getElementById('newPwd').value;
             const pwd2 = document.getElementById('newPwd2').value;
             const btn = document.getElementById('pwdSubmitBtn');
 
+            if (!currentPwd) { showToast('请输入当前密码', 'error'); return; }
             if (!pwd || pwd.length < 6) {
                 showToast('新密码至少 6 位', 'error');
                 return;
@@ -407,25 +413,51 @@
                 return;
             }
 
-            // 防重复提交（同时修同类缺陷：成功路径漏恢复，靠 openPwdModal 兜底太脆弱）
+            // 防重复提交
             if (btn.disabled) return;
             btn.disabled = true;
             const originalText = btn.textContent;
             btn.textContent = '提交中...';
 
             try {
-                // 用客户端 Supabase 调 updateUser（改自己的密码）
-                // 注意：必须用 access_token，不能用 service_role
-                const token = getAccessToken();
-                const { createClient } = supabase;
-                const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-                    global: { headers: { Authorization: 'Bearer ' + token } },
-                    auth: { persistSession: false, autoRefreshToken: false },
+                // 第 1 步：用当前密码登录验证身份（与 admin/译员改密码链路一致）
+                // 修复（2026-09-24）：之前直接调 userClient.auth.updateUser，但新 createClient 出来
+                // 的 client 内部 session 为空，supabase-js 抛 'Auth session missing!'
+                // → 改成 signInWithPassword 验证 + 走 apiCall('update-password') 后端 service_role 路径
+
+                // 从 supabase 默认 session 拿 email（与 client/login.html setSession 后存的位置一致）
+                // 避免前端多存一份 currentClient 造成同步问题
+                const sbToken = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                const { data: sessionData } = await sbToken.auth.getSession();
+                const userEmail = sessionData?.session?.user?.email;
+                if (!userEmail) {
+                    showToast('会话已过期，请重新登录', 'error');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                const { error: signInErr } = await sb.auth.signInWithPassword({
+                    email: userEmail,
+                    password: currentPwd,
                 });
-                const { error } = await userClient.auth.updateUser({ password: pwd });
-                if (error) throw error;
+                if (signInErr) {
+                    showToast('当前密码错误', 'error');
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    return;
+                }
+
+                // 第 2 步：调后端 update-password 改密（service_role.updateUserById）
+                await apiCall('update-password', {
+                    method: 'POST',
+                    body: JSON.stringify({ newPassword: pwd }),
+                });
 
                 showToast('密码修改成功，下次请用新密码登录', 'success');
+                document.getElementById('currentPwd').value = '';
+                document.getElementById('newPwd').value = '';
+                document.getElementById('newPwd2').value = '';
                 closePwdModal();
             } catch (e) {
                 showToast('密码修改失败：' + (e.message || '未知错误'), 'error');
