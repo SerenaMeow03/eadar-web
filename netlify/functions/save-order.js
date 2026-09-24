@@ -244,14 +244,16 @@ exports.handler = async (event) => {
       console.log('[save-order] C2 trigger skipped: status=', status, 'orderId=', result.id);
     }
 
-    // C2 编辑模式转派通知（admin 把 translator_id 改成新译员 + status='pending'）
+    // C2 编辑模式转派通知（admin 把 translator_id 改成新译员）
     // 与上面创建 trigger 区分（创建是 !id && status='pending' && !batch_id，编辑改派是 id && translator 变了）
-    // 必须 status='pending' 才发（与 C2 设计一致：只有待处理才通知，避免进行中/已完成打扰）
+    // 触发条件放宽：status in [pending, progress]
+    //   - pending：用户说"收回后重新派给 C" → C 收「新派单」
+    //   - progress：用户说"连续改派"（admin 在译员已接单时直接换译员）→ C 收「新派单」
     // 包括 oldTranslatorId=null 的场景：批量导入时译员空，admin 后续补指定译员
     // send-order-email 内部用 translators:translator_id JOIN 查关联译员，编辑后 order.translator_id 是新值，
     // 所以会发对新译员（无需再传 originalTranslatorId）
     // 后端 await 同步调用：与 C2/C5/C7 同模式，100% 可靠
-    if (id && oldTranslatorId !== translator_id && status === 'pending' && !batch_id) {
+    if (id && oldTranslatorId !== translator_id && translator_id !== null && ['pending', 'progress'].includes(status) && !batch_id) {
       try {
         const protocol = event.headers['x-forwarded-proto'] || 'https';
         const host = event.headers.host;
@@ -265,7 +267,7 @@ exports.handler = async (event) => {
           body: JSON.stringify({ orderId: result.id }),
         });
         emailNotifications.push({ type: 'C2-resign', status: resp.ok ? 'sent' : 'failed', code: resp.status });
-        console.log('[save-order] C2-resign trigger response:', resp.status, 'notify new translator:', translator_id, '(old:', oldTranslatorId, ')');
+        console.log('[save-order] C2-resign trigger response:', resp.status, 'notify new translator:', translator_id, '(old:', oldTranslatorId, ', status:', status, ')');
       } catch (err) {
         emailNotifications.push({ type: 'C2-resign', status: 'failed', error: err.message });
         console.warn('[save-order] C2-resign trigger failed (non-blocking):', err.message);
@@ -332,6 +334,37 @@ exports.handler = async (event) => {
       } catch (err) {
         emailNotifications.push({ type: 'C7', status: 'failed', error: err.message });
         console.warn('[save-order] C7 trigger failed (non-blocking):', err.message);
+      }
+    }
+
+    // C7-reassign: 连续改派通知（progress → progress + translator_id 改了）
+    // 用户反馈（2026-09-24 第 2 次）："B译员接单后，直接admin在系统中将订单从B译员改为C译员"
+    //   → B 应该收到「订单收回通知」+ C 应该收到「新派单通知」（C2-resign 已覆盖）
+    // 跟上面 C7 trigger 不冲突：上面是 progress→pending（status 改），这里是 progress→progress（status 不变）
+    // 后端 await 同步调用：与 C7 同模式
+    if (id && oldTranslatorId && oldTranslatorId !== translator_id && oldStatus === 'progress' && status === 'progress') {
+      try {
+        const protocol = event.headers['x-forwarded-proto'] || 'https';
+        const host = event.headers.host;
+        const authHeader = event.headers.authorization || event.headers.Authorization || '';
+        const resp = await fetch(`${protocol}://${host}/.netlify/functions/send-order-cancel-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader,
+          },
+          body: JSON.stringify({
+            orderId: result.id,
+            previousStatus: oldStatus,
+            action: 'recalled',
+            originalTranslatorId: oldTranslatorId,
+          }),
+        });
+        emailNotifications.push({ type: 'C7-reassign', status: resp.ok ? 'sent' : 'failed', code: resp.status });
+        console.log('[save-order] C7-reassign trigger response:', resp.status, 'progress→progress', 'notify old translator:', oldTranslatorId);
+      } catch (err) {
+        emailNotifications.push({ type: 'C7-reassign', status: 'failed', error: err.message });
+        console.warn('[save-order] C7-reassign trigger failed (non-blocking):', err.message);
       }
     }
 
