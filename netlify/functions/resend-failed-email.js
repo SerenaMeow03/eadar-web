@@ -9,20 +9,15 @@
 //   order_assigned         → send-order-email               (orderId)
 //   order_completed        → send-completion-email          (orderId)
 //   order_response         → send-order-response-email      (orderId)
-//   batch_order_assigned   → send-batch-order-email         (batchId)
 //   batch_import_assigned  → send-batch-import-email        (batchId)
 //   translator_payment     → send-translator-payment-email  (orderId)  ← C5
 //   order_recalled         → send-order-cancel-email        (orderId+previousStatus) ← C7
 //
+// 2026-09-24: 批量派单功能作废（用户决定：派单必须通过批量导入完成），所以
+//   batch_order_assigned emailType 不再产生，路由从 ROUTES 表中删除
+//
 // 注：order_cancelled 已砍——业务上订单必须推进直到完成，没有 cancelled 状态流转
 // 注：translator_welcome / client_welcome 暂不支持重发（欢迎邮件失败时手动让用户重置密码更稳）
-//
-// 注：translator_welcome / client_welcome 暂不支持重发（欢迎邮件失败时手动让用户重置密码更稳）
-//
-// 成功：在 audit_logs 写 action='email_resent'
-//       + UPDATE 原条目 details.status='resent'
-// 仍失败：写 action='email_resend_failed'
-//        + UPDATE 原条目 details.status='pending_resend'
 
 const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate, parseBody } = require('./_shared/auth');
@@ -31,11 +26,15 @@ const ROUTES = {
   order_assigned:         { endpoint: 'send-order-email',              idField: 'orderId',      idSource: 'orderId' },
   order_completed:        { endpoint: 'send-completion-email',         idField: 'orderId',      idSource: 'orderId' },
   order_response:         { endpoint: 'send-order-response-email',     idField: 'orderId',      idSource: 'orderId' },
-  batch_order_assigned:   { endpoint: 'send-batch-order-email',        idField: 'batchId',      idSource: 'batchId' },
   batch_import_assigned:  { endpoint: 'send-batch-import-email',       idField: 'batchId',      idSource: 'batchId' },
   translator_payment:     { endpoint: 'send-translator-payment-email', idField: 'orderId',      idSource: 'orderId',      extra: {} },
   order_recalled:         { endpoint: 'send-order-cancel-email',       idField: 'orderId',      idSource: 'orderId',      extra: { previousStatus: 'progress' } },
 };
+//
+// 成功：在 audit_logs 写 action='email_resent'
+//       + UPDATE 原条目 details.status='resent'
+// 仍失败：写 action='email_resend_failed'
+//        + UPDATE 原条目 details.status='pending_resend'
 
 exports.handler = async (event) => {
   const pre = preflight(event);

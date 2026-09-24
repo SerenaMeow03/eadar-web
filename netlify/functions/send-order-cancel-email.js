@@ -1,6 +1,6 @@
 // netlify/functions/send-order-cancel-email.js
 // 内部接口：发送订单收回通知邮件给译员（C7）
-// 由 save-order.js（admin 把 progress → pending）或 batch-assign-orders.js（直接改派）触发
+// 由 save-order.js（admin 把 progress → pending，或连续改派 progress → progress + translator 变）触发
 //
 // 触发条件：admin 收回已接订单（status 从 progress 改回 pending，或改派给其他译员）
 // 不触发：pending → pending（无效）；completed → pending（已完成被收回是 admin 误操作）
@@ -8,6 +8,8 @@
 // 鉴权：translator 或 admin 都可触发（内部接口）
 //
 // 注：原 ACTION_CONFIG 表 + 删除（C6 砍了，C7 收回是唯一用例）
+// 注：2026-09-24 批量派单功能作废（send-batch-order-email.js + batch-assign-orders.js 已删除）
+//     save-order 的 C7/C7-reassign 是唯一触发器
 
 const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate } = require('./_shared/auth');
@@ -64,7 +66,8 @@ exports.handler = async (event) => {
 
     // 2. 选译员：优先用调用方传的 originalTranslatorId（C7 修复 2026-09-24）
     // ——save-order 触发时 order.translator_id 已是 UPDATE 后新值，必须用旧值
-    // ——batch-assign-orders 不传 originalTranslatorId，fallback 到 order.translator_id
+    // ——为兼容历史记录：若调用方不传 originalTranslatorId，fallback 到 order.translator_id
+    //   （批量派单功能已作废 2026-09-24，所以这条 fallback 主要是兜底老 audit_logs 数据）
     let translator;
     if (originalTranslatorId) {
       const { data: t, error: tErr } = await service

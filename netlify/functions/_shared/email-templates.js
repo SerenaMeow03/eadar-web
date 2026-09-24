@@ -489,9 +489,10 @@ ${order.remark ? '\n备注：' + order.remark : ''}
 // ============================================================
 // 模板：订单收回通知（admin 收回已接订单 → 通知原译员 C7）
 // ============================================================
-// 触发条件：save-order.js（admin 把 progress 改回 pending）或 batch-assign-orders.js（直接改派）
+// 触发条件：save-order.js（admin 把 progress 改回 pending，或连续改派 progress→progress + translator 变）
 // 不触发：pending → pending（无效）；completed → pending（已完成被收回是 admin 误操作）
 // 注：C6（订单取消）已砍——业务上订单必须推进直到完成，没有 cancelled 状态流转
+// 注：2026-09-24 批量派单功能作废（send-batch-order-email.js 已删除）
 function buildOrderRecalledEmail({ order, translator, smtpUser }) {
   const translatorName = translator?.name || '译员';
   const translatorEmail = translator?.email;

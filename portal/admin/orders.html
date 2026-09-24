@@ -702,7 +702,6 @@
                 </div>
                 <div class="toolbar-right">
                     <button class="btn btn-danger btn-sm" onclick="batchDelete()" id="batchDeleteBtn" disabled>🗑 删除（<span id="selectedCount">0</span>）</button>
-                    <button class="btn btn-primary btn-sm" onclick="openBatchAssignModal()" id="batchAssignBtn" disabled>📤 派单</button>
                     <button class="btn btn-ghost btn-sm" onclick="openBatchPaymentModal()" id="batchPaymentBtn" disabled>💰 付款/发票</button>
                     <button class="btn btn-secondary btn-sm" onclick="openImportModal()">📥 批量导入</button>
                     <button class="btn btn-primary btn-highlight btn-sm" onclick="openModal()">+ 登记订单</button>
@@ -940,39 +939,6 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closePaymentModal()">取消</button>
                     <button type="submit" class="btn btn-primary">保存</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- 批量派单弹窗 -->
-    <div class="modal" id="batchAssignModal">
-        <div class="modal-content" style="max-width: 560px;">
-            <div class="modal-header">
-                <h3>批量派单</h3>
-                <button class="close-btn" onclick="closeBatchAssignModal()">&times;</button>
-            </div>
-            <div style="margin-bottom: 16px;">
-                <p style="font-size: 13px; color: #999;">
-                    将 <strong id="batchAssignCount" style="color: #1a1a2e;">0</strong> 个订单指派给同一译员，并发送汇总邮件。
-                </p>
-            </div>
-            <form id="batchAssignForm">
-                <div class="form-group">
-                    <label>指派译员 *</label>
-                    <select id="batchAssignTranslator" required>
-                        <option value="">请选择译员</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>订单列表预览</label>
-                    <div id="batchAssignPreview" style="max-height: 240px; overflow-y: auto; padding: 12px; background: #fafafa; border-radius: 6px; font-size: 13px;">
-                        <span style="color: #999;">加载中...</span>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeBatchAssignModal()">取消</button>
-                    <button type="submit" class="btn btn-primary" id="batchAssignSubmitBtn">确认派单</button>
                 </div>
             </form>
         </div>
@@ -1643,13 +1609,11 @@
         function updateBatchBtn() {
             const ids = getSelectedIds();
             const btn = document.getElementById('batchDeleteBtn');
-            const assignBtn = document.getElementById('batchAssignBtn');
             const payBtn = document.getElementById('batchPaymentBtn');
             const counter = document.getElementById('selectedCount');
             if (counter) counter.textContent = ids.length;
             const disabledStyle = ids.length === 0 ? '0.5' : '1';
             if (btn) { btn.disabled = ids.length === 0; btn.style.opacity = disabledStyle; }
-            if (assignBtn) { assignBtn.disabled = ids.length === 0; assignBtn.style.opacity = disabledStyle; }
             if (payBtn) { payBtn.disabled = ids.length === 0; payBtn.style.opacity = disabledStyle; }
             // 同步 master checkbox 状态
             const all = document.querySelectorAll('.rowCheck');
@@ -1703,111 +1667,6 @@
             }
         }
         window.batchDelete = batchDelete;
-
-        // C1: 批量派单
-        async function openBatchAssignModal() {
-            const ids = getSelectedIds();
-            if (!ids.length) return;
-
-            const modal = document.getElementById('batchAssignModal');
-            document.getElementById('batchAssignCount').textContent = ids.length;
-
-            // 复用 loadTranslatorOptions 填充下拉
-            await loadTranslatorOptions();
-            document.getElementById('batchAssignTranslator').value = '';
-
-            // 预览：要派的订单简表（从 allOrders 缓存读）
-            const preview = document.getElementById('batchAssignPreview');
-            const lines = ids.map(id => {
-                const o = allOrders.find(x => x.id === id);
-                if (!o) return `<div>${id}</div>`;
-                const lang = LANGS[o.language_pair] || '—';
-                return `<div style="padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
-                    <span style="font-family: monospace; color: #666;">${o.id}</span>
-                    <span style="color: #333;">${escapeHtml(o.project_name)}</span>
-                    <span style="color: #999; font-size: 12px;">[${lang}]</span>
-                    <span style="color: #cf1322; float: right;">¥${o.amount}</span>
-                </div>`;
-            }).join('');
-            preview.innerHTML = lines || '<span style="color: #999;">无</span>';
-
-            modal.classList.add('active');
-        }
-        window.openBatchAssignModal = openBatchAssignModal;
-
-        function closeBatchAssignModal() {
-            document.getElementById('batchAssignModal').classList.remove('active');
-        }
-        window.closeBatchAssignModal = closeBatchAssignModal;
-
-        async function batchAssign(e) {
-            e.preventDefault();
-            const ids = getSelectedIds();
-            const translatorId = document.getElementById('batchAssignTranslator').value;
-            if (!ids.length || !translatorId) return;
-
-            const submitBtn = document.getElementById('batchAssignSubmitBtn');
-            const original = submitBtn.textContent;
-            submitBtn.disabled = true;
-            submitBtn.textContent = '派单中...';
-
-            try {
-                // 1. 批量更新 translator_id
-                const result = await apiCall('batch-assign-orders', {
-                    method: 'POST',
-                    body: JSON.stringify({ orderIds: ids, translatorId }),
-                });
-                const data = result?.data || result || {};
-                const assignedCount = (data.assigned || []).length;
-                const failedCount = (data.failed || []).length;
-                const translatorEmail = data.translator?.email;
-
-                if (assignedCount === 0) {
-                    showToast(`派单失败：全部 ${failedCount} 条订单被跳过`, 'error');
-                    return;
-                }
-
-                // 2. 触发一封汇总通知邮件给译员
-                const assignedIds = data.assigned;
-                if (translatorEmail && assignedIds.length > 0) {
-                    try {
-                        const emailResult = await apiCall('send-batch-order-email', {
-                            method: 'POST',
-                            body: JSON.stringify({ orderIds: assignedIds }),
-                        });
-                        const ed = emailResult?.data || emailResult || {};
-                        if (ed.skipped) {
-                            showToast(`已派 ${assignedCount} 条订单（译员未开启邮件通知，未发送）`, 'success');
-                        } else {
-                            showToast(`已派 ${assignedCount} 条订单，汇总邮件已发给译员`, 'success');
-                        }
-                    } catch (emailErr) {
-                        console.warn('send-batch-order-email failed:', emailErr);
-                        showToast(`已派 ${assignedCount} 条订单，但邮件发送失败：${emailErr.message}`, 'error');
-                    }
-                } else {
-                    showToast(`已派 ${assignedCount} 条订单`, 'success');
-                }
-
-                if (failedCount > 0) {
-                    setTimeout(() => showToast(`另有 ${failedCount} 条被跳过（已完成/已取消）`, 'error'), 500);
-                }
-
-                closeBatchAssignModal();
-                // 清空所有勾选
-                document.querySelectorAll('.rowCheck:checked').forEach(cb => { cb.checked = false; });
-                const master = document.getElementById('selectAllCheckbox');
-                if (master) master.checked = false;
-                updateBatchBtn();
-                await renderOrders(getCurrentFilter());
-            } catch (e) {
-                showToast('批量派单失败: ' + e.message, 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = original;
-            }
-        }
-        window.batchAssign = batchAssign;
 
         // ===== 批量付款/发票 =====
         async function openBatchPaymentModal() {
@@ -1912,19 +1771,23 @@
         window.batchUpdatePayment = batchUpdatePayment;
 
         // 绑定表单提交
-        document.getElementById('batchAssignForm').addEventListener('submit', batchAssign);
         document.getElementById('batchPaymentForm').addEventListener('submit', batchUpdatePayment);
 
         // C2: 批量导入订单（前端 SheetJS 实现，0 后端改动）
         // 流程：下载模板 → 用户填好上传 → 前端解析 → 按名字查 ID → 重复检测 → 循环调 save-order
         // 模板与后台统一用"元/字"，不做单位换算
+        // 2026-09-24: 加 language_pair（语言对）列，Excel DV 下拉框避免自由输入与后台冲突；
+        // 备选项与后台 select#languagePair 一致（zh-en / en-zh / zh-ar / zh-ru + 其他自由填写）
         const IMPORT_TEMPLATE_COLS = [
             '项目名称*', '字数*', '单价*（元/字）', '截止日期*（YYYY-MM-DD）',
-            '译员*（填名字）', '客户（填名字，可选）',
+            '语言对*（下拉选择）',
+            '译员*（填名字，可留空）', '客户（填名字，可选）',
             '客户字数（可选）', '客户单价（元/字，可选）',
             '状态（pending/progress/completed/cancelled）', '客户付款（unpaid/paid）', '译员付款（unpaid/paid）',
             '备注',
         ];
+        // 语言对下拉框备选值（与后台 select#languagePair 一致）
+        const IMPORT_LANG_OPTIONS = ['zh-en', 'en-zh', 'zh-ar', 'zh-ru'];
         let importParsedRows = []; // 解析后的预览行
 
         function openImportModal() {
@@ -1948,9 +1811,11 @@
 
         function downloadImportTemplate() {
             // 用 SheetJS 生成模板（含列头 + 一行示例 + 译员/客户名字提示列）
+            // 2026-09-24: 加 SheetJS DV 下拉框（语言对列 E2:E1000），避免自由输入与后台冲突
             const headers = IMPORT_TEMPLATE_COLS;
             // 示例数据：单价 0.5 元/字（与后台一致，导入时不做单位换算）
             const sampleRow = ['2026 Q3 高校医学论文', '5000', '0.5', '2026-12-31',
+                'zh-en',
                 (translatorsCache && translatorsCache[0]?.name) || '译员A',
                 (clientsCache && clientsCache[0]?.company_name) || '客户A',
                 '5000', '0.5', 'pending', 'unpaid', 'unpaid', '示例：补登历史订单'];
@@ -1962,6 +1827,28 @@
 
             // 设置列宽（视觉舒服）
             ws['!cols'] = headers.map(h => ({ wch: 18 }));
+
+            // 语言对下拉框（2026-09-24 新增）
+            //  - DV 列表只放后台 select#languagePair 的 4 个固定选项
+            //  - 想填"其他"（如日→中）的用户，sheet 提示文本说明"其他填这里"但不强制 DV（避免拦截合法自由输入）
+            //    实际：保留 DV 让 Excel 在数据校验时弹错误，后端 save-order 校验会自动放过 ≤32 字符的自定义值
+            //    简化：DV 包含 4 个固定值 + 提示；用户选"__other__"在备注列写明，或改用单条登记
+            ws['!dataValidation'] = [{
+                sqref: 'E2:E1000',
+                type: 'list',
+                allowBlank: false,
+                showInputMessage: true,
+                promptTitle: '语言对',
+                prompt: '请从下拉选择：zh-en / en-zh / zh-ar / zh-ru。其他语言对请用"登记订单"单条填写。',
+                showErrorMessage: true,
+                errorTitle: '语言对错误',
+                errorStyle: 'stop',
+                error: '请从下拉列表选择有效语言对。其他语言对请单条登记。',
+                formula1: '"' + IMPORT_LANG_OPTIONS.join(',') + '"',
+            }];
+
+            // 第 2 行示例加备注提示"如何选其他语言对"
+            if (!ws['!notes']) ws['!notes'] = '语言对下拉框仅含 4 个固定值；其他语言对请用"登记订单"单条填写。';
 
             XLSX.writeFile(wb, `订单导入模板_${new Date().toISOString().slice(0,10)}.xlsx`);
             showToast('模板已下载', 'success');
@@ -2036,7 +1923,9 @@
 
                 for (let i = 0; i < dataRows.length; i++) {
                     const r = dataRows[i];
+                    // 2026-09-24: 第 5 列插入 languagePair（语言对）；列序：项目/字数/单价/截止/语言对/译员/客户/客户字数/客户单价/状态/客户付款/译员付款/备注
                     const [projectName, wordCount, rate, deadline,
+                        languagePair,
                         translatorName, customerName,
                         clientWordCount, clientRate,
                         status, clientPaymentStatus, paymentStatus, remark] = r;
@@ -2047,6 +1936,23 @@
                     const wCount = wordCount != null && wordCount !== '' ? Number(String(wordCount).trim()) : NaN;
                     const rRate = rate != null && rate !== '' ? Number(String(rate).trim()) : NaN;
                     const dDate = normalizeImportDate(deadline);  // 归一化：Date 对象 / YYYY/MM/DD / M/D/YYYY / 序列号 → YYYY-MM-DD
+
+                    // 语言对（2026-09-24 新增）：
+                    //  - 必填
+                    //  - 优先 4 个固定值（zh-en / en-zh / zh-ar / zh-ru，与后台 select#languagePair 一致）
+                    //  - 其他合法自由输入（如日→中、韩→英等 ≤32 字符）也允许（save-order 后端校验一致）
+                    const rawLang = languagePair != null ? String(languagePair).trim() : '';
+                    let normLang = '';
+                    if (!rawLang) {
+                        errors.push('语言对空（请从下拉选择 zh-en / en-zh / zh-ar / zh-ru，其他语言对用"登记订单"单条填写）');
+                    } else if (IMPORT_LANG_OPTIONS.includes(rawLang)) {
+                        normLang = rawLang;
+                    } else if (rawLang.length <= 32) {
+                        // 自由输入：保留原值（后端 save-order 也会校验 ≤32 字符）
+                        normLang = rawLang;
+                    } else {
+                        errors.push(`语言对"${rawLang}"超过 32 字符`);
+                    }
 
                     if (!pName) errors.push('项目名称空');
                     if (!Number.isFinite(wCount) || wCount <= 0) errors.push(`字数无效"${wordCount}"`);
@@ -2115,6 +2021,7 @@
                             word_count: wCount,
                             rate: rRate,
                             deadline: dDate,
+                            language_pair: normLang,  // 2026-09-24 新增：语言对
                             translator_id: translatorId,
                             client_id: clientId,
                             client_word_count: clientWordCount && String(clientWordCount).trim()
@@ -2145,130 +2052,155 @@
         window.handleImportFile = handleImportFile;
 
         async function confirmImport() {
-            if (importParsedRows.length === 0) return;
+            // 2026-09-24: 防御性 — 任何意外错误都要复位 submitBtn，避免"邮件失败后再次点击无反应"
+            // 整个函数包在最外层 try-catch 中，catch 块兜底复位按钮 + 弹错误
             const submitBtn = document.getElementById('importSubmitBtn');
             const original = submitBtn.textContent;
-            submitBtn.disabled = true;
-            submitBtn.textContent = '导入中...';
-
-            // V11 批量导入链路：生成 batch_id，让所有订单共享同一批次 ID
-            // → 后端 save-order 跳过单条派单邮件
-            // → 全部写完后调一次 send-batch-import-email 按译员聚合发汇总
-            const batchId = (typeof crypto !== 'undefined' && crypto.randomUUID)
-                ? `import-${crypto.randomUUID().slice(0, 8)}`
-                : `import-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-
-            let success = 0;
-            let failed = 0;
-            const failedReasons = [];
-            const successList = [];
-
-            for (let i = 0; i < importParsedRows.length; i++) {
-                const row = importParsedRows[i];
-                try {
-                    await apiCall('save-order', {
-                        method: 'POST',
-                        body: JSON.stringify({ ...row, batch_id: batchId }),
-                    });
-                    success++;
-                    successList.push(`第${i + 2}行：${row.project_name}`);
-                } catch (e) {
-                    failed++;
-                    failedReasons.push(`第${i + 2}行（${row.project_name}）：${e.message}`);
+            try {
+                if (importParsedRows.length === 0) {
+                    showToast('没有可导入的订单，请先上传文件并解析成功', 'error');
+                    return;
                 }
-            }
+                submitBtn.disabled = true;
+                submitBtn.textContent = '导入中...';
 
-            submitBtn.disabled = false;
-            submitBtn.textContent = original;
+                // V11 批量导入链路：生成 batch_id，让所有订单共享同一批次 ID
+                // → 后端 save-order 跳过单条派单邮件
+                // → 全部写完后调一次 send-batch-import-email 按译员聚合发汇总
+                const batchId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                    ? `import-${crypto.randomUUID().slice(0, 8)}`
+                    : `import-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-            // V11: 全部导入成功后调一次 send-batch-import-email，按译员聚合发汇总邮件
-            // - success 是 0 就不发（避免给 0 个译员发空邮件）
-            // - failed > 0 但 success > 0 也发（部分成功的订单仍需要通知）
-            let emailSummaryHtml = '';
-            if (success > 0) {
-                try {
-                    submitBtn.textContent = '发送汇总通知中...';
-                    submitBtn.disabled = true;
-                    const emailResp = await apiCall('send-batch-import-email', {
-                        method: 'POST',
-                        body: JSON.stringify({ batchId }),
-                    });
-                    const emailData = emailResp?.data || emailResp || {};
-                    const notified = emailData.notifiedTranslators ?? 0;
-                    const skipped = emailData.skippedTranslators ?? 0;
-                    const failedEm = emailData.failedTranslators ?? 0;
-                    const totalT = emailData.totalTranslators ?? 0;
+                let success = 0;
+                let failed = 0;
+                const failedReasons = [];
+                const successList = [];
 
-                    // 每个译员的发送状态明细
-                    const detailRows = (emailData.results || []).map(r => {
-                        const statusIcon = r.status === 'sent' ? '✅'
-                            : r.status === 'skipped' ? '⏭️'
-                            : '❌';
-                        const statusText = r.status === 'sent' ? `已发送 (${r.count}单)`
-                            : r.status === 'skipped' ? `跳过：${r.reason}`
-                            : `失败：${r.reason}`;
-                        return `<div style="font-size: 12px; margin-left: 8px;">
-                            ${statusIcon} ${escapeHtml(r.translatorEmail || '(无邮箱)')} · ${statusText}
-                        </div>`;
-                    }).join('');
+                for (let i = 0; i < importParsedRows.length; i++) {
+                    const row = importParsedRows[i];
+                    try {
+                        await apiCall('save-order', {
+                            method: 'POST',
+                            body: JSON.stringify({ ...row, batch_id: batchId }),
+                        });
+                        success++;
+                        successList.push(`第${i + 2}行：${row.project_name}`);
+                    } catch (e) {
+                        failed++;
+                        failedReasons.push(`第${i + 2}行（${row.project_name}）：${e.message}`);
+                    }
+                }
 
-                    emailSummaryHtml = `
-                        <div style="margin-top: 10px; padding: 10px 12px; border-radius: 6px; background: ${notified === 0 && skipped > 0 ? '#fff1f0' : '#f0f0ff'}; border: 1px solid ${notified === 0 && skipped > 0 ? '#ffa39e' : '#91d5ff'};">
-                            <div style="font-weight: 600; margin-bottom: 6px; color: ${notified === 0 && skipped > 0 ? '#cf1322' : '#096dd9'};">
-                                ${notified === 0 && skipped > 0 ? '⚠️ ' : '📧 '}汇总邮件：共 ${totalT} 位译员，发送 ${notified} / 跳过 ${skipped}${failedEm > 0 ? ` / 失败 ${failedEm}` : ''}
-                                ${notified === 0 && skipped > 0 ? '（全部跳过，无人收到邮件）' : ''}
+                submitBtn.disabled = false;
+                submitBtn.textContent = original;
+
+                // V11: 全部导入成功后调一次 send-batch-import-email，按译员聚合发汇总邮件
+                // - success 是 0 就不发（避免给 0 个译员发空邮件）
+                // - failed > 0 但 success > 0 也发（部分成功的订单仍需要通知）
+                let emailSummaryHtml = '';
+                if (success > 0) {
+                    try {
+                        submitBtn.textContent = '发送汇总通知中...';
+                        submitBtn.disabled = true;
+                        // 2026-09-24 诊断日志：让用户能复制 batchId 去 Netlify Functions 日志查 send-batch-import-email
+                        console.log('[confirmImport] sending batch-import-email, batchId=', batchId, 'success=', success, 'failed=', failed);
+                        const emailResp = await apiCall('send-batch-import-email', {
+                            method: 'POST',
+                            body: JSON.stringify({ batchId }),
+                        });
+                        console.log('[confirmImport] send-batch-import-email response:', emailResp);
+                        const emailData = emailResp?.data || emailResp || {};
+                        const notified = emailData.notifiedTranslators ?? 0;
+                        const skipped = emailData.skippedTranslators ?? 0;
+                        const failedEm = emailData.failedTranslators ?? 0;
+                        const totalT = emailData.totalTranslators ?? 0;
+
+                        // 每个译员的发送状态明细
+                        const detailRows = (emailData.results || []).map(r => {
+                            const statusIcon = r.status === 'sent' ? '✅'
+                                : r.status === 'skipped' ? '⏭️'
+                                : '❌';
+                            const statusText = r.status === 'sent' ? `已发送 (${r.count}单)`
+                                : r.status === 'skipped' ? `跳过：${r.reason}`
+                                : `失败：${r.reason}`;
+                            return `<div style="font-size: 12px; margin-left: 8px;">
+                                ${statusIcon} ${escapeHtml(r.translatorEmail || '(无邮箱)')} · ${statusText}
+                            </div>`;
+                        }).join('');
+
+                        emailSummaryHtml = `
+                            <div style="margin-top: 10px; padding: 10px 12px; border-radius: 6px; background: ${notified === 0 && skipped > 0 ? '#fff1f0' : '#f0f0ff'}; border: 1px solid ${notified === 0 && skipped > 0 ? '#ffa39e' : '#91d5ff'};">
+                                <div style="font-weight: 600; margin-bottom: 6px; color: ${notified === 0 && skipped > 0 ? '#cf1322' : '#096dd9'};">
+                                    ${notified === 0 && skipped > 0 ? '⚠️ ' : '📧 '}汇总邮件：共 ${totalT} 位译员，发送 ${notified} / 跳过 ${skipped}${failedEm > 0 ? ` / 失败 ${failedEm}` : ''}
+                                    ${notified === 0 && skipped > 0 ? '（全部跳过，无人收到邮件）' : ''}
+                                </div>
+                                ${detailRows}
                             </div>
-                            ${detailRows}
-                        </div>
-                    `;
-                } catch (e) {
-                    emailSummaryHtml = `
-                        <div style="margin-top: 10px; padding: 10px 12px; border-radius: 6px; background: #fff1f0; border: 1px solid #ffa39e;">
-                            <div style="color: #cf1322;">📧 汇总邮件发送失败：${escapeHtml(e.message)}（订单已导入，可在"批量派单"中重发）</div>
-                        </div>
-                    `;
-                } finally {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = original;
+                        `;
+                    } catch (e) {
+                        console.error('[confirmImport] send-batch-import-email failed:', e);
+                        emailSummaryHtml = `
+                            <div style="margin-top: 10px; padding: 10px 12px; border-radius: 6px; background: #fff1f0; border: 1px solid #ffa39e;">
+                                <div style="color: #cf1322;">📧 汇总邮件发送失败：${escapeHtml(e.message)}（订单已导入，批次 ID：${escapeHtml(batchId)}）</div>
+                            </div>
+                        `;
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = original;
+                    }
                 }
-            }
 
-            // 把成功/失败明细展示在 modal 内（之前只 toast 一句话，错误详情用户看不到）
-            // 2026-09-24: 统计"待派单"数量，提示用户导入后用批量派单指派
-            const unassignedCount = importParsedRows.filter(r => !r.translator_id).length;
-            const unassignedHint = unassignedCount > 0
-                ? `<div style="margin-top: 6px; color: #fa8c16; font-size: 12px;">
-                    ⚠️ 其中 ${unassignedCount} 条未指派译员，请导入完成后到「批量派单」中指派
-                  </div>`
-                : '';
-            const resultHtml = `
-                <div style="margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: ${failed === 0 ? '#f6ffed' : '#fff7e6'}; border: 1px solid ${failed === 0 ? '#b7eb8f' : '#ffd591'};">
-                    <div style="font-weight: 600; margin-bottom: 6px;">
-                        ✅ 成功 ${success} 条${failed > 0 ? `，❌ 失败 ${failed} 条` : ''}
+                // 把成功/失败明细展示在 modal 内（之前只 toast 一句话，错误详情用户看不到）
+                // 2026-09-24: 批量派单功能已作废（派单必须通过批量导入完成），所以"待派单"提示改成"单条登记"
+                const unassignedCount = importParsedRows.filter(r => !r.translator_id).length;
+                const unassignedHint = unassignedCount > 0
+                    ? `<div style="margin-top: 6px; color: #fa8c16; font-size: 12px;">
+                        ⚠️ 其中 ${unassignedCount} 条未指派译员（不会发送派单邮件）。请用「登记订单」单条补派，或重新导入带译员的 Excel
+                      </div>`
+                    : '';
+                const resultHtml = `
+                    <div style="margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: ${failed === 0 ? '#f6ffed' : '#fff7e6'}; border: 1px solid ${failed === 0 ? '#b7eb8f' : '#ffd591'};">
+                        <div style="font-weight: 600; margin-bottom: 6px;">
+                            ✅ 成功 ${success} 条${failed > 0 ? `，❌ 失败 ${failed} 条` : ''}
+                        </div>
+                        ${unassignedHint}
+                        <div style="font-size: 11px; color: #999;">批次 ID：${escapeHtml(batchId)}</div>
+                        ${successList.length > 0 ? `<div style="font-size: 12px; color: #666; margin-top: 4px;">成功：${successList.join('、')}</div>` : ''}
+                        ${failedReasons.length > 0 ? `<div style="font-size: 12px; color: #cf1322; margin-top: 4px;">失败：${failedReasons.join('；')}</div>` : ''}
+                        ${emailSummaryHtml}
                     </div>
-                    ${unassignedHint}
-                    <div style="font-size: 11px; color: #999;">批次 ID：${escapeHtml(batchId)}</div>
-                    ${successList.length > 0 ? `<div style="font-size: 12px; color: #666; margin-top: 4px;">成功：${successList.join('、')}</div>` : ''}
-                    ${failedReasons.length > 0 ? `<div style="font-size: 12px; color: #cf1322; margin-top: 4px;">失败：${failedReasons.join('；')}</div>` : ''}
-                    ${emailSummaryHtml}
-                </div>
-            `;
-            const previewEl = document.getElementById('importPreview');
-            previewEl.insertAdjacentHTML('beforeend', resultHtml);
+                `;
+                const previewEl = document.getElementById('importPreview');
+                previewEl.insertAdjacentHTML('beforeend', resultHtml);
 
-            if (failed === 0) {
-                showToast(`成功导入 ${success} 条订单`, 'success');
-                await renderOrders(getCurrentFilter());
-                // 成功后 2.5s 自动关闭 modal（延长一点，让用户看清邮件发送明细）
-                setTimeout(closeImportModal, 2500);
-            } else {
-                // toast 显示前 3 条失败原因（之前只一行，错误详情用户看不到）
-                const topFailures = failedReasons.slice(0, 3).map(r => r.replace(/第\d+行（/, '行 ')).join('；');
-                const toastMsg = failedReasons.length > 3
-                    ? `导入 ${success} 条，失败 ${failed} 条：${topFailures} 等`
-                    : `失败 ${failed} 条：${topFailures}`;
-                showToast(toastMsg, 'error', 6000);
-                // 不关闭 modal，让用户看到错误
+                // 2026-09-24 修复：成功也保留 modal（之前是 setTimeout 2.5s 关 modal，但邮件可能还没读完）
+                // 让用户看清邮件发送状态后，手动关 modal
+                // 这样"再次点击导入订单没反应"的 bug 也消失 — 用户不会再以为 modal 突然卡死
+                if (failed === 0) {
+                    showToast(`成功导入 ${success} 条订单`, 'success');
+                    await renderOrders(getCurrentFilter());
+                    // 不自动关 modal — 让用户检查汇总邮件状态后手动关
+                    // 给出"完成"按钮提示
+                    const closeHint = `<div style="margin-top: 6px; font-size: 12px; color: #999;">✨ 导入完成，可关闭弹窗查看订单列表</div>`;
+                    previewEl.insertAdjacentHTML('beforeend', closeHint);
+                } else {
+                    // toast 显示前 3 条失败原因（之前只一行，错误详情用户看不到）
+                    const topFailures = failedReasons.slice(0, 3).map(r => r.replace(/第\d+行（/, '行 ')).join('；');
+                    const toastMsg = failedReasons.length > 3
+                        ? `导入 ${success} 条，失败 ${failed} 条：${topFailures} 等`
+                        : `失败 ${failed} 条：${topFailures}`;
+                    showToast(toastMsg, 'error', 6000);
+                    // 不关闭 modal，让用户看到错误
+                }
+            } catch (unexpectedErr) {
+                // 2026-09-24: 最外层 catch，兜底防止 submitBtn 永久 disabled
+                console.error('[confirmImport] unhandled error:', unexpectedErr);
+                showToast(`导入失败：${unexpectedErr.message || unexpectedErr}`, 'error', 6000);
+            } finally {
+                // 2026-09-24: 无论发生什么，最终保证可点（防止"再次点击无反应"）
+                submitBtn.disabled = importParsedRows.length === 0;
+                submitBtn.style.opacity = importParsedRows.length === 0 ? '0.5' : '1';
+                submitBtn.textContent = original;
             }
         }
         window.confirmImport = confirmImport;

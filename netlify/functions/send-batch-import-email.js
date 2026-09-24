@@ -4,14 +4,13 @@
 //
 // 设计要点：
 //   1) 按 translator_id 分组：N 条订单可能指派给 5 个译员 → 发 5 封邮件（每封含该译员的订单列表）
-//   2) 复用 BATCH_ORDER_ASSIGNED 模板（与批量派单同一模板，译员体验一致）
+//   2) 复用 BATCH_ORDER_ASSIGNED 模板（批量派单已作废，模板继续用于批量导入汇总）
 //   3) 每个译员单独检查 order_assigned 通知偏好，关闭的跳过（不阻塞其他译员）
 //   4) 失败非阻塞：单个译员 SMTP 失败不影响其他译员，主流程返回 partial_success 状态
 //   5) 输入支持 batchId（推荐）或 orderIds[]（兼容旧调用）
 //
-// 与 send-batch-order-email.js 的区别：
-//   - send-batch-order-email：业务上批量派单必然是同一个译员，发 1 封
-//   - send-batch-import-email：批量导入可能多个译员，发 N 封
+// 2026-09-24: 批量派单功能作废，send-batch-order-email.js 已删除。
+//   本函数继续作为"批量导入汇总邮件"的唯一端点。
 
 const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate } = require('./_shared/auth');
@@ -46,6 +45,9 @@ exports.handler = async (event) => {
   const { smtpUser } = envCheck;
 
   const service = getServiceClient();
+
+  // 2026-09-24 诊断日志：M9 邮件未触发排查 — 用户说"导入成功但没收到汇总邮件"
+  console.log('[send-batch-import-email] entry, batchId=', batchId, 'orderIds=', orderIds?.length || 'n/a');
 
   try {
     // 查订单：优先用 batchId（推荐路径），否则用 orderIds
@@ -82,6 +84,12 @@ exports.handler = async (event) => {
       return corsResponse(404, { error: '未找到任何订单' });
     }
 
+    // 2026-09-24 诊断：查到的原始 orders（含 status / translator_id）
+    console.log('[send-batch-import-email] fetched', orders.length, 'orders, status breakdown:', orders.reduce((acc, o) => {
+      acc[o.status || 'null'] = (acc[o.status || 'null'] || 0) + 1;
+      return acc;
+    }, {}), 'translators:', [...new Set(orders.map(o => o.translator_id).filter(Boolean))]);
+
     // 过滤：只有 status=pending 的订单需要通知（已完成的补登订单不发）
     const pendingOrders = orders.filter(o => o.status === 'pending');
     if (pendingOrders.length === 0) {
@@ -113,6 +121,9 @@ exports.handler = async (event) => {
         notifiedTranslators: 0,
       });
     }
+
+    // 2026-09-24 诊断：分组结果
+    console.log('[send-batch-import-email] byTranslator groups:', byTranslator.size, 'translators:', [...byTranslator.entries()].map(([tid, arr]) => `${tid}=${arr.length}单`).join(', '));
 
     // 创建一次 transporter（所有邮件复用同一连接池）
     const transporter = createEmailTransport();
@@ -151,9 +162,11 @@ exports.handler = async (event) => {
               text: tpl.text,
               html: tpl.html,
             });
+            // 2026-09-24 诊断：每封 sendMail 详细结果（含 messageId）
+            console.log('[send-batch-import-email] SENT to=', translator.email, 'count=', tOrders.length, 'messageId=', info.messageId);
             return { translatorId: tid, translatorEmail: translator.email, status: 'sent', messageId: info.messageId, count: tOrders.length };
           } catch (mailErr) {
-            console.error('send-batch-import-email mail failed for translator', translator.email, ':', mailErr.message);
+            console.error('[send-batch-import-email] FAILED to=', translator.email, 'count=', tOrders.length, 'error=', mailErr.message);
             // 失败留痕：admin 后台 audit_logs 查 action='email_send_failed' + translatorId 定位
             await logEmailFailed(service, {
               batchId,

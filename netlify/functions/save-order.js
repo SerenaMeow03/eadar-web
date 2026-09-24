@@ -43,12 +43,12 @@ exports.handler = async (event) => {
 
   // 必填校验
   // 手动登记场景：项目名称/字数/费率/截止日期 + 译员 必填
-  // 批量导入场景（带 batch_id）：译员允许空（导入后用批量派单指派）
+  // 批量导入场景（带 batch_id）：译员允许空（不会派单也不发邮件，由 admin 后续用「登记订单」单条补派）
   if (!project_name || !word_count || !rate || !deadline) {
     return corsResponse(400, { error: '项目名称、字数、费率、截止日期为必填' });
   }
   if (!translator_id && !batch_id) {
-    return corsResponse(400, { error: '译员为必填（批量导入可留空，导入后用批量派单指派）' });
+    return corsResponse(400, { error: '译员为必填（批量导入可留空，但不会发送派单邮件）' });
   }
   // 客户字段必填（手动登记订单场景）；批量导入场景（带 batch_id）允许空
   if (!client_id && !batch_id) {
