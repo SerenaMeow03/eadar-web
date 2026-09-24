@@ -205,6 +205,12 @@ exports.handler = async (event) => {
       },
     });
 
+    // 邮件触发结果收集器（修复 2026-09-24 P1#3：之前 try-catch 吞错，前端 toast「订单已创建」绿色
+    // 完全不知道邮件失败。现在把每个 trigger 的状态写入 response.data.emailNotifications，
+    // 前端拿到后追加 secondary warning toast：admin 能看到「订单已创建，但 X 封邮件失败」。
+    // 保留「主流程优先」语义：邮件失败不阻塞订单创建/更新。
+    const emailNotifications = [];
+
     // C2: 派单通知译员（仅创建时 + 仅待处理状态触发）
     // 用户诉求：只有"待处理"才通知译员，进行中/已完成/取消不通知
     // - 编辑路径永远不重发
@@ -226,8 +232,10 @@ exports.handler = async (event) => {
           },
           body: JSON.stringify({ orderId: result.id }),
         });
+        emailNotifications.push({ type: 'C2', status: resp.ok ? 'sent' : 'failed', code: resp.status });
         console.log('[save-order] C2 trigger response:', resp.status, 'status=pending');
       } catch (err) {
+        emailNotifications.push({ type: 'C2', status: 'failed', error: err.message });
         console.warn('[save-order] C2 trigger failed (non-blocking):', err.message);
       }
     } else if (!id) {
@@ -252,8 +260,10 @@ exports.handler = async (event) => {
           },
           body: JSON.stringify({ orderId: result.id }),
         });
+        emailNotifications.push({ type: 'C5', status: resp.ok ? 'sent' : 'failed', code: resp.status });
         console.log('[save-order] C5 trigger response:', resp.status, 'payment_status: unpaid→paid');
       } catch (err) {
+        emailNotifications.push({ type: 'C5', status: 'failed', error: err.message });
         console.warn('[save-order] C5 trigger failed (non-blocking):', err.message);
       }
     } else if (id && payment_status === 'paid') {
@@ -278,13 +288,18 @@ exports.handler = async (event) => {
           },
           body: JSON.stringify({ orderId: result.id, previousStatus: oldStatus, action: 'recalled' }),
         });
+        emailNotifications.push({ type: 'C7', status: resp.ok ? 'sent' : 'failed', code: resp.status });
         console.log('[save-order] C7 trigger response:', resp.status, 'progress→pending');
       } catch (err) {
+        emailNotifications.push({ type: 'C7', status: 'failed', error: err.message });
         console.warn('[save-order] C7 trigger failed (non-blocking):', err.message);
       }
     }
 
-    return corsResponse(200, { data: result, message: id ? '订单已更新' : '订单已创建' });
+    return corsResponse(200, {
+      data: { ...result, emailNotifications },
+      message: id ? '订单已更新' : '订单已创建',
+    });
   } catch (e) {
     console.error('save-order unhandled:', e);
     return corsResponse(500, { error: e.message });

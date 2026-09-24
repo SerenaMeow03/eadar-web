@@ -1893,7 +1893,7 @@
 
                 if (summary.failed && summary.failed.length > 0) {
                     const reasons = summary.failed.map(f => `${f.id}: ${f.reason}`).slice(0, 3).join('；');
-                    showToast(`更新 ${summary.updated || 0} 条，失败 ${summary.failed || 0} 条：${reasons}`, 'error', 6000);
+                    showToast(`更新 ${summary.updated || 0} 条，失败 ${(summary.failed || []).length} 条：${reasons}`, 'error', 6000);
                 } else {
                     showToast(`成功更新 ${summary.updated || 0} 条订单`, 'success');
                 }
@@ -2608,6 +2608,21 @@
             setTimeout(() => toast.remove(), duration);
         }
 
+        // 修复（2026-09-24 P1#3）：save-order 后端邮件触发失败时，追加警告 toast
+        // 不阻塞主流程（订单已创建/更新成功），但 admin 能立刻看到邮件失败
+        // 有 failed → warning toast「⚠️ 订单已保存，但 N 封通知邮件发送失败，请到「邮件失败」页面重发」
+        function checkEmailNotifications(emailNotifications) {
+            if (!Array.isArray(emailNotifications) || emailNotifications.length === 0) return;
+            const failed = emailNotifications.filter(n => n.status === 'failed');
+            if (failed.length === 0) return;
+            const labels = { C2: '派单通知', C5: '结算通知', C7: '收回通知' };
+            const types = failed.map(n => labels[n.type] || n.type).join('、');
+            // 200ms 后追加，主 toast 显示完才显示
+            setTimeout(() => {
+                showToast(`⚠️ 订单已保存，但 ${types} 邮件发送失败，请到「邮件失败」页面重发`, 'error', 6000);
+            }, 200);
+        }
+
         // 表单提交
         document.getElementById('orderForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -2680,11 +2695,14 @@
             if (id) {
                 // 编辑
                 try {
-                    await apiCall('save-order', {
+                    result = await apiCall('save-order', {
                         method: 'POST',
                         body: JSON.stringify({ id, ...orderData })
                     });
                     showToast('订单更新成功', 'success');
+                    // 修复（2026-09-24 P1#3）：后端把邮件触发结果写在 emailNotifications，
+                    // 如果有失败，追加 secondary warning toast 让 admin 知道
+                    checkEmailNotifications(result?.data?.emailNotifications);
                 } catch (err) {
                     showToast('更新失败: ' + err.message, 'error');
                 }
@@ -2696,6 +2714,7 @@
                         body: JSON.stringify(orderData)
                     });
                     showToast('订单登记成功', 'success');
+                    checkEmailNotifications(result?.data?.emailNotifications);
                 } catch (err) {
                     showToast('登记失败: ' + err.message, 'error');
                 }
@@ -2818,7 +2837,9 @@
                 const s = details.summary;
                 const bits = [];
                 if (s.updated != null) bits.push(`成功 ${s.updated}`);
-                if (s.failed  != null) bits.push(`失败 ${s.failed}`);
+                // 修复（2026-09-24 P2）：s.failed 是数组 [{id, reason}]，渲染数字要 .length
+                // 之前直接 ${s.failed} 输出 [object Object]
+                if (s.failed != null) bits.push(`失败 ${(s.failed || []).length}`);
                 if (s.requested != null) bits.push(`请求 ${s.requested}`);
                 return bits.join(' / ');
             }

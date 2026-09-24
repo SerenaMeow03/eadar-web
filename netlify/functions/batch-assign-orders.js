@@ -103,26 +103,38 @@ exports.handler = async (event) => {
     // C7 改派通知：原译员 ≠ 新译员时，调 send-order-cancel-email（action='recalled'）通知原译员
     // 一个订单一封邮件（简单方案，批量改派单译员多个订单是小概率场景，UX 可接受）
     // 后端 await 同步调用：与 save-order C7 同模式，100% 可靠
+    //
+    // 修复（2026-09-24）：原本 for...of 串行 await，30 单 C7 = 30 秒，会撞 Netlify 异步 26s 超时
+    // 改为 Promise.allSettled 并发：sub-function 启动开销 ~300ms，但 30 单实际 ~5-10s
+    // SMTP 限流在 email-transport.js 的 maxConnections=2 + rateLimit=2（commit 2dc751a6），并发安全
     const orderMap = new Map((orders || []).map(o => [o.id, o]));
-    for (const id of assigned) {
-      const o = orderMap.get(id);
-      if (!o || !o.translator_id || o.translator_id === body.translatorId) continue;
-      try {
-        const protocol = event.headers['x-forwarded-proto'] || 'https';
-        const host = event.headers.host;
-        const authHeader = event.headers.authorization || event.headers.Authorization || '';
-        const resp = await fetch(`${protocol}://${host}/.netlify/functions/send-order-cancel-email`, {
+    const c7Tasks = assigned
+      .map(id => ({ id, o: orderMap.get(id) }))
+      .filter(({ o }) => o && o.translator_id && o.translator_id !== body.translatorId);
+
+    if (c7Tasks.length > 0) {
+      const protocol = event.headers['x-forwarded-proto'] || 'https';
+      const host = event.headers.host;
+      const authHeader = event.headers.authorization || event.headers.Authorization || '';
+
+      const c7Results = await Promise.allSettled(c7Tasks.map(({ id, o }) =>
+        fetch(`${protocol}://${host}/.netlify/functions/send-order-cancel-email`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': authHeader,
           },
           body: JSON.stringify({ orderId: id, previousStatus: o.status, action: 'recalled' }),
-        });
-        console.log('[batch-assign-orders] C7 trigger response:', resp.status, 'orderId=', id, 'oldStatus=', o.status);
-      } catch (err) {
-        console.warn('[batch-assign-orders] C7 trigger failed (non-blocking):', err.message);
-      }
+        }).then(r => ({ id, status: r.status }))
+          .catch(err => ({ id, status: 'failed', error: err.message }))
+      ));
+      c7Results.forEach((r, i) => {
+        if (r.status === 'fulfilled') {
+          console.log('[batch-assign-orders] C7 trigger response:', r.value.status, 'orderId=', c7Tasks[i].id);
+        } else {
+          console.warn('[batch-assign-orders] C7 trigger failed (non-blocking):', r.reason?.message);
+        }
+      });
     }
 
     // A7: 审计日志
