@@ -369,7 +369,8 @@
                 document.getElementById('translatorCount').textContent = translators.length;
 
                 // 订单统计
-                const oRes = await apiCall('get-orders');
+                // 2026-09-24: 拉 limit=200 拿全量订单做统计（用户月单 <50 不会超）
+                const oRes = await apiCall('get-orders?limit=200');
                 const list = oRes?.data || [];
                 document.getElementById('orderCount').textContent = list.length;
                 document.getElementById('pendingCount').textContent = list.filter(o => o.status === 'pending').length;

@@ -18,7 +18,7 @@ const { corsResponse, preflight, authenticate } = require('./_shared/auth');
 const { buildBatchOrderAssignedEmail } = require('./_shared/email-templates');
 const { checkPreference } = require('./_shared/notifications');
 const { logEmailFailed } = require('./_shared/email-log');
-const nodemailer = require('nodemailer');
+const { createEmailTransport, validateSmtpEnv } = require('./_shared/email-transport');
 
 exports.handler = async (event) => {
   const pre = preflight(event);
@@ -41,13 +41,9 @@ exports.handler = async (event) => {
   }
 
   // SMTP 配置检查
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpPort = Number(process.env.SMTP_PORT || 465);
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-  if (!smtpHost || !smtpUser || !smtpPass) {
-    return corsResponse(500, { error: 'SMTP 未配置' });
-  }
+  const envCheck = validateSmtpEnv();
+  if (!envCheck.ok) return corsResponse(500, { error: envCheck.error });
+  const { smtpUser } = envCheck;
 
   const service = getServiceClient();
 
@@ -118,62 +114,77 @@ exports.handler = async (event) => {
       });
     }
 
-    // 创建 transporter（一次连接，所有邮件复用）
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: { user: smtpUser, pass: smtpPass },
+    // 创建一次 transporter（所有邮件复用同一连接池）
+    const transporter = createEmailTransport();
+
+    // 并发发送（每译员 1 封，互不影响；失败 try-catch 后继续）
+    // 改前：for...of 串行 await — 50 译员 = 5-10 分钟（Netlify async 26s 超时会丢邮件）
+    // 改后：Promise.allSettled — 总耗时 ≈ 单封最慢那封（SMTP 拨号 + 发送，~1s/封）
+    const sendTasks = [];
+    for (const [tid, tOrders] of byTranslator) {
+      sendTasks.push(
+        (async () => {
+          const translator = tOrders[0].translators;
+          if (!translator?.email) {
+            return { translatorId: tid, translatorEmail: null, status: 'skipped', reason: '译员无邮箱' };
+          }
+
+          // 通知偏好检查
+          const enabled = await checkPreference(service, translator.email, 'translator', 'order_assigned');
+          if (!enabled) {
+            console.log('send-batch-import-email skipped: translator disabled order_assigned:', translator.email, 'count:', tOrders.length);
+            return { translatorId: tid, translatorEmail: translator.email, status: 'skipped', reason: '已关闭"订单分配"通知', count: tOrders.length };
+          }
+
+          // 渲染模板
+          const tpl = buildBatchOrderAssignedEmail({
+            orders: tOrders,
+            translator,
+            smtpUser,
+          });
+
+          try {
+            const info = await transporter.sendMail({
+              from: `"${tpl.fromName}" <${smtpUser}>`,
+              to: tpl.to,
+              subject: tpl.subject,
+              text: tpl.text,
+              html: tpl.html,
+            });
+            return { translatorId: tid, translatorEmail: translator.email, status: 'sent', messageId: info.messageId, count: tOrders.length };
+          } catch (mailErr) {
+            console.error('send-batch-import-email mail failed for translator', translator.email, ':', mailErr.message);
+            // 失败留痕：admin 后台 audit_logs 查 action='email_send_failed' + translatorId 定位
+            await logEmailFailed(service, {
+              batchId,
+              emailType: 'batch_import_assigned',
+              to: translator.email,
+              error: mailErr,
+              translatorId: tid,
+            }).catch(() => {});
+            return { translatorId: tid, translatorEmail: translator.email, status: 'failed', reason: mailErr.message, count: tOrders.length };
+          }
+        })()
+      );
+    }
+
+    const results = await Promise.allSettled(sendTasks);
+
+    // 拍平：Promise.allSettled 包裹的是 fulfilled/rejected 状态，fulfilled.value 才是结果
+    const flatResults = results.map((r, i) => {
+      if (r.status === 'fulfilled') return r.value;
+      // 理论不会到这（内部已 try-catch），兜底用 byTranslator key 算出 tid
+      const tid = Array.from(byTranslator.keys())[i];
+      return { translatorId: tid, translatorEmail: null, status: 'failed', reason: r.reason?.message || '未知错误' };
     });
 
-    // 逐译员发邮件（互不影响：失败 catch 后继续下一个）
-    const results = [];
-    for (const [tid, tOrders] of byTranslator) {
-      const translator = tOrders[0].translators;
-      if (!translator?.email) {
-        results.push({ translatorId: tid, translatorEmail: null, status: 'skipped', reason: '译员无邮箱' });
-        continue;
-      }
-
-      // 通知偏好检查（每个译员单独判断，关闭的不发）
-      const enabled = await checkPreference(service, translator.email, 'translator', 'order_assigned');
-      if (!enabled) {
-        console.log('send-batch-import-email skipped: translator disabled order_assigned:', translator.email, 'count:', tOrders.length);
-        results.push({ translatorId: tid, translatorEmail: translator.email, status: 'skipped', reason: '已关闭"订单分配"通知', count: tOrders.length });
-        continue;
-      }
-
-      // 渲染模板
-      const tpl = buildBatchOrderAssignedEmail({
-        orders: tOrders,
-        translator,
-        smtpUser,
-      });
-
-      try {
-        const info = await transporter.sendMail({
-          from: `"${tpl.fromName}" <${smtpUser}>`,
-          to: tpl.to,
-          subject: tpl.subject,
-          text: tpl.text,
-          html: tpl.html,
-        });
-        results.push({ translatorId: tid, translatorEmail: translator.email, status: 'sent', messageId: info.messageId, count: tOrders.length });
-        console.log('send-batch-import-email sent:', info.messageId, 'translator:', translator.email, 'count:', tOrders.length, 'batchId:', batchId);
-      } catch (mailErr) {
-        results.push({ translatorId: tid, translatorEmail: translator.email, status: 'failed', reason: mailErr.message, count: tOrders.length });
-        console.error('send-batch-import-email mail failed for translator', translator.email, ':', mailErr.message);
-        // 邮件失败留痕：admin 后台 audit_logs 查 action='email_send_failed' + translatorId 定位
-        // batchId 作为 target_id 聚合整个批次的所有失败（partial failure 也好排查）
-        await logEmailFailed(service, {
-          batchId,
-          emailType: 'batch_import_assigned',
-          to: translator.email,
-          error: mailErr,
-          translatorId: tid,
-        });
-      }
-    }
+    console.log('send-batch-import-email complete:', {
+      batchId,
+      total: flatResults.length,
+      sent: flatResults.filter(r => r.status === 'sent').length,
+      failed: flatResults.filter(r => r.status === 'failed').length,
+      skipped: flatResults.filter(r => r.status === 'skipped').length,
+    });
 
     // 汇总返回
     const sentCount = results.filter(r => r.status === 'sent').length;

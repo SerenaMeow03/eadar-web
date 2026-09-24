@@ -4,6 +4,7 @@
 
 const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate, requireMethod, parseBody } = require('./_shared/auth');
+const { writeAudit } = require('./_shared/audit');
 
 exports.handler = async (event) => {
   const pre = preflight(event);
@@ -39,6 +40,16 @@ exports.handler = async (event) => {
       console.error('update-password error:', error);
       return corsResponse(500, { error: error.message });
     }
+
+    await writeAudit(service, {
+      action: 'change_password',
+      actorEmail: auth.user.email,
+      actorRole: auth.role,
+      targetId: auth.role === 'translator' ? auth.translatorId : null,
+      targetEmail: auth.user.email,
+      targetRole: auth.role,
+      details: { self: true },
+    }).catch((e) => console.warn('[update-password] writeAudit failed:', e.message));
 
     return corsResponse(200, { message: '密码修改成功' });
   } catch (e) {

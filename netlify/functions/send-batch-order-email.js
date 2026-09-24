@@ -10,7 +10,7 @@ const { corsResponse, preflight, authenticate } = require('./_shared/auth');
 const { buildBatchOrderAssignedEmail } = require('./_shared/email-templates');
 const { checkPreference } = require('./_shared/notifications');
 const { logEmailFailed } = require('./_shared/email-log');
-const nodemailer = require('nodemailer');
+const { createEmailTransport, validateSmtpEnv } = require('./_shared/email-transport');
 
 exports.handler = async (event) => {
   const pre = preflight(event);
@@ -33,13 +33,9 @@ exports.handler = async (event) => {
   }
 
   // SMTP 配置检查
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpPort = Number(process.env.SMTP_PORT || 465);
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-  if (!smtpHost || !smtpUser || !smtpPass) {
-    return corsResponse(500, { error: 'SMTP 未配置' });
-  }
+  const envCheck = validateSmtpEnv();
+  if (!envCheck.ok) return corsResponse(500, { error: envCheck.error });
+  const { smtpUser } = envCheck;
 
   const service = getServiceClient();
 
@@ -88,13 +84,8 @@ exports.handler = async (event) => {
       smtpUser,
     });
 
-    // 发送
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: { user: smtpUser, pass: smtpPass },
-    });
+    // 发送（connectionTimeout/socketTimeout 由 helper 统一设为 8s）
+    const transporter = createEmailTransport();
 
     const info = await transporter.sendMail({
       from: `"${tpl.fromName}" <${smtpUser}>`,

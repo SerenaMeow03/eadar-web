@@ -8,7 +8,7 @@ const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate, requireMethod, parseBody } = require('./_shared/auth');
 const { buildTranslatorWelcomeEmail } = require('./_shared/email-templates');
 const { logEmailFailed } = require('./_shared/email-log');
-const nodemailer = require('nodemailer');
+const { createEmailTransport, validateSmtpEnv } = require('./_shared/email-transport');
 
 exports.handler = async (event) => {
   const pre = preflight(event);
@@ -82,19 +82,13 @@ exports.handler = async (event) => {
 
     // 4) 发送欢迎邮件给译员（非阻塞，失败仅记日志 + audit）
     try {
-      const smtpHost = process.env.SMTP_HOST;
-      const smtpUser = process.env.SMTP_USER;
-      const smtpPass = process.env.SMTP_PASS;
-      if (!smtpHost || !smtpUser || !smtpPass) {
+      const envCheck = validateSmtpEnv();
+      if (!envCheck.ok) {
         console.warn('create-translator: SMTP not configured, skip welcome email');
       } else {
+        const { smtpUser } = envCheck;
         const tpl = buildTranslatorWelcomeEmail({ translator, password, smtpUser });
-        const transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: Number(process.env.SMTP_PORT || 465),
-          secure: Number(process.env.SMTP_PORT || 465) === 465,
-          auth: { user: smtpUser, pass: smtpPass },
-        });
+        const transporter = createEmailTransport();
         const info = await transporter.sendMail({
           from: `"${tpl.fromName}" <${smtpUser}>`,
           to: tpl.to,

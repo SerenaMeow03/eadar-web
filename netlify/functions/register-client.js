@@ -11,7 +11,8 @@ const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate, parseBody } = require('./_shared/auth');
 const { buildClientWelcomeEmail } = require('./_shared/email-templates');
 const { logEmailFailed } = require('./_shared/email-log');
-const nodemailer = require('nodemailer');
+const { createEmailTransport, validateSmtpEnv } = require('./_shared/email-transport');
+const { writeAudit } = require('./_shared/audit');
 
 function generateTempPassword() {
   // 12 位临时密码：大写+小写+数字，避免特殊字符
@@ -93,21 +94,25 @@ exports.handler = async (event) => {
 
     console.log('client created:', clientData.id, 'by admin:', auth.user.email);
 
+    await writeAudit(service, {
+      action: 'create_client',
+      actorEmail: auth.user.email,
+      actorRole: 'admin',
+      targetId: clientData.id,
+      targetEmail: email,
+      targetRole: 'client',
+      details: { company_name: clientData.company_name || null, contact_name: clientData.contact_name },
+    }).catch((e) => console.warn('[register-client] writeAudit failed:', e.message));
+
     // 4) 发送欢迎邮件给客户（非阻塞，失败仅记日志 + audit）
     try {
-      const smtpHost = process.env.SMTP_HOST;
-      const smtpUser = process.env.SMTP_USER;
-      const smtpPass = process.env.SMTP_PASS;
-      if (!smtpHost || !smtpUser || !smtpPass) {
+      const envCheck = validateSmtpEnv();
+      if (!envCheck.ok) {
         console.warn('register-client: SMTP not configured, skip welcome email');
       } else {
+        const { smtpUser } = envCheck;
         const tpl = buildClientWelcomeEmail({ client: clientData, tempPassword, smtpUser });
-        const transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: Number(process.env.SMTP_PORT || 465),
-          secure: Number(process.env.SMTP_PORT || 465) === 465,
-          auth: { user: smtpUser, pass: smtpPass },
-        });
+        const transporter = createEmailTransport();
         const info = await transporter.sendMail({
           from: `"${tpl.fromName}" <${smtpUser}>`,
           to: tpl.to,

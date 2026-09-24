@@ -1116,7 +1116,9 @@
 
         // 加载订单列表
         async function loadOrders() {
-            const result = await apiCall('get-orders');
+            // 2026-09-24: 一次性拉满 limit=200（Netlify Function body 6MB 上限足够）
+            // 用户月单 <50，未来若超 50 再加 UI 翻页
+            const result = await apiCall('get-orders?limit=200');
             return result?.data || [];
         }
 
@@ -2020,7 +2022,8 @@
                 }
 
                 // 一次性查 DB 已有订单（用于跨文件去重）
-                const existingOrders = await apiCall('get-orders');
+                // 2026-09-24: 拉 limit=200 拿到全部订单做去重（用户月单 <50 不会超，但跨文件去重必须全量）
+                const existingOrders = await apiCall('get-orders?limit=200');
                 const existingList = existingOrders?.data || [];
                 const existingFps = new Set(existingList.map(o =>
                     `${o.project_name || ''}|${o.deadline || ''}|${o.translator_id || ''}`

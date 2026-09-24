@@ -8,6 +8,7 @@
 
 const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate, parseBody } = require('./_shared/auth');
+const { writeAudit } = require('./_shared/audit');
 
 function generateTempPassword() {
   // 12 位临时密码：大写+小写+数字，避免容易混淆的字符（I/O/0/1/l）
@@ -82,6 +83,18 @@ exports.handler = async (event) => {
     }
 
     console.log(`password reset: ${email} (${role}) by admin ${auth.user.email} at ${new Date().toISOString()}`);
+
+    await writeAudit(service, {
+      action: 'reset_password',
+      actorEmail: auth.user.email,
+      actorRole: 'admin',
+      targetEmail: email,
+      targetRole: role,
+      details: {
+        custom: !!new_password,
+        // 不写明文密码，只记"是否自定义"
+      },
+    }).catch((e) => console.warn('[admin-reset-password] writeAudit failed:', e.message));
 
     return corsResponse(200, {
       data: {
