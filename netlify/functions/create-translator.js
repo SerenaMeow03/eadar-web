@@ -71,7 +71,7 @@ exports.handler = async (event) => {
         specialties: specialties || [],
         status: 'active',
       })
-      .select('id, name, email, auth_user_id')
+      .select('id, name, email, auth_user_id, languages, phone, specialties, status')
       .single();
 
     if (insertErr) {

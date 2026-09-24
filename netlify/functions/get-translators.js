@@ -7,6 +7,10 @@
 //   terminated  → 已终止合作（最下，便于审计）
 //
 // 所有译员都返回（包括 terminated），admin 可看到完整历史。
+//
+// 注：bank_info / phone / standard_rate / urgent_rate 等大字段保留返回，
+//   translators.html 的重置密码弹窗 / 编辑表单 / 详情显示都要用。
+//   当前译员数 <50，全表返回开销可控；未来译员数到 200+ 时再分"列表" / "详情"两个端点。
 
 const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate, requireMethod } = require('./_shared/auth');

@@ -42,8 +42,13 @@ exports.handler = async (event) => {
   } = body;
 
   // 必填校验
-  if (!project_name || !word_count || !rate || !deadline || !translator_id) {
-    return corsResponse(400, { error: '项目名称、字数、费率、截止日期、译员为必填' });
+  // 手动登记场景：项目名称/字数/费率/截止日期 + 译员 必填
+  // 批量导入场景（带 batch_id）：译员允许空（导入后用批量派单指派）
+  if (!project_name || !word_count || !rate || !deadline) {
+    return corsResponse(400, { error: '项目名称、字数、费率、截止日期为必填' });
+  }
+  if (!translator_id && !batch_id) {
+    return corsResponse(400, { error: '译员为必填（批量导入可留空，导入后用批量派单指派）' });
   }
   // 客户字段必填（手动登记订单场景）；批量导入场景（带 batch_id）允许空
   if (!client_id && !batch_id) {

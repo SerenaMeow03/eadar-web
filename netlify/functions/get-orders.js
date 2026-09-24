@@ -43,7 +43,7 @@ exports.handler = async (event) => {
         accepted_at, submitted_at,
         translators:translator_id ( id, name, email ),
         clients:client_id ( id, contact_name, company_name, email )
-      `, { count: 'exact' })
+      `, { count: 'estimated' })
       .order('created_at', { ascending: false })
       .range(from, to);
 

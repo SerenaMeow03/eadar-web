@@ -363,15 +363,16 @@
         // 获取统计数据
         async function updateStats() {
             try {
-                // 译员数量
-                const tRes = await apiCall('get-translators');
+                // 2026-09-24: 改并行调用（之前 await 串行两次往返 = 400-600ms，
+                //   现在 Promise.all 一次往返 = 200-300ms）
+                const [tRes, oRes] = await Promise.all([
+                    apiCall('get-translators'),
+                    apiCall('get-orders?limit=200'),
+                ]);
                 const translators = tRes?.data || [];
-                document.getElementById('translatorCount').textContent = translators.length;
-
-                // 订单统计
-                // 2026-09-24: 拉 limit=200 拿全量订单做统计（用户月单 <50 不会超）
-                const oRes = await apiCall('get-orders?limit=200');
                 const list = oRes?.data || [];
+
+                document.getElementById('translatorCount').textContent = translators.length;
                 document.getElementById('orderCount').textContent = list.length;
                 document.getElementById('pendingCount').textContent = list.filter(o => o.status === 'pending').length;
                 document.getElementById('completedCount').textContent = list.filter(o => o.status === 'completed').length;

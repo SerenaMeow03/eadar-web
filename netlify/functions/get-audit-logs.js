@@ -41,7 +41,7 @@ exports.handler = async (event) => {
   try {
     let query = service
       .from('audit_logs')
-      .select('*', { count: 'exact' });
+      .select('*', { count: 'estimated' });
 
     if (params.action) query = query.eq('action', params.action);
     if (params.user_email) query = query.eq('user_email', params.user_email);

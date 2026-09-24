@@ -2054,16 +2054,16 @@
                     if (!dDate) errors.push('截止日期空');
                     else if (!/^\d{4}-\d{2}-\d{2}$/.test(dDate)) errors.push(`截止日期格式无法识别"${deadline}"（应是 YYYY-MM-DD 或 YYYY/MM/DD）`);
 
-                    // 按名字查译员 ID
+                    // 按名字查译员 ID（2026-09-24: 允许译员空 —— 批量导入场景可先入库再批量派单）
                     let translatorId = null;
                     if (translatorName) {
                         const tName = String(translatorName).trim();
                         const t = translatorsCache.find(x => x.name === tName);
                         if (!t) errors.push(`找不到译员"${tName}"`);
                         else translatorId = t.id;
-                    } else {
-                        errors.push('译员空');
                     }
+                    // 注：translatorName 为空时 translatorId=null 不报错，导入后用"批量派单"指派
+                    // 但 save-order 的 importPreview 提示"待派单"
 
                     // 按名字查客户 ID
                     let clientId = null;
@@ -2077,10 +2077,11 @@
                     }
 
                     // 重复检测（指纹 = 项目名 + 截止日期 + 译员）
+                    // 2026-09-24: 译员为空时用 'none' 兜底，避免所有空译员单指纹指纹一致
                     let duplicate = false;
                     let duplicateInDb = false;
                     if (errors.length === 0) {
-                        const fp = `${pName}|${dDate}|${translatorId}`;
+                        const fp = `${pName}|${dDate}|${translatorId || 'none'}`;
                         if (seenFingerprints.has(fp)) {
                             duplicate = true;
                             errors.push('与本 Excel 内更早的行重复');
@@ -2232,11 +2233,19 @@
             }
 
             // 把成功/失败明细展示在 modal 内（之前只 toast 一句话，错误详情用户看不到）
+            // 2026-09-24: 统计"待派单"数量，提示用户导入后用批量派单指派
+            const unassignedCount = importParsedRows.filter(r => !r.translator_id).length;
+            const unassignedHint = unassignedCount > 0
+                ? `<div style="margin-top: 6px; color: #fa8c16; font-size: 12px;">
+                    ⚠️ 其中 ${unassignedCount} 条未指派译员，请导入完成后到「批量派单」中指派
+                  </div>`
+                : '';
             const resultHtml = `
                 <div style="margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: ${failed === 0 ? '#f6ffed' : '#fff7e6'}; border: 1px solid ${failed === 0 ? '#b7eb8f' : '#ffd591'};">
                     <div style="font-weight: 600; margin-bottom: 6px;">
                         ✅ 成功 ${success} 条${failed > 0 ? `，❌ 失败 ${failed} 条` : ''}
                     </div>
+                    ${unassignedHint}
                     <div style="font-size: 11px; color: #999;">批次 ID：${escapeHtml(batchId)}</div>
                     ${successList.length > 0 ? `<div style="font-size: 12px; color: #666; margin-top: 4px;">成功：${successList.join('、')}</div>` : ''}
                     ${failedReasons.length > 0 ? `<div style="font-size: 12px; color: #cf1322; margin-top: 4px;">失败：${failedReasons.join('；')}</div>` : ''}
