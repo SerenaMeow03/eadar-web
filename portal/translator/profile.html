@@ -394,6 +394,10 @@
     </div>
 
     <script>
+        // Supabase 配置（savePassword() 需要用 createClient 验证当前密码）
+        const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
+
         // ============= 统一 API 调用封装 =============
         // 检查登录状态 + 角色校验（防止 admin/client token 残留）
         const currentTranslator = JSON.parse(localStorage.getItem('currentTranslator'));
