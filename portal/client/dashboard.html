@@ -243,7 +243,7 @@
     <script src="../_shared/api-client.js"></script>
     <script>
     (function() {
-        // Supabase 配置（changePassword() 需要用 createClient 调 updateUser）
+        // Supabase 配置（changePassword() 需要 createClient 做 signInWithPassword 验证当前密码 + getSession 拿 userEmail）
         const SUPABASE_URL = 'https://zyawwjxjdloubvcnyvtp.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5YXd3anhqZGxvdWJ2Y255dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2OTQ1ODcsImV4cCI6MjEwMzI3MDU4N30.MumxYoClGwxbuJrAsWNvSlXsMgRsSIkT2nphfgXBT_c';
 
@@ -425,10 +425,9 @@
                 // 的 client 内部 session 为空，supabase-js 抛 'Auth session missing!'
                 // → 改成 signInWithPassword 验证 + 走 apiCall('update-password') 后端 service_role 路径
 
-                // 从 supabase 默认 session 拿 email（与 client/login.html setSession 后存的位置一致）
-                // 避免前端多存一份 currentClient 造成同步问题
-                const sbToken = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                const { data: sessionData } = await sbToken.auth.getSession();
+                // 一次性 createClient，复用做 getSession + signInWithPassword
+                const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                const { data: sessionData } = await sb.auth.getSession();
                 const userEmail = sessionData?.session?.user?.email;
                 if (!userEmail) {
                     showToast('会话已过期，请重新登录', 'error');
@@ -436,7 +435,6 @@
                     return;
                 }
 
-                const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 const { error: signInErr } = await sb.auth.signInWithPassword({
                     email: userEmail,
                     password: currentPwd,
