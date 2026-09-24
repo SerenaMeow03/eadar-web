@@ -2213,9 +2213,10 @@
                     }).join('');
 
                     emailSummaryHtml = `
-                        <div style="margin-top: 10px; padding: 10px 12px; border-radius: 6px; background: #f0f0ff; border: 1px solid #91d5ff;">
-                            <div style="font-weight: 600; margin-bottom: 6px; color: #096dd9;">
-                                📧 汇总邮件：共 ${totalT} 位译员，发送 ${notified} / 跳过 ${skipped}${failedEm > 0 ? ` / 失败 ${failedEm}` : ''}
+                        <div style="margin-top: 10px; padding: 10px 12px; border-radius: 6px; background: ${notified === 0 && skipped > 0 ? '#fff1f0' : '#f0f0ff'}; border: 1px solid ${notified === 0 && skipped > 0 ? '#ffa39e' : '#91d5ff'};">
+                            <div style="font-weight: 600; margin-bottom: 6px; color: ${notified === 0 && skipped > 0 ? '#cf1322' : '#096dd9'};">
+                                ${notified === 0 && skipped > 0 ? '⚠️ ' : '📧 '}汇总邮件：共 ${totalT} 位译员，发送 ${notified} / 跳过 ${skipped}${failedEm > 0 ? ` / 失败 ${failedEm}` : ''}
+                                ${notified === 0 && skipped > 0 ? '（全部跳过，无人收到邮件）' : ''}
                             </div>
                             ${detailRows}
                         </div>

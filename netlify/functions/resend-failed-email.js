@@ -12,7 +12,10 @@
 //   batch_order_assigned   → send-batch-order-email         (batchId)
 //   batch_import_assigned  → send-batch-import-email        (batchId)
 //   translator_payment     → send-translator-payment-email  (orderId)  ← C5
-//   order_cancelled        → send-order-cancel-email        (orderId+previousStatus) ← C6
+//   order_recalled         → send-order-cancel-email        (orderId+previousStatus) ← C7
+//
+// 注：order_cancelled 已砍——业务上订单必须推进直到完成，没有 cancelled 状态流转
+// 注：translator_welcome / client_welcome 暂不支持重发（欢迎邮件失败时手动让用户重置密码更稳）
 //
 // 注：translator_welcome / client_welcome 暂不支持重发（欢迎邮件失败时手动让用户重置密码更稳）
 //
@@ -31,7 +34,7 @@ const ROUTES = {
   batch_order_assigned:   { endpoint: 'send-batch-order-email',        idField: 'batchId',      idSource: 'batchId' },
   batch_import_assigned:  { endpoint: 'send-batch-import-email',       idField: 'batchId',      idSource: 'batchId' },
   translator_payment:     { endpoint: 'send-translator-payment-email', idField: 'orderId',      idSource: 'orderId',      extra: {} },
-  order_cancelled:        { endpoint: 'send-order-cancel-email',       idField: 'orderId',      idSource: 'orderId',      extra: { previousStatus: 'progress' } },
+  order_recalled:         { endpoint: 'send-order-cancel-email',       idField: 'orderId',      idSource: 'orderId',      extra: { previousStatus: 'progress' } },
 };
 
 exports.handler = async (event) => {

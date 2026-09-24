@@ -146,14 +146,16 @@ exports.handler = async (event) => {
 
     let result;
     let oldPaymentStatus = null;  // C5: 用于检测 unpaid → paid 触发结算通知
+    let oldStatus = null;          // C7: 用于检测 progress → pending 触发收回通知
     if (id) {
-      // C5: 先读旧 payment_status（避免 SELECT 再 UPDATE 多一轮 RT）
+      // 一次读旧 status + payment_status（避免 SELECT 再 UPDATE 多一轮 RT）
       const { data: prev } = await service
         .from('orders')
-        .select('payment_status')
+        .select('status, payment_status')
         .eq('id', id)
         .single();
       oldPaymentStatus = prev?.payment_status || null;
+      oldStatus = prev?.status || null;
 
       // 更新
       const { data, error } = await service
@@ -256,6 +258,30 @@ exports.handler = async (event) => {
       }
     } else if (id && payment_status === 'paid') {
       console.log('[save-order] C5 trigger skipped: oldPaymentStatus=', oldPaymentStatus);
+    }
+
+    // C7: 收回通知译员（admin 把 progress → pending —— 收回已接订单改派他人）
+    // 触发条件：admin 编辑订单时，把 status 从 progress 改成 pending（收回已接单）
+    // 不触发：pending → pending（无效）；completed → pending（已完成被收回是 admin 误操作）
+    // 之前 1d67f62b 错把 trigger 放到 update-order-status.js，但 admin 改状态走 save-order，不是 update-order-status
+    // 后端 await 同步调用：与 C2/C5 同模式，100% 可靠
+    if (id && oldStatus === 'progress' && status === 'pending') {
+      try {
+        const protocol = event.headers['x-forwarded-proto'] || 'https';
+        const host = event.headers.host;
+        const authHeader = event.headers.authorization || event.headers.Authorization || '';
+        const resp = await fetch(`${protocol}://${host}/.netlify/functions/send-order-cancel-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader,
+          },
+          body: JSON.stringify({ orderId: result.id, previousStatus: oldStatus, action: 'recalled' }),
+        });
+        console.log('[save-order] C7 trigger response:', resp.status, 'progress→pending');
+      } catch (err) {
+        console.warn('[save-order] C7 trigger failed (non-blocking):', err.message);
+      }
     }
 
     return corsResponse(200, { data: result, message: id ? '订单已更新' : '订单已创建' });

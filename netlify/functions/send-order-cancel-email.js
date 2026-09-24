@@ -1,15 +1,17 @@
 // netlify/functions/send-order-cancel-email.js
-// 内部接口：发送订单取消通知邮件给译员（C6）
-// 由 update-order-status.js 在 admin 把订单改为 cancelled 时触发
+// 内部接口：发送订单收回通知邮件给译员（C7）
+// 由 save-order.js（admin 把 progress → pending）或 batch-assign-orders.js（直接改派）触发
 //
-// 触发条件：admin 把 progress/completed 改为 cancelled
-// 不触发：pending → cancelled（译员没接单不知道，没必要打扰）
+// 触发条件：admin 收回已接订单（status 从 progress 改回 pending，或改派给其他译员）
+// 不触发：pending → pending（无效）；completed → pending（已完成被收回是 admin 误操作）
 //
 // 鉴权：translator 或 admin 都可触发（内部接口）
+//
+// 注：原 ACTION_CONFIG 表 + 删除（C6 砍了，C7 收回是唯一用例）
 
 const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate } = require('./_shared/auth');
-const { buildOrderCancelledEmail } = require('./_shared/email-templates');
+const { buildOrderRecalledEmail } = require('./_shared/email-templates');
 const { checkPreference } = require('./_shared/notifications');
 const { logEmailFailed } = require('./_shared/email-log');
 const { createEmailTransport, validateSmtpEnv } = require('./_shared/email-transport');
@@ -36,9 +38,10 @@ exports.handler = async (event) => {
   if (!orderId) {
     return corsResponse(400, { error: 'orderId 必填' });
   }
-  if (!['progress', 'completed'].includes(previousStatus)) {
-    // 防御：pending → cancelled 不通知译员
-    return corsResponse(200, { data: { skipped: true, reason: 'pending status, no notify needed' } });
+
+  // 防御：仅 progress 状态的收回才通知（completed 收回是 admin 误操作，pending 收回没意义）
+  if (previousStatus !== 'progress') {
+    return corsResponse(200, { data: { skipped: true, reason: `previousStatus=${previousStatus}, no notify` } });
   }
 
   const service = getServiceClient();
@@ -66,25 +69,27 @@ exports.handler = async (event) => {
       return corsResponse(200, { data: { skipped: true, reason: 'no translator email' } });
     }
 
-    // 2. 检查译员偏好（order_cancelled 开关）
-    const enabled = await checkPreference(service, 'translator', translator.email, 'order_cancelled');
+    // SMTP 配置检查
+    const envCheck = validateSmtpEnv();
+    if (!envCheck.ok) return corsResponse(500, { error: envCheck.error });
+    const { smtpUser } = envCheck;
+
+    // 2. 检查译员偏好（'order_cancelled' 偏好项——文案已改为「订单取消/收回通知」）
+    // 注：参数顺序 = (service, email, role, key) — 2026-09-24 修正（之前 role/email 互换，无害但不一致）
+    const enabled = await checkPreference(service, translator.email, 'translator', 'order_cancelled');
     if (!enabled) {
       console.log('[send-order-cancel-email] skipped: translator disabled order_cancelled notification:', translator.email);
       return corsResponse(200, { data: { skipped: true, reason: 'translator disabled order_cancelled notification' } });
     }
 
     // 3. 构造邮件
-    const tpl = buildOrderCancelledEmail({
+    const tpl = buildOrderRecalledEmail({
       order: { ...order, previous_status: previousStatus },
       translator,
       smtpUser,
     });
 
     // 4. 发送（connectionTimeout/socketTimeout 由 helper 统一设为 8s）
-    const envCheck = validateSmtpEnv();
-    if (!envCheck.ok) return corsResponse(500, { error: envCheck.error });
-    const { smtpUser } = envCheck;
-
     const transporter = createEmailTransport();
 
     try {
@@ -100,7 +105,7 @@ exports.handler = async (event) => {
     } catch (mailErr) {
       await logEmailFailed(service, {
         orderId,
-        emailType: 'order_cancelled',
+        emailType: 'order_recalled',
         to: tpl.to,
         error: mailErr,
         translatorId: translator.id,

@@ -487,58 +487,55 @@ ${order.remark ? '\n备注：' + order.remark : ''}
 }
 
 // ============================================================
-// 模板 8：订单取消通知（admin 取消订单 → 通知已接单的译员 C6）
+// 模板：订单收回通知（admin 收回已接订单 → 通知原译员 C7）
 // ============================================================
-// 触发条件：admin 把 progress/completed 改为 cancelled
-// 不触发：pending → cancelled（译员没接单不知道，没必要打扰）
-function buildOrderCancelledEmail({ order, translator, smtpUser }) {
+// 触发条件：save-order.js（admin 把 progress 改回 pending）或 batch-assign-orders.js（直接改派）
+// 不触发：pending → pending（无效）；completed → pending（已完成被收回是 admin 误操作）
+// 注：C6（订单取消）已砍——业务上订单必须推进直到完成，没有 cancelled 状态流转
+function buildOrderRecalledEmail({ order, translator, smtpUser }) {
   const translatorName = translator?.name || '译员';
   const translatorEmail = translator?.email;
   const deadlineStr = fmtDate(order.deadline);
-  const cancelledAt = fmtDateTime(new Date().toISOString());
-  const wasCompleted = order.previous_status === 'completed'; // 上一状态（admin 改的源头）
-  const stageLabel = wasCompleted ? '已完成' : '翻译中';
+  const recalledAt = fmtDateTime(new Date().toISOString());
 
-  const subject = `【订单已取消】${order.project_name}（订单号 ${order.id}）`;
+  const subject = `【订单已收回】${order.project_name}（订单号 ${order.id}）`;
 
   const html = `
     ${WRAPPER_OPEN}
     <h2 style="color: #1a1a2e;">您好 ${escapeHtml(translatorName)}，</h2>
-    <p>您原本负责的翻译订单被管理员取消了，请留意后续安排：</p>
+    <p>您原本已接单的翻译订单被管理员收回，回到「待派单」状态。如已开工请暂停翻译，避免做无效工作。</p>
     <table ${TABLE_STYLE}>
       <tr><td ${TD_LABEL}>订单号</td><td ${TD_VALUE_BOLD}>${escapeHtml(order.id)}</td></tr>
       <tr><td ${TD_LABEL}>项目名称</td><td ${TD_VALUE_BOLD}>${escapeHtml(order.project_name)}</td></tr>
-      <tr><td ${TD_LABEL}>取消前状态</td><td ${TD_VALUE_BOLD}>${escapeHtml(stageLabel)}</td></tr>
       <tr><td ${TD_LABEL}>字数</td><td ${TD_VALUE}>${(order.word_count || 0).toLocaleString()} 字</td></tr>
       <tr><td ${TD_LABEL}>原计划金额</td><td ${TD_VALUE}>¥${escapeHtml(order.amount)}</td></tr>
       <tr><td ${TD_LABEL}>原截止日期</td><td ${TD_VALUE}>${deadlineStr}</td></tr>
-      <tr><td ${TD_LABEL}>取消时间</td><td style="padding: 10px; font-weight: 600; color: #cf1322;">${cancelledAt}</td></tr>
-      ${order.remark ? `<tr><td ${TD_LABEL}>取消原因</td><td ${TD_VALUE}>${escapeHtml(order.remark)}</td></tr>` : ''}
+      <tr><td ${TD_LABEL}>收回时间</td><td style="padding: 10px; font-weight: 600; color: #d46b08;">${recalledAt}</td></tr>
+      ${order.remark ? `<tr><td ${TD_LABEL}>备注</td><td ${TD_VALUE}>${escapeHtml(order.remark)}</td></tr>` : ''}
     </table>
-    <p style="background: #fff1f0; border: 1px solid #ffa39e; padding: 12px; border-radius: 6px; color: #a8071a;">
-      ⚠️ <strong>该订单已作废</strong>${wasCompleted ? '，请停止后续任何交付动作。' : '，如已开工请暂停并联系对接人确认。'}
+    <p style="background: #fff7e6; border: 1px solid #ffd591; padding: 12px; border-radius: 6px; color: #ad6800;">
+      ⚠️ <strong>该订单已被收回</strong>，请暂停翻译工作，等待进一步通知。
     </p>
-    <p style="color: #666; font-size: 13px;">💡 如对取消有疑问，请及时联系对接人。</p>
+    <p style="color: #666; font-size: 13px;">💡 如对收回有疑问，请及时联系对接人。</p>
     ${FOOTER()}
     ${WRAPPER_CLOSE}
   `;
 
   const text = `您好 ${translatorName}，
 
-您原本负责的翻译订单被管理员取消了：
+您原本已接单的翻译订单被管理员收回，回到「待派单」状态：
 
 订单号：${order.id}
 项目名称：${order.project_name}
-取消前状态：${stageLabel}
 字数：${order.word_count}
 原计划金额：¥${order.amount}
 原截止日期：${deadlineStr}
-取消时间：${cancelledAt}
-${order.remark ? '\n取消原因：' + order.remark : ''}
+收回时间：${recalledAt}
+${order.remark ? '\n备注：' + order.remark : ''}
 
-⚠️ 该订单已作废${wasCompleted ? '，请停止后续任何交付动作。' : '，如已开工请暂停并联系对接人确认。'}
+⚠️ 该订单已被收回，请暂停翻译工作，等待进一步通知。
 
-如对取消有疑问，请及时联系对接人。
+如对收回有疑问，请及时联系对接人。
 
 谊达翻译系统`;
 
@@ -560,7 +557,7 @@ const TEMPLATES = {
   ORDER_RESPONSE: buildOrderResponseEmail,
   BATCH_ORDER_ASSIGNED: buildBatchOrderAssignedEmail,
   TRANSLATOR_PAYMENT: buildTranslatorPaymentEmail,
-  ORDER_CANCELLED: buildOrderCancelledEmail,
+  ORDER_RECALLED: buildOrderRecalledEmail,
 };
 
 module.exports = {
@@ -572,5 +569,5 @@ module.exports = {
   buildClientWelcomeEmail,
   buildTranslatorWelcomeEmail,
   buildTranslatorPaymentEmail,
-  buildOrderCancelledEmail,
+  buildOrderRecalledEmail,
 };

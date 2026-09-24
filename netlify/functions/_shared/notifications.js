@@ -15,7 +15,7 @@ const APPLICABLE_ROLES = {
   order_completed: ['admin'],       // 译员标记完成通知 PM
   payment_received: ['translator'], // 译费到账通知译员
   translator_payment: ['translator'], // admin 改"已结算"通知译员（C5）
-  order_cancelled: ['translator'],  // admin 取消已接订单通知译员（C6）
+  order_cancelled: ['translator'],  // admin 取消（C6）或收回（C7）已接订单通知译员
 };
 
 // 每个角色应看到的偏好项（含 label / desc / 默认启用）
@@ -50,8 +50,8 @@ const ROLE_PREFERENCES = {
     },
     {
       key: 'order_cancelled',
-      label: '订单取消通知',
-      desc: '当公司取消我已接订单（翻译中/已完成）时，邮件通知我',
+      label: '订单取消/收回通知',
+      desc: '当公司取消或收回我已接订单时，邮件通知我',
     },
   ],
   client: [], // 客户通知走 admin 手动邮件，不发系统通知

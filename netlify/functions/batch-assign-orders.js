@@ -2,6 +2,9 @@
 // 管理员：批量把多个订单指派给同一个译员（C1）
 // 与 batch-delete 模式一致：一次查 → 逐条校验 → 一次性 UPDATE
 // 派单成功后由前端触发 send-batch-order-email.js 发一封汇总通知给译员
+//
+// C7 改派通知：原译员 ≠ 新译员时，调 send-order-cancel-email（action='recalled'）
+// 通知原译员「订单被改派他人」。与 save-order.js 的 C7（progress→pending 收回）共用模板和偏好开关。
 
 const { getServiceClient } = require('./_shared/supabase');
 const { corsResponse, preflight, authenticate, requireMethod, parseBody } = require('./_shared/auth');
@@ -53,7 +56,7 @@ exports.handler = async (event) => {
     // 一次查所有订单
     const { data: orders, error: fetchErr } = await service
       .from('orders')
-      .select('id, status, payment_status, invoice_status')
+      .select('id, status, payment_status, invoice_status, translator_id')
       .in('id', body.orderIds);
 
     if (fetchErr) {
@@ -95,6 +98,31 @@ exports.handler = async (event) => {
         return corsResponse(500, { error: updErr.message });
       }
       assigned.push(...assignable);
+    }
+
+    // C7 改派通知：原译员 ≠ 新译员时，调 send-order-cancel-email（action='recalled'）通知原译员
+    // 一个订单一封邮件（简单方案，批量改派单译员多个订单是小概率场景，UX 可接受）
+    // 后端 await 同步调用：与 save-order C7 同模式，100% 可靠
+    const orderMap = new Map((orders || []).map(o => [o.id, o]));
+    for (const id of assigned) {
+      const o = orderMap.get(id);
+      if (!o || !o.translator_id || o.translator_id === body.translatorId) continue;
+      try {
+        const protocol = event.headers['x-forwarded-proto'] || 'https';
+        const host = event.headers.host;
+        const authHeader = event.headers.authorization || event.headers.Authorization || '';
+        const resp = await fetch(`${protocol}://${host}/.netlify/functions/send-order-cancel-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader,
+          },
+          body: JSON.stringify({ orderId: id, previousStatus: o.status, action: 'recalled' }),
+        });
+        console.log('[batch-assign-orders] C7 trigger response:', resp.status, 'orderId=', id, 'oldStatus=', o.status);
+      } catch (err) {
+        console.warn('[batch-assign-orders] C7 trigger failed (non-blocking):', err.message);
+      }
     }
 
     // A7: 审计日志

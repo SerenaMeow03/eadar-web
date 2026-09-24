@@ -39,6 +39,17 @@ function createEmailTransport() {
     // 关键：8s 超时（Netlify 同步 10s，留 2s 余量给后续处理）
     connectionTimeout: 8000,
     socketTimeout: 8000,
+    // 限流（解决批量邮件触发 SMTP 反垃圾问题，2026-09-24 实战踩坑）：
+    //   - pool: true 开启连接池复用，避免每次 sendMail 都新建 TCP 连接
+    //   - maxConnections=2：最多 2 个并发 SMTP 连接
+    //   - rateDelta=1000 / rateLimit=2：1 秒窗口内最多发 2 封
+    // 实测 exmail.qq.com 5 并发时会被静默限流（sendMail 返回 250 但邮件被丢），
+    // 改为 2 并发 + 限速后稳定投递。
+    // 单封邮件场景（如 send-order-email）也走这个 transport，限流不影响（< 2 封）。
+    pool: true,
+    maxConnections: 2,
+    rateDelta: 1000,
+    rateLimit: 2,
   });
 }
 

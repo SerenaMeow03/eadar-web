@@ -187,19 +187,26 @@ exports.handler = async (event) => {
     });
 
     // 汇总返回
-    const sentCount = results.filter(r => r.status === 'sent').length;
-    const skippedCount = results.filter(r => r.status === 'skipped').length;
-    const failedCount = results.filter(r => r.status === 'failed').length;
+    // 关键修复（2026-09-24）：必须从 flatResults.filter 算，不能用 results.filter
+    // 因为 Promise.allSettled 的 r.status 只有 'fulfilled' / 'rejected'，
+    // 永远不会是 'sent' / 'skipped' / 'failed'（那些是 flatResults[i].status）
+    // 之前这里写错，导致前端 modal 顶部 notifiedTranslators 等数字永远是 0
+    const sentCount = flatResults.filter(r => r.status === 'sent').length;
+    const skippedCount = flatResults.filter(r => r.status === 'skipped').length;
+    const failedCount = flatResults.filter(r => r.status === 'failed').length;
 
     return corsResponse(200, {
-      success: failedCount === 0,
-      partial: failedCount > 0 && sentCount > 0,
+      // 修复（2026-09-24）：success 必须是真正有 sent，不能只看 failedCount
+      // 当所有译员都 skipped（不是 failed）时，failedCount=0、sentCount=0，
+      // 之前 success=true 让前端以为一切正常，实际没人收到邮件
+      success: sentCount > 0,
+      partial: sentCount > 0 && failedCount > 0,
       totalOrders: pendingOrders.length,
       totalTranslators: byTranslator.size,
       notifiedTranslators: sentCount,
       skippedTranslators: skippedCount,
       failedTranslators: failedCount,
-      results,
+      results: flatResults,
     });
   } catch (e) {
     console.error('send-batch-import-email unhandled:', e);
